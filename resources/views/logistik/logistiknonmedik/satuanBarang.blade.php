@@ -1,0 +1,159 @@
+@extends('master')
+@section('header')
+  <h1>Logistik Non Medik - Satuan Barang</h1>
+@endsection
+
+@section('content')
+  <div class="box box-primary">
+    <div class="box-header with-border">
+      <h3 class="box-title">
+        Daftar Satuan Barang
+        <a href="{{ url('#') }}" class="btn btn-default btn-sm" onclick="tambah()"><i class="fa fa-plus"></i></a>
+      </h3>
+    </div>
+    <div class="box-body">
+        <div class='table-responsive col-md-12'>
+          <table class='table table-striped table-bordered table-hover table-condensed'>
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Nama</th>
+                <th>Jumlah</th>
+                <th>Tipe</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+    </div>
+    <div id="Modal" class="modal fade" role="dialog" aria-labelledby="my-modal-title" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+          <div class="modal-content">
+              <div class="modal-header bg-green">
+                  <button class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                  </button>
+                  <h4 class="modal-title"></h4>
+              </div>
+              <div class="modal-body">
+                  <form method="POST" class="form-horizontal" id="form">
+                      {{ csrf_field() }} {{ method_field('POST') }}
+                      <input type="hidden" name="id">
+                      <div class="box-body">
+                          <div class="form-group">
+                          <label for="nama" class="col-sm-3 control-label">Nama</label>
+                              <div class="col-sm-7 namaGroup">
+                                  <input type="text" class="form-control" name="nama" placeholder="nama">
+                                  <span class="text-danger namaError"></span>
+                              </div>
+                          </div>
+                          <div class="form-group">
+                          <label for="jumlah" class="col-sm-3 control-label">Jumlah</label>
+                              <div class="col-sm-7 jumlahGroup">
+                                  <input type="text" class="form-control" name="jumlah" placeholder="jumlah">
+                                  <span class="text-danger jumlahError"></span>
+                              </div>
+                          </div>
+                          <div class="form-group">
+                          <label for="tipe" class="col-sm-3 control-label">Tipe</label>
+                              <div class="col-sm-7 tipeGroup">
+                                  <input type="text" class="form-control" name="tipe" placeholder="tipe">
+                                  <span class="text-danger tipeError"></span>
+                              </div>
+                          </div>
+                      </div>
+                  </form>
+              </div>
+              <div class="modal-footer bg-green">
+                  <button type="button" class="btn bg-orange btn-flat" onclick="save()">SAVE</button>
+              </div>
+          </div>
+      </div>
+    </div>
+  </div>
+@endsection
+@section('script')
+  <script type="text/javascript">
+    function tambah(){
+      $('#Modal').modal('show')
+      $('.modal-title').text('Tambah Satuan Barang')
+      $('input[name="id"]').val('')
+      $('input[name="_method"]').val('POST')
+      $('#form')[0].reset();
+    }
+
+    function edit(id){
+      $('#Modal').modal('show')
+      $('.modal-title').text('Edit Satuan Barang')
+      $('input[name="id"]').val(id)
+      $('input[name="_method"]').val('PATCH')
+      $.get('/logistiknonmedik/satuan-barang/'+id+'/edit', function(resp){
+          $('input[name="nama"]').val(resp.satuan.nama)
+          $('input[name="jumlah"]').val(resp.satuan.jumlah)
+          $('input[name="tipe"]').val(resp.satuan.tipe)
+      })
+    }
+
+    function reset(){
+      $('.namaGroup').removeClass('has-error')
+      $('.namaError').text('');
+      $('.jumlahGroup').removeClass('has-error')
+      $('.jumlahError').text('');
+      $('.tipeGroup').removeClass('has-error')
+      $('.tipeError').text('');
+    }
+
+    function save(){
+        var data = $('#form').serialize()
+        var id = $('input[name="id"]').val()
+
+        if(id == ''){
+            var url = '{{ route('satuan-barang.store') }}'
+        } else {
+            var url = '/logistiknonmedik/satuan-barang/'+id
+        }
+
+        $.post( url, data, function(resp){
+            reset()
+            if(resp.sukses == false){
+              if(resp.error.nama){
+                  $('.namaGroup').addClass('has-error')
+                  $('.namaError').text(resp.error.nama[0]);
+              }
+              if(resp.error.jumlah){
+                  $('.jumlahGroup').addClass('has-error')
+                  $('.jumlahError').text(resp.error.jumlah[0]);
+              }
+              if(resp.error.tipe){
+                  $('.tipeGroup').addClass('has-error')
+                  $('.tipeError').text(resp.error.tipe[0]);
+              }
+            } if(resp.sukses == true){
+              $('#Modal').modal('hide');
+              $('#form')[0].reset();
+              table.ajax.reload();
+            }
+        })
+
+    }
+
+    var table;
+    table = $('.table').DataTable({
+    'language': {
+      'url': '/json/pasien.datatable-language.json',
+    },
+    autoWidth: false,
+    processing: true,
+    serverSide: true,
+    ajax: '{{ route('satuan-barang.index') }}',
+    columns: [
+        {data: 'DT_RowIndex', searchable: false, orderable: false},
+        {data: 'nama'},
+        {data: 'jumlah'},
+        {data: 'tipe'},
+        {data: 'aksi', searchable: false}
+    ]
+    });
+  </script>
+@endsection

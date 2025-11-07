@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Nomor Antrian Poli</title>
+    <!-- Bootstrap 3.3.7 -->
+    <link rel="stylesheet" href="{{ asset('style') }}/bower_components/bootstrap/dist/css/bootstrap.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="{{ asset('style') }}/bower_components/font-awesome/css/font-awesome.min.css">
+    <!-- Theme style -->
+    <link rel="stylesheet" href="{{ asset('style') }}/dist/css/AdminLTE.min.css">
+    <!-- AdminLTE Skins. Choose a skin from the css/skins
+         folder instead of downloading all of them to reduce the load. -->
+    <link rel="stylesheet" href="{{ asset('style') }}/dist/css/skins/_all-skins.min.css">
+    <link rel="stylesheet" href="{{ asset('Nivo-Slider/style/style.css') }}" type="text/css" />
+
+    <script src="{{ asset('/js/tanggal.js') }}" charset="utf-8"></script>
+
+    <style type="text/css" media="screen">
+        body {
+            background-color: #097e37;
+        }
+
+        #header {
+            background-color: white;
+            width: auto;
+            height: 130px;
+            border-top: 1px solid grey;
+            border-bottom: 6px solid green;
+
+        }
+
+        #judul {
+            height: 150px;
+            width: 100%;
+            font-size: 28pt;
+            font-weight: bold;
+            color: green;
+            margin-top: 3px;
+            background-color: #097e37;
+            border-top: 0;
+            border-bottom-left-radius: 5px;
+            border-bottom-right-radius: 5px;
+            padding: 15px 20px;
+
+            /* text-shadow: 1px 1px 2px #000000; */
+        }
+
+        .blockloket {
+            height: 350px;
+            width: 100%;
+            margin: 20px auto;
+            background-color: none;
+            -webkit-box-shadow: 0px 1px 5px 0px rgba(0, 0, 0, 0.4);
+            -moz-box-shadow: 0px 1px 5px 0px rgba(0, 0, 0, 0.4);
+            box-shadow: 0px 1px 5px 0px rgba(0, 0, 0, 0.4);
+            background-color: white;
+            float: left;
+            border-radius: 3px;
+            /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#f8ffe8+0,e3f5ab+0,b7df2d+100 */
+            /* background: #EEF1FF;  */
+            background: white;
+        }
+
+        .blockloket2 {
+            width: 100%;
+            margin: 20px auto;
+            background-color: none;
+            -webkit-box-shadow: 0px 1px 5px 0px rgba(0, 0, 0, 0.4);
+            -moz-box-shadow: 0px 1px 5px 0px rgba(0, 0, 0, 0.4);
+            box-shadow: 0px 1px 5px 0px rgba(0, 0, 0, 0.4);
+            background-color: white;
+            float: left;
+            border-radius: 3px;
+            background: white;
+            min-height: 320px;
+        }
+
+        .loketheader {
+            width: 100%;
+            height: 85px;
+            padding: 10px 20px;
+            color: white;
+            font-weight: bold;
+            text-shadow: 3px 3px 5px #000000;
+            font-size: 30pt;
+            border-bottom: 1px solid green;
+            /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#bfd255+0,72aa00+0,72aa00+38,8eb92a+70,9ecb2d+100 */
+            background-color: #18a450;
+        }
+
+        .logo {
+            width: 200px;
+            float: left;
+            margin-right: 20px;
+        }
+
+        .nama {
+            font-weight: bold;
+            padding-top: 10px;
+            font-size: 25pt;
+            color: green;
+            float: left;
+            text-shadow: 1px 1px 0px #000000;
+
+        }
+
+        .alamat {
+            font-size: 13pt;
+            margin-right: 130px;
+        }
+
+        .tanggal {
+            font-size: 24px;
+            font-weight: bold;
+            color: green;
+            padding-top: 35px;
+            text-shadow: 1px 1px 0px #000000;
+        }
+
+        .hari {
+            float: right;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            padding: 20px;
+            border: none;
+            background: #c9d0f7;
+            color: #097e3;
+            text-shadow: 1px 1px 1px #000000;
+            position: relative;
+        }
+
+        .btn-area {
+            padding-top: 20px;
+            width: 100%;
+            font-family: Verdana;
+            color: green;
+            font-size: 100pt;
+            letter-spacing: -5px;
+            font-weight: bold;
+            text-shadow: 2px 2px 2px #000000;
+        }
+
+        .blink_me {
+            animation: blinker 4s linear infinite;
+            color: #d0ae06;
+        }
+
+        @keyframes blinker {
+            50% {
+                opacity: 0;
+            }
+        }
+
+
+        .header_antrian {
+
+            font-size: 100pt;
+            margin-right: 20px;
+            font-weight: bold;
+            color: rgb(31, 20, 143);
+            margin-top: 3px;
+            font-family: Arial;
+
+            text-shadow: 2px 2px 3px #000000;
+            /*background-color: #87C3FF;*/
+        }
+
+        .dokter {
+            margin-top: -0px;
+            color: green;
+            font-family: Arial;
+            font-size: 25pt;
+        }
+
+        .nama_antrian {
+            margin-top: 5px;
+            color: rgb(9, 13, 9);
+            font-family: Arial;
+            font-size: 30pt;
+            /* font-weight: bold; */
+
+        }
+
+        .header_antrian_on {
+            animation: blinker 2s linear infinite;
+            color: rgb(243, 10, 10);
+            font-size: 100pt;
+            margin-right: 20px;
+            font-weight: bold;
+            margin-top: 3px;
+            font-family: Arial;
+            text-shadow: 2px 2px 3px #000000;
+            /*background-color: #87C3FF;*/
+        }
+
+        .nama_antrian_on {
+            margin-top: 5px;
+            color: rgb(12, 11, 9);
+            font-family: Arial;
+            font-size: 30pt;
+        }
+
+        .antrianku {
+            font-size: 24px;
+            color: white;
+            padding: 10px;
+            border: none;
+            color: white;
+            text-shadow: 1px 1px 1px #000000;
+            /* background: #c9d0f7; */
+            background: white;
+            position: relative;
+            font-weight: bold;
+        }
+
+        .nama {
+            font-weight: bold;
+            padding-top: 10px;
+            font-size: 25pt;
+            color: white;
+            float: left;
+            text-shadow: 1px 1px 0px #000000;
+        }
+
+        .tanggal {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            padding-top: 35px;
+            text-shadow: 1px 1px 0px #000000;
+        }
+
+        .nama_marquee {
+            color: #05692d;
+            font-family: Arial;
+            font-size: 17pt;
+            font-weight: bold;
+        }
+
+        .nomor_antrian {
+            font-size: 60px;
+            font-weight: bold;
+            margin-top: 40px;
+        }
+
+        .nama_pasien {
+            font-size: 40px;
+        }
+
+        .d-flex {
+            display: flex;
+        }
+
+        .flex-1 {
+            flex: 1;
+        }
+
+        .table-list-pasien {
+            width: 100%;
+        }
+
+        tr {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .nomor {
+            width: 120px;
+            text-align: center; 
+            background-color:rgb(47, 209, 112);
+            padding: .5rem;
+        }
+
+        .header-sub {
+            padding: 1rem 0; 
+            background-color: rgb(47, 209, 112); 
+            color: white;
+        }
+    </style>
+
+<body>
+
+    <div class="container-fluid">
+        <div class="contents">
+            <div class="row">
+                <div class="col-md-12">
+                    <div id="judul">
+                        <table class="col-md-1" style="width:100%">
+                            <tr>
+                                <td>
+                                    <img src="{{ asset('/images/' . configrs()->logo) }}"
+                                        style="height: 90px;margin-left: 30px">
+                                </td>
+                                <td class="nama" style="font-size:20pt; text-align: center">
+                                    {{ configrs()->nama }}
+                                    <br>
+                                    <span style="font-size: 18pt; font-weight: normal; text-align: center">
+                                        {{ configrs()->alamat }} Tlp. {{ configrs()->tlp }}
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-12">
+                        <table class="col-md-1" style="width:100%">
+                            <tr>
+                                <div class="antrianku">
+                                    <marquee class="nama_marquee" style="text-transform: uppercase;">ANTRIAN RAWAT JALAN
+                                        / POLI KLINIK - {{Carbon\Carbon::now()->format('d M Y')}} - {{ configrs()->nama }}
+                                    </marquee>
+                                </div>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {{-- <div class="row">
+                <div class="col-md-12">
+                    <div class="col-sm-12">
+                        <div class="blockloket">
+                            <div class="loketheader text-center">
+                                POLI KEMUNING
+                            </div>
+                            <div class="text-center">
+                                <div id="KM_antrian" class="nomor_antrian">
+                                    {{ @$antrianKM->kelompok . @$antrianKM->nomor }}</div> --}}
+                                {{-- <div id="KM_nama" class="nama_pasien">
+                                    {{ @$antrianKM->register_antrian->pasien->nama }}</div> --}}
+                            {{-- </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> --}}
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="col-sm-6">
+                    <div class="blockloket2">
+                        <div class="loketheader text-center">
+                            POLI JANTUNG
+                        </div>
+                        <div class="d-flex" style="height: 320px; overflow: hidden">
+                            <div class="flex-1 container-box" style="border-right: black solid 2px;  overflow: hidden;">
+                                <div class="header-sub" style="position: absolute; left: 15px; right: 50%;">
+                                    <h4 class="text-center" style="font-weight: bold; color: black;">Belum Dipanggil</h4>
+                                </div>
+                                <div style="padding: 2rem; margin-top: 5rem;" id="top-point">
+                                    <table class="table-list-pasien">
+                                        <tbody id="antrianBPJantung">
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div id="bottom-point"></div>
+                            </div>
+                            <div class="flex-1">
+                                <div class="header-sub">
+                                    <h4 class="text-center" style="font-weight: bold; color: black;">Sedang Dipanggil</h4>
+                                </div>
+                                <div class="text-center">
+                                    @if( !baca_nomorantrian_bpjs(@$lastCallJantung->register_antrian->nomorantrian) )
+                                        <div id="nomorAntrian_jantung" class="nomor_antrian">
+                                            {{ @$lastCallJantung->kelompok . @$lastCallJantung->nomor }}
+                                        </div>
+                                    @else
+                                        <div id="nomorAntrian_jantung" class="nomor_antrian">
+                                            {{ baca_nomorantrian_bpjs(@$lastCallJantung->register_antrian->nomorantrian) }}
+                                        </div>
+                                    @endif
+                                    <div id="namaAntrian_jantung" class="nama_pasien">
+                                        {{ @$lastCallJantung->register_antrian->pasien->nama }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="blockloket2">
+                        <div class="loketheader text-center">
+                            POLI PENYAKIT DALAM
+                        </div>
+                        <div class="d-flex" style="height: 320px; overflow: hidden">
+                            <div class="flex-1 container-box" style="border-right: black solid 2px;  overflow: hidden;">
+                                <div class="header-sub" style="position: absolute; left: 15px; right: 50%;">
+                                    <h4 class="text-center" style="font-weight: bold; color: black;">Belum Dipanggil</h4>
+                                </div>
+                                <div style="padding: 2rem; margin-top: 5rem;" id="top-point">
+                                    <table class="table-list-pasien">
+                                        <tbody id="antrianBPDalam">
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div id="bottom-point"></div>
+                            </div>
+                            <div class="flex-1">
+                                <div class="header-sub">
+                                    <h4 class="text-center" style="font-weight: bold; color: black;">Sedang Dipanggil</h4>
+                                </div>
+                                <div class="text-center">
+                                    @if( !baca_nomorantrian_bpjs(@$lastCallDalam->register_antrian->nomorantrian) )
+                                        <div id="nomorAntrian_dalam" class="nomor_antrian">
+                                            {{ @$lastCallDalam->kelompok . @$lastCallDalam->nomor }}
+                                        </div>
+                                    @else
+                                        <div id="nomorAntrian_dalam" class="nomor_antrian">
+                                            {{ baca_nomorantrian_bpjs(@$lastCallDalam->register_antrian->nomorantrian) }}
+                                        </div>
+                                    @endif
+                                    <div id="namaAntrian_dalam" class="nama_pasien">
+                                        {{ @$lastCallDalam->register_antrian->pasien->nama }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12" id="suara_antrian_tv2"></div>
+        </div>
+
+    </div>
+    </div>
+
+    <!-- jQuery 3 -->
+    <script src="{{ asset('style') }}/bower_components/jquery/dist/jquery.min.js"></script>
+
+    <script type="text/javascript">
+        // setInterval(function() {
+        //     $('#suara_antrian_tv2').load("{{ route('antrian_poli.ajax_suara_tv2') }}");
+        // }, 15000);
+    </script>
+
+    <script type="text/javascript">
+        let intervalId;
+
+        let ajaxDelay = 5000;
+        function startInterval() {
+            intervalId = setInterval(() => {
+                ajaxAntrian();
+            }, ajaxDelay);
+        }
+
+        function pauseInterval() {
+            clearInterval(intervalId);
+        }
+        
+        let intervalBP;
+
+        intervalBP = setInterval(() => {
+            ajaxAntrianBP();
+        }, 10000);
+        
+        // Init ajax
+        startInterval();
+        ajaxAntrianBP();
+
+        // $(document).ready(function() {
+        //     confirm('Klik dimana saya pada halaman web ini! sampai terdengar suara notifikasi. Jika text terlalu besar maka kecilkan dengan menekan CTRL + "-"');
+        //     document.addEventListener('click', function() {
+        //         new Audio('/audio/notif.mp3').play();
+        //         startInterval();
+        //     })
+        // });
+
+        function ajaxAntrian() {
+            $.ajax({
+                url: "/antrian_poliklinik/jantung_dalam/get-current-call",
+                method: "POST",
+                dataType: "json",
+                data: {
+                    _token: $('meta[name="csrf-token"]').attr('content'),
+                    poli_id: $('input[name="poli_id"]').val()
+                },
+                success: function(data) {
+                    // Jantung
+                    let antrianDipanggilJantung = Object.values(data.jantung[0]);
+                    pauseInterval();
+                    let audioDelayJantung = antrianDipanggilJantung.length * 9000;
+                    setTimeout(() => {
+                        startInterval();
+                        console.log('mulai ajax lagi dalam ' +  (audioDelayJantung + ajaxDelay) + 's');
+                    }, audioDelayJantung);
+
+
+                    antrianDipanggilJantung.forEach(antrian => {
+                        if(antrian != null){
+                            if (bacaNomorAntrianBPJS(antrian.register_antrian.nomorantrian)) {
+                                $('#nomorAntrian_jantung').html(bacaNomorAntrianBPJS(antrian.register_antrian.nomorantrian));
+                                $('#namaAntrian_jantung').html(antrian.register_antrian?.pasien?.nama ?? '');
+                            } else {
+                                $('#nomorAntrian_jantung').html(antrian.kelompok + antrian.nomor);
+                                $('#namaAntrian_jantung').html(antrian.register_antrian?.pasien?.nama ?? '');
+                            }
+                        }
+                    });
+
+                    // Dalam
+                    let antrianDipanggilDalam = Object.values(data.dalam[0]);
+                    pauseInterval();
+                    let audioDelayDalam = antrianDipanggilDalam.length * 9000;
+                    setTimeout(() => {
+                        startInterval();
+                        console.log('mulai ajax lagi dalam ' +  (audioDelayDalam + ajaxDelay) + 's');
+                    }, audioDelayDalam);
+
+
+                    antrianDipanggilDalam.forEach(antrian => {
+                        console.log(antrian);
+                        if(antrian != null){
+                            if (bacaNomorAntrianBPJS(antrian.register_antrian.nomorantrian)) {
+                                $('#nomorAntrian_dalam').html(bacaNomorAntrianBPJS(antrian.register_antrian.nomorantrian));
+                                $('#namaAntrian_dalam').html(antrian.register_antrian?.pasien?.nama ?? '');
+                            } else {
+                                $('#nomorAntrian_dalam').html(antrian.kelompok + antrian.nomor);
+                                $('#namaAntrian_dalam').html(antrian.register_antrian?.pasien?.nama ?? '');
+                            }
+                        }
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error:", status, error);
+                }
+            });
+        }
+
+        function ajaxAntrianBP() {
+            $.ajax({
+                type: 'GET',
+                url: '/antrian_poliklinik/jantung_dalam/belum-dipanggil',
+                success: function (data) {
+                    let antrianBPDalam = data.dalam;
+                    let htmlDalam = '';
+                    antrianBPDalam.forEach(rehab_medis => {
+                        if (rehab_medis != null) {
+                            if (bacaNomorAntrianBPJS(rehab_medis.nomorantrian)) {
+                                htmlDalam += `<tr>
+                                            <td class="nomor text-bp">${bacaNomorAntrianBPJS(rehab_medis.nomorantrian)}</td>
+                                            <td class="text-center text-bp">${rehab_medis?.nama ?? ''}</td>
+                                        </tr>`
+                            } else {
+                                htmlDalam += `<tr>
+                                            <td class="nomor text-bp">${rehab_medis.kelompok_antrian ?? '-'}${rehab_medis.nomor_antrian ?? '-'}</td>
+                                            <td class="text-center text-bp">${rehab_medis?.nama ?? ''}</td>
+                                        </tr>`
+                            }
+                        }
+                    })
+                    $('#antrianBPDalam').html(htmlDalam);
+                    if (htmlDalam == undefined) {
+                        $('#antrianBPDalam').html('');
+                    }
+                    htmlDalam = null;
+
+                    // Jantung
+                    let antrianBPJantung = data.jantung;
+                    let htmlJantung;
+                    antrianBPJantung.forEach(rehab_medis => {
+                        if (rehab_medis != null) {
+                            if (bacaNomorAntrianBPJS(rehab_medis.nomorantrian)) {
+                                htmlJantung += `<tr>
+                                            <td class="nomor text-bp">${bacaNomorAntrianBPJS(rehab_medis.nomorantrian)}</td>
+                                            <td class="text-center text-bp">${rehab_medis?.nama ?? ''}</td>
+                                        </tr>`
+                            } else {
+                                htmlJantung += `<tr>
+                                            <td class="nomor text-bp">${rehab_medis.kelompok_antrian ?? '-'}${rehab_medis.nomor_antrian ?? '-'}</td>
+                                            <td class="text-center text-bp">${rehab_medis?.nama ?? ''}</td>
+                                        </tr>`
+                            }
+                        }
+                    })
+                    $('#antrianBPJantung').html(htmlJantung);
+                    if (htmlJantung == undefined) {
+                        $('#antrianBPJantung').html('');
+                    }
+                    htmlJantung = null;
+                }
+            });
+        }
+
+        function autoScroll() {
+            $('.container-box').animate({
+                scrollTop: 0
+            }, 0);
+
+            $('.container-box').animate({
+                scrollTop: $("#bottom-point").offset().top
+            }, 25000, () => {
+                autoScroll();
+            });
+        }
+
+        function bacaNomorAntrianBPJS(nomorAntrian) {
+            if (nomorAntrian === null || nomorAntrian.length <= 8) {
+                return false;
+            }
+
+            const antrian = nomorAntrian.substring(8);
+            if (!/[a-zA-Z]/.test(antrian)) {
+                return false;
+            }
+
+            return antrian;
+        }
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            autoScroll();
+        });
+    </script>
+</body>
+
+</html>

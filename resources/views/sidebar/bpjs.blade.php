@@ -1,0 +1,2 @@
+<li class="header text-yellow"><strong>VEDIKA BPJS KESEHATAN</strong></li>
+  <li><a href="{{ url('modul-bpjs') }}"><img src="{{ asset('menu/sidebar/bpjs.svg') }}" width="24"> <span>Vedika</span></a></li>

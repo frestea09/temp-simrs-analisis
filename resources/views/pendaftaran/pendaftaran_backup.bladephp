@@ -1,0 +1,249 @@
+
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pendaftaran</title>
+    
+    <link rel="stylesheet" href="{{ asset('style') }}/bower_components/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ asset('style') }}/bower_components/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="{{ asset('style') }}/bower_components/bootstrap-datepicker/dist/css/bootstrap-datepicker.css">
+    <link rel="stylesheet" href="{{ asset('style') }}/bower_components/select2/dist/css/select2.css">
+    <link rel="stylesheet" href="{{ asset('style') }}/dist/css/AdminLTE.min.css">
+    <link rel="stylesheet" href="{{ asset('style') }}/bower_components/custom/custom.css">
+    <style>
+        body{background-image: url(images/lamaddukkeleng.jpg);background-repeat: no-repeat;background-size: cover;}
+        header{height: 80px;background: rgba(255, 136, 13, 0.58);}
+        header .logo{height: 100%;}
+        header .logo img{height: 100%;}
+        header .logo h1{display: inline-block;margin: 5px 0;color: #fff;}
+        header .logo p{color: #fff;}
+        .form{background: rgba(255, 255, 255, 0.82)}
+        .colForm{box-shadow: 0 1px 3px #000 !important;}
+        .container{margin-top: 50px}
+        .form:first-child{padding-top:10px;}
+        .nav li{width: 50%;margin-right: 0 !important;text-align: center;}
+        .nav li a{font-weight: 600;color: #000;}
+        .nav li.active a{background: #3c8dbc !important;color: #fff !important;font-weight: 600;}
+        .select2-container{margin-bottom: 15px}
+    </style>
+</head>
+<html lang="en">
+<body>
+    <header class="text-center">
+        <div class="logo">
+            <h1>RSUD LAMADDUKKELENG</h1><br/>
+            <p>Jl. Kartika Chandra Kirana No. 09 Sengkang, Kodepos 90914 Tlp. 0485 21785</p>
+        </div>
+    </header>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="nav-tabs-custom">
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a href="#lama" data-toggle="tab">PASIEN LAMA</a></li>
+                        <li><a href="#baru" data-toggle="tab">PASIEN BARU</a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="lama">
+                            <form role="form" id="form" method="post" action="{{ url('pendaftaran/store') }}">
+                                {{ csrf_field() }}
+                                <div class="row">
+                                    <div class="col-sm-4">
+                                        <div class="form-group">
+                                            <label class="col-lg-4 control-label">No. RM</label>
+                                            <div class="col-lg-8">
+                                                <input type="number" class="form-control" name="no_rm" placeholder="No. Rekam Medik" required>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-lg-4 control-label">Tgl. Lahir</label>
+                                            <div class="col-lg-8">
+                                                <input type="text" class="form-control" name="tgllahir" placeholder="Tanggal Lahir" readonly required>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-lg-4 control-label">Cara Bayar</label>
+                                            <div class="col-lg-8">
+                                                {!! Form::select('cara_bayar', $cara_bayar, null, ['class' => 'form-control select2', 'style' => 'width:100%;', 'onChange' => 'embuh()']) !!}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <div class="form-group">
+                                            <label class="col-lg-4 control-label">Nama</label>
+                                            <div class="col-lg-8">
+                                                <input type="text" class="form-control" name="nama" required readonly>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-lg-4 control-label">Jns Kelamin</label>
+                                            <div class="col-lg-8">
+                                                <input type="text" class="form-control" name="kelamin" required readonly>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-lg-4 control-label">No. Hp</label>
+                                            <div class="col-lg-8">
+                                                <input type="number" class="form-control" name="no_telp" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <div class="form-group divJKN" id="noRuj">
+                                            <label class="col-lg-4 control-label">No. Rujukan</label>
+                                            <div class="col-lg-8">
+                                                <input type="text" class="form-control" name="no_rujukan">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-lg-4 control-label">Periksa</label>
+                                            <div class="col-lg-8">
+                                                <input type="text" class="form-control datepicker" id="periksa" name="tgl_periksa" placeholder="Tgl. Periksa" required>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-lg-4 control-label">Poliklinik</label>
+                                            <div class="col-lg-8">
+                                                <select id="selectPoli" class="form-control select2" name="kode_poli" style="width:100%;" required>
+                                                @foreach ($poli as $p)
+                                                    <option value="{{ $p->id }}">{{ $p->nama }}</option>
+                                                @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="form-group">
+                                            <label class="col-lg-2 control-label">Alamat</label>
+                                            <div class="col-lg-10">
+                                                <input type="text" name="alamat" class="form-control" name="alamat" required readonly>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="form-group">
+                                            <label class="col-lg-2 control-label">Dokter</label>
+                                            <div class="col-lg-10">
+                                                <select class="form-control select2" name="kode_dokter" style="width:100%;" required>
+                                                @foreach ($dokter as $d)
+                                                    <option value="{{ $d->id }}">{{ $d->nama }}</option>
+                                                @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-12 text-center">
+                                        <hr/>
+                                        <button class="btn btn-primary" type="button">Daftar</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="tab-pane " id="baru">
+                            <form role="form" id="form" method="post" action="#">
+                                {{ csrf_field() }}
+                                {{-- <div class="row">
+                                    <div class="col-sm-6">
+                                        <div class="form-group">
+                                            <label class="col-lg-3 control-label">NIK</label>
+                                            <div class="col-lg-9">
+                                                <input type="text" class="form-control" name="nik" required>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-lg-3 control-label">Nama</label>
+                                            <div class="col-lg-9">
+                                                <input type="text" class="form-control" name="nama" required>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-lg-3 control-label">Tmp, Tgl Lahir</label>
+                                            <div class="col-lg-5">
+                                                <input type="text" class="form-control" name="tmplahir" placeholder="Tempat Lahir" required>
+                                            </div>
+                                            <div class="col-lg-4">
+                                                <input type="text" class="form-control" name="tgllahir" placeholder="Tanggal" required>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-lg-3 control-label">Dusun, RT, RW</label>
+                                            <div class="col-lg-5">
+                                                <input type="text" class="form-control" name="dsn" required placeholder="Dusun">
+                                            </div>
+                                            <div class="col-lg-2">
+                                                <input type="text" class="form-control" name="rt" required placeholder="RT">
+                                            </div>
+                                            <div class="col-lg-2">
+                                                <input type="text" class="form-control" name="rw" required placeholder="RW">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-lg-3 control-label">Propinsi</label>
+                                            <div class="col-lg-9">
+                                                {!! Form::select('propinsi', $propinsi, null, ['class' => 'form-control select2']) !!}
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-lg-3 control-label">Kabupaten</label>
+                                            <div class="col-lg-9">
+                                                {!! Form::select('kabupaten', $kabupaten, null, ['class' => 'form-control select2']) !!}
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-lg-3 control-label">Kecamatan</label>
+                                            <div class="col-lg-9">
+                                                {!! Form::select('kecamatan', $kecamatan, null, ['class' => 'form-control select2']) !!}
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-lg-3 control-label">Kelurahan</label>
+                                            <div class="col-lg-9">
+                                                {!! Form::select('kelurahan', $kelurahan, null, ['class' => 'form-control select2']) !!}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div> --}}
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script src="{{ asset('style') }}/bower_components/jquery/dist/jquery.min.js"></script>
+<script src="{{ asset('style') }}/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+<script src="{{ asset('style') }}/bower_components/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
+<script src="{{ asset('style') }}/bower_components/select2/dist/js/select2.full.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('.select2').select2();
+        $("#periksa").datepicker({
+            startDate: "dateToday",
+            format: "yyyy-mm-dd",
+            autoclose: true
+        });
+        function embuh(){
+            var cb = $('select[name="cara_bayar"]').val();
+            if(cb != 1){
+                $('#noRuj').hide();
+            }else{
+                $('#noRuj').show();
+            }
+        }
+        $('input[name="no_rm"]').keyup(function(){
+            var no_rm = $(this).val();
+            if(no_rm.length > 6){
+                $.get("cek-pasien/"+no_rm, function(resp){
+                    $('input[name="tgllahir"]').val(resp[0]['tgllahir']);
+                    $('input[name="nama"]').val(resp[0]['nama']);
+                    $('input[name="alamat"]').val(resp[0]['alamat']);
+                    $('input[name="kelamin"]').val((resp[0]['kelamin'] == 'L') ? 'Laki-laki' : 'Perempuan');
+                })
+            }
+        })
+    })
+</script>
+</html>
