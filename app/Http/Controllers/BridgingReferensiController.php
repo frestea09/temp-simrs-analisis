@@ -27,11 +27,13 @@ use App\Nomorrm;
 use App\PasienBjb;
 use App\PenerimaanDetailProduks;
 use App\Penjualan;
+use App\AntrianFarmasi;
 use App\RegistrasiDummy;
 use App\User;
 use DB;
 use Modules\Bed\Entities\Bed;
 use Modules\Registrasi\Entities\Folio;
+use Carbon\Carbon;
 
 class BridgingReferensiController extends Controller {
 	public function cekDoub(){
@@ -984,78 +986,36 @@ class BridgingReferensiController extends Controller {
 	dd("OKE");
 }
 	function sinkronTaskidCron6() {
-		// dd("A");
-		ini_set('max_execution_time', 0); //0=NOLIMIT
-		ini_set('memory_limit', '8000M');
-		// dd(is_numeric('05072023JAN18'));
-		$penjualan = Penjualan::with('registrasi')->whereBetween('created_at', [date('Y-m-d') . ' 00:00:00', date('Y-m-d') . ' 23:59:59'])->get();
-		// dd($penjualan);
-		// $reg= Registrasi::whereNotNull('nomorantrian')
-		// 		->whereBetween('created_at', [date('Y-m-d') . ' 00:00:00', date('Y-m-d') . ' 23:59:59'])
-		// 		->select('nomorantrian')
-		// 		->orderBy('id','DESC')
-		// 		->get();
-		// dd($reg);
-		$ID = config('app.consid_antrean');
-		date_default_timezone_set('Asia/Jakarta');
-		$t = time();
-		$dat = "$ID&$t";
-		$secretKey = config('app.secretkey_antrean');
-		$signature = base64_encode(hash_hmac('sha256', utf8_encode($dat), utf8_encode($secretKey), true));
-		$completeurl = config('app.antrean_url_web_service')."antrean/updatewaktu";
-		$arrheader = array(
-			'X-cons-id: ' . $ID,
-			'X-timestamp: ' . $t,
-			'X-signature: ' . $signature,
-			'user_key:'. config('app.user_key_antrean'),
-			'Content-Type: application/json',
-		);
-		if(count($penjualan) > 0){
-			foreach ($penjualan as $key => $val){
-				// dd($val->registrasi->nomorantrian);
-				if($val->registrasi){
-					if($val->registrasi->nomorantrian){
-						// $req->nomor = $val->nomorantrian;
-					$updatewaktu2   = '{
-						"kodebooking": "'.@$val->registrasi->nomorantrian.'",
-						"taskid": "6",
-						"waktu": "'.randomWaktu1().'"
-					}';
-					$session3 = curl_init($completeurl);
-					curl_setopt($session3, CURLOPT_HTTPHEADER, $arrheader);
-					curl_setopt($session3, CURLOPT_POSTFIELDS, $updatewaktu2);
-					curl_setopt($session3, CURLOPT_POST, TRUE);
-					curl_setopt($session3, CURLOPT_RETURNTRANSFER, TRUE);
-					curl_exec($session3);
+                ini_set('max_execution_time', 0); //0=NOLIMIT
+                ini_set('memory_limit', '8000M');
 
+                $penjualan = Penjualan::with('registrasi')
+                        ->whereBetween('created_at', [date('Y-m-d') . ' 00:00:00', date('Y-m-d') . ' 23:59:59'])
+                        ->get();
 
-					$updatewaktu   = '{
-						"kodebooking": "'.@$val->registrasi->nomorantrian.'",
-						"taskid": "7",
-						"waktu": "'.randomWaktu3().'"
-					}';
-					$session2 = curl_init($completeurl);
-					curl_setopt($session2, CURLOPT_HTTPHEADER, $arrheader);
-					curl_setopt($session2, CURLOPT_POSTFIELDS, $updatewaktu);
-					curl_setopt($session2, CURLOPT_POST, TRUE);
-					curl_setopt($session2, CURLOPT_RETURNTRANSFER, TRUE);
-					$e = curl_exec($session2);
-					// sleep(180); 
-					}
-				}
+                foreach ($penjualan as $val) {
+                        if (!$val->registrasi || !$val->registrasi->nomorantrian) {
+                                continue;
+                        }
 
-				
-				
-			}
+                        $antrian = AntrianFarmasi::where('registrasi_id', $val->registrasi->id)
+                                ->orderByDesc('processed_at')
+                                ->orderByDesc('updated_at')
+                                ->orderByDesc('id')
+                                ->first();
 
-		}
+                        if ($antrian && $antrian->processed_at) {
+                                updateTaskId(6, $val->registrasi->nomorantrian, Carbon::parse($antrian->processed_at));
+                        }
 
-		// return response()->json(['code'=>200,'message'=>'Taskid Tersinkron']);
-	
+                        if ($antrian && $antrian->finished_at) {
+                                updateTaskId(7, $val->registrasi->nomorantrian, Carbon::parse($antrian->finished_at));
+                        }
+                }
 
-	dd("OKE");
+                dd("OKE");
 }
-	function sinkronTaskidCron5() {
+        function sinkronTaskidCron5() {
 		// dd("A");
 		// dd(is_numeric('05072023JAN18'));
 		// $penjualan = Penjualan::with('registrasi')->whereBetween('created_at', [date('Y-m-d') . ' 00:00:00', date('Y-m-d') . ' 23:59:59'])->get();

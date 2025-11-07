@@ -50,13 +50,48 @@ use Modules\Icd9\Entities\Icd9;
 use Modules\Poli\Entities\Poli;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\EsignLog;
+use App\AntrianFarmasi;
 
 
 class PenjualanController extends Controller
 {
 
-	public function indexRajal()
-	{
+        protected function latestFarmasiQueue(Registrasi $registrasi)
+        {
+                return AntrianFarmasi::where('registrasi_id', $registrasi->id)
+                        ->orderByDesc('processed_at')
+                        ->orderByDesc('updated_at')
+                        ->orderByDesc('id')
+                        ->first();
+        }
+
+        protected function ensureFarmasiProcessTimestamp(Registrasi $registrasi)
+        {
+                $antrian = $this->latestFarmasiQueue($registrasi);
+
+                if ($antrian) {
+                        if (empty($antrian->processed_at)) {
+                                $antrian->processed_at = now()->format('Y-m-d H:i:s');
+                                $antrian->save();
+                        }
+
+                        return Carbon::parse($antrian->processed_at);
+                }
+
+                return Carbon::now();
+        }
+
+        protected function pushTask6Update(Registrasi $registrasi)
+        {
+                if (!$registrasi->nomorantrian) {
+                        return;
+                }
+
+                updateTaskId(6, $registrasi->nomorantrian, $this->ensureFarmasiProcessTimestamp($registrasi));
+        }
+
+        public function indexRajal()
+        {
 		session()->forget('penjualanid');
 		session()->forget('idpenjualan');
 		session()->forget('next_resep');
@@ -2303,20 +2338,9 @@ class PenjualanController extends Controller
 			}
 
 
-			if (status_consid(6)) {
-				// CONSID 6
-				$updatewaktu6   = '{
-					"kodebooking": "' . $data['reg']->nomorantrian . '",
-					"taskid": "6",
-					"waktu": "' . round(microtime(true) * 1000) . '"
-				}';
-				$session6 = curl_init($completeurl);
-				curl_setopt($session6, CURLOPT_HTTPHEADER, $arrheader);
-				curl_setopt($session6, CURLOPT_POSTFIELDS, $updatewaktu6);
-				curl_setopt($session6, CURLOPT_POST, TRUE);
-				curl_setopt($session6, CURLOPT_RETURNTRANSFER, TRUE);
-				$resp6 = curl_exec($session6);
-			}
+                        if (status_consid(6)) {
+                                $this->pushTask6Update($data['reg']);
+                        }
 		}
 
 		if (!empty($request->resep)) {
@@ -2404,20 +2428,9 @@ class PenjualanController extends Controller
 				$resp = curl_exec($session2);
 			}
 
-			if (status_consid(6)) {
-				// CONSID 6
-				$updatewaktu6   = '{
-					"kodebooking": "' . $data['reg']->nomorantrian . '",
-					"taskid": "6",
-					"waktu": "' . round(microtime(true) * 1000) . '"
-				}';
-				$session6 = curl_init($completeurl);
-				curl_setopt($session6, CURLOPT_HTTPHEADER, $arrheader);
-				curl_setopt($session6, CURLOPT_POSTFIELDS, $updatewaktu6);
-				curl_setopt($session6, CURLOPT_POST, TRUE);
-				curl_setopt($session6, CURLOPT_RETURNTRANSFER, TRUE);
-				$resp6 = curl_exec($session6);
-			}
+                        if (status_consid(6)) {
+                                $this->pushTask6Update($data['reg']);
+                        }
 		}
 
 		if (!empty($request->resep)) {
@@ -2978,20 +2991,9 @@ class PenjualanController extends Controller
 				'Content-Type: application/json',
 			);
 
-			if (status_consid(6)) {
-				$updatewaktu   = '{
-					"kodebooking": "' . @$reg->nomorantrian . '",
-					"taskid": "6",
-					"waktu": "' . round(microtime(true) * 1000) . '"
-				}';
-				$session2 = curl_init($completeurl);
-				curl_setopt($session2, CURLOPT_HTTPHEADER, $arrheader);
-				curl_setopt($session2, CURLOPT_POSTFIELDS, $updatewaktu);
-				curl_setopt($session2, CURLOPT_POST, TRUE);
-				curl_setopt($session2, CURLOPT_RETURNTRANSFER, TRUE);
-				$resp = curl_exec($session2);
-				$sml2 = json_decode($resp, true);
-			}
+                        if (status_consid(6)) {
+                                $this->pushTask6Update($reg);
+                        }
 
 			// if (status_consid(7)) {
 			// 	// UPDATE TASK ID 7
@@ -3515,20 +3517,9 @@ class PenjualanController extends Controller
 				'Content-Type: application/json',
 			);
 
-			if (status_consid(6)) {
-				$updatewaktu   = '{
-					"kodebooking": "' . $reg->nomorantrian . '",
-					"taskid": "6",
-					"waktu": "' . round(microtime(true) * 1000) . '"
-				}';
-				$session2 = curl_init($completeurl);
-				curl_setopt($session2, CURLOPT_HTTPHEADER, $arrheader);
-				curl_setopt($session2, CURLOPT_POSTFIELDS, $updatewaktu);
-				curl_setopt($session2, CURLOPT_POST, TRUE);
-				curl_setopt($session2, CURLOPT_RETURNTRANSFER, TRUE);
-				$resp = curl_exec($session2);
-				$sml2 = json_decode($resp, true);
-			}
+                        if (status_consid(6)) {
+                                $this->pushTask6Update($reg);
+                        }
 
 
 			if (status_consid(7)) {
@@ -4804,20 +4795,9 @@ class PenjualanController extends Controller
 			}
 
 
-			if (status_consid(6)) {
-				// CONSID 6
-				$updatewaktu6   = '{
-						"kodebooking": "' . @$data['reg']->nomorantrian . '",
-						"taskid": "6",
-						"waktu": "' . round(microtime(true) * 1000) . '"
-					}';
-				$session6 = curl_init($completeurl);
-				curl_setopt($session6, CURLOPT_HTTPHEADER, $arrheader);
-				curl_setopt($session6, CURLOPT_POSTFIELDS, $updatewaktu6);
-				curl_setopt($session6, CURLOPT_POST, TRUE);
-				curl_setopt($session6, CURLOPT_RETURNTRANSFER, TRUE);
-				$resp6 = curl_exec($session6);
-			}
+                        if (status_consid(6)) {
+                                $this->pushTask6Update($data['reg']);
+                        }
 		}
 		$data['histori_irj'] = HistorikunjunganIRJ::where('registrasi_id', $data['reg']->id)->where('created_at', 'like', date('Y-m-d') . '%')->get();
 		$data['histori_igd'] = HistorikunjunganIGD::join('registrasis', 'registrasis.id', '=', 'histori_kunjungan_igd.registrasi_id')
@@ -5537,20 +5517,9 @@ class PenjualanController extends Controller
 				'Content-Type: application/json',
 			);
 
-			if (status_consid(6)) {
-				$updatewaktu   = '{
-					"kodebooking": "' . @$reg->nomorantrian . '",
-					"taskid": "6",
-					"waktu": "' . round(microtime(true) * 1000) . '"
-				}';
-				$session2 = curl_init($completeurl);
-				curl_setopt($session2, CURLOPT_HTTPHEADER, $arrheader);
-				curl_setopt($session2, CURLOPT_POSTFIELDS, $updatewaktu);
-				curl_setopt($session2, CURLOPT_POST, TRUE);
-				curl_setopt($session2, CURLOPT_RETURNTRANSFER, TRUE);
-				$resp = curl_exec($session2);
-				$sml2 = json_decode($resp, true);
-			}
+                        if (status_consid(6)) {
+                                $this->pushTask6Update($reg);
+                        }
 
 			if (status_consid(7)) {
 				// UPDATE TASK ID 7
