@@ -2414,43 +2414,69 @@ if (!function_exists('cek_jenis_reg')) {
 	}
 }
 
-function updateTaskId($taskid, $kodebooking)
+function bpjsTimestamp($timestamp = null)
 {
+        if ($timestamp instanceof \DateTimeInterface) {
+                return Carbon::instance($timestamp)->valueOf();
+        }
 
-	$ID = config('app.consid_antrean');
-	date_default_timezone_set('Asia/Jakarta');
-	$t = time();
-	$dat = "$ID&$t";
-	$secretKey = config('app.secretkey_antrean');
-	$signature = base64_encode(hash_hmac('sha256', utf8_encode($dat), utf8_encode($secretKey), true));
-	$completeurl = config('app.antrean_url_web_service') . "antrean/updatewaktu";
-	$arrheader = array(
-		'X-cons-id: ' . $ID,
-		'X-timestamp: ' . $t,
-		'X-signature: ' . $signature,
-		'user_key:' . config('app.user_key_antrean'),
-		'Content-Type: application/json',
-	);
-	// dd($re);
-	$updatewaktu   = '{
-		"kodebooking": "' . $kodebooking . '",
-		"taskid": "' . $taskid . '",
-		"waktu": "' . round(microtime(true) * 1000) . '"
-	}';
-	$session2 = curl_init($completeurl);
-	curl_setopt($session2, CURLOPT_HTTPHEADER, $arrheader);
-	curl_setopt($session2, CURLOPT_POSTFIELDS, $updatewaktu);
-	curl_setopt($session2, CURLOPT_POST, TRUE);
-	curl_setopt($session2, CURLOPT_RETURNTRANSFER, TRUE);
-	$exec = curl_exec($session2);
-	// dd($exec);
+        if (is_numeric($timestamp)) {
+                $value = (int) $timestamp;
 
-	@$history = new TaskidLog();
-	@$history->response = @$exec;
-	@$history->url = url()->full();
-	@$history->nomorantrian = @$kodebooking;
-	@$history->taskid = @$taskid;
-	@$history->save();
+                return strlen((string) $value) > 11 ? $value : $value * 1000;
+        }
+
+        if (!is_null($timestamp)) {
+                try {
+                        return Carbon::parse($timestamp)->valueOf();
+                } catch (\Exception $e) {
+                        // fallback below
+                }
+        }
+
+        return (int) round(microtime(true) * 1000);
+}
+
+function updateTaskId($taskid, $kodebooking, $timestamp = null)
+{
+        if (empty($kodebooking)) {
+                return;
+        }
+
+        $ID = config('app.consid_antrean');
+        date_default_timezone_set('Asia/Jakarta');
+        $t = time();
+        $dat = "$ID&$t";
+        $secretKey = config('app.secretkey_antrean');
+        $signature = base64_encode(hash_hmac('sha256', utf8_encode($dat), utf8_encode($secretKey), true));
+        $completeurl = config('app.antrean_url_web_service') . "antrean/updatewaktu";
+        $arrheader = array(
+                'X-cons-id: ' . $ID,
+                'X-timestamp: ' . $t,
+                'X-signature: ' . $signature,
+                'user_key:' . config('app.user_key_antrean'),
+                'Content-Type: application/json',
+        );
+
+        $payload = json_encode([
+                'kodebooking' => (string) $kodebooking,
+                'taskid' => (string) $taskid,
+                'waktu' => bpjsTimestamp($timestamp),
+        ]);
+
+        $session2 = curl_init($completeurl);
+        curl_setopt($session2, CURLOPT_HTTPHEADER, $arrheader);
+        curl_setopt($session2, CURLOPT_POSTFIELDS, $payload);
+        curl_setopt($session2, CURLOPT_POST, TRUE);
+        curl_setopt($session2, CURLOPT_RETURNTRANSFER, TRUE);
+        $exec = curl_exec($session2);
+
+        @$history = new TaskidLog();
+        @$history->response = @$exec;
+        @$history->url = url()->full();
+        @$history->nomorantrian = @$kodebooking;
+        @$history->taskid = @$taskid;
+        @$history->save();
 }
 
 
