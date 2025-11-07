@@ -1,0 +1,3528 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Activity;
+use App\Deposit;
+use App\Foliopelaksana;
+use App\HistorikunjunganIGD;
+use App\HistorikunjunganIRJ;
+use App\Inacbg;
+use App\MetodeBayar;
+use App\Pasienlangsung;
+use App\Pembayaran;
+use App\Penjualan;
+use App\Penjualanbebas;
+use App\Penjualandetail;
+use App\Piutang;
+use App\Rawatinap;
+use App\Satuanbeli;
+use App\TransaksiKeluar;
+use App\KlasifikasiPengeluaran;
+use App\JenisPengeluaran;
+use App\UangRacik;
+use App\User;
+use Auth;
+use DB;
+use Excel;
+use Illuminate\Http\Request;
+use MercurySeries\Flashy\Flashy;
+use Modules\Accounting\Entities\Journal;
+use Modules\Accounting\Entities\JournalDetail;
+use Modules\Accounting\Entities\Master\AkunCOA;
+use Modules\Bed\Entities\Bed;
+use Modules\Kategoritarif\Entities\Kategoritarif;
+use Modules\Pasien\Entities\Pasien;
+use Modules\Pegawai\Entities\Pegawai;
+use Modules\Poli\Entities\Poli;
+use Modules\Registrasi\Entities\Carabayar as ModulesCarabayar;
+use Modules\Registrasi\Entities\Folio;
+use Modules\Registrasi\Entities\HistoriStatus;
+use Modules\Registrasi\Entities\Registrasi;
+use Modules\Registrasi\Entities\Tagihan;
+use Modules\Registrasi\Http\Requests\Carabayar;
+use Modules\Tarif\Entities\Tarif;
+use PDF;
+use Validator;
+use Yajra\DataTables\DataTables;
+
+class KasirController extends Controller
+{
+	public function rawat_jalan()
+	{
+		$bayar = ModulesCarabayar::all();
+		$today = Registrasi::where('status_reg', 'like', 'J%')
+			// ->whereNotIn('bayar', [1])
+			->where('created_at', 'LIKE', date('Y-m-d' . '%'))
+			->get();
+
+		return view('kasir.index', compact('today', 'bayar'))->with('no', 1);
+	}
+
+	public function rawatjalanByTanggal(Request $request)
+	{
+		request()->validate(['tanggal' => 'required']);
+		$query = Registrasi::where('status_reg', 'like', 'J%');
+		$query->where('created_at', 'like', valid_date($request['tanggal']) . '%');
+		$query->whereIn('lunas', !empty($request['ket_lunas']) ? [$request['ket_lunas']] : ['Y', 'N', 'P']);
+
+		if (!empty($request['carabayar'])) {
+			$query->where('bayar', $request['carabayar']);
+		}
+
+		if (!empty($request['tipe_jkn'])) {
+			$query->whereIn('tipe_jkn', !empty($request['tipe_jkn']) ? [$request['tipe_jkn']] : ['PBI', 'NON PBI']);
+		}
+		$bayar = ModulesCarabayar::all();
+		$today = $query->get();
+		return view('kasir.index', compact('today', 'bayar'))->with('no', 1);
+	}
+
+	public function ajax_rawat_jalan()
+	{
+		$bayar = ModulesCarabayar::all();
+		$today = Registrasi::where('status_reg', 'like', 'J%')->where('created_at', 'LIKE', date('Y-m-d' . '%'))->get();
+		return view('kasir.rawat_jalan', compact('today', 'bayar'))->with('no', 1);
+	}
+
+	public function rawat_inap()
+	{
+		$today = Registrasi::join('rawatinaps', 'registrasis.id', '=', 'rawatinaps.registrasi_id')
+			->where('registrasis.status_reg', 'I3')
+			->where('rawatinaps.tgl_keluar', 'LIKE', date('Y-m-d') . '%')
+			->select('registrasis.id', 'registrasis.pasien_id', 'registrasis.tipe_jkn', 'rawatinaps.dokter_id', 'rawatinaps.kamar_id', 'registrasis.bayar')
+			->get();
+		return view('kasir.irna', compact('today'))->with('no', 1);
+	}
+
+	public function rawat_inap_byTanggal(Request $request)
+	{
+		request()->validate(['tga' => 'required', 'tgb' => 'required']);
+		$today = Registrasi::where('status_reg', 'I3')
+			->whereBetween('created_at', [valid_date($request['tga']) . ' 00:00:00', valid_date($request['tgb']) . ' 23:59:59'])
+			// ->where('lunas', 'N')
+			->orderBy('bayar', 'desc')
+			->get();
+		return view('kasir.irna', compact('today'))->with('no', 1);
+	}
+
+	public function igd()
+	{
+		$bayar = ModulesCarabayar::all();
+		$today = Registrasi::where('status_reg', 'like', 'G%')
+			->where('created_at', 'LIKE', date('Y-m-d' . '%'))
+			//->where('verif_kasa', 'N')
+			->get();
+		return view('kasir.index_igd', compact('today', 'bayar'))->with('no', 1);
+
+	}
+
+	public function igdByTanggal(Request $request)
+	{
+		
+		request()->validate(['tga' => 'required']);
+		if ($request['carabayar'] == 1) {
+			$bayar = ModulesCarabayar::all();
+			$today = Registrasi::where('status_reg', 'like', 'G%')
+				->where('created_at', 'like', valid_date($request['tga']) . '%')
+				->whereIn('lunas', !empty($request['ket_lunas']) ? [$request['ket_lunas']] : ['Y', 'N'])
+				->where('bayar', 1)
+				->whereIn('tipe_jkn', !empty($request['tipe_jkn']) ? [$request['tipe_jkn']] : ['PBI', 'NON PBI'])
+				->get();
+		} else {
+			// dd(valid_date($request['tga']));
+			$bayar = ModulesCarabayar::all();
+			$today = Registrasi::where('status_reg', 'like', 'G%')
+				->where('created_at', 'like', valid_date($request['tga']) . '%')
+				->whereIn('lunas', !empty($request['ket_lunas']) ? [$request['ket_lunas']] : ['Y', 'N'])
+				// ->whereIn('bayar', !empty($request['carabayar']) ? [$request['carabayar']] : ['2', '3', '4', '5'])
+				->get();
+			// dd($today);
+		}
+		// dd($today);
+
+		return view('kasir.index_igd', compact('today', 'bayar'))->with('no', 1);
+	}
+
+	public function ajax_igd()
+	{
+		$bayar = ModulesCarabayar::all();
+		$today = Registrasi::where('status_reg', 'like', 'G%')->where('created_at', 'LIKE', date('Y-m-d' . '%'))->get();
+		return view('kasir.rawat_jalan', compact('today', 'bayar'))->with('no', 1);
+	}
+
+	public function byRM(Request $request)
+	{
+		request()->validate(['keyword' => 'required']);
+		$keyword = $request['keyword'];
+		$byRM = DB::table('registrasis')
+			->join('pasiens', 'registrasis.pasien_id', '=', 'pasiens.id')->where('pasiens.no_rm', '=', $keyword)->orWhere('pasiens.nama', 'like', '%' . $keyword . '%')
+			->select('pasiens.id as pasienid', 'pasiens.nama', 'pasiens.no_rm', 'registrasis.id as regid', 'registrasis.reg_id', 'registrasis.dokter_id', 'registrasis.poli_id', 'registrasis.bayar')
+			->get();
+		// return $byRM;
+		return view('kasir.rawat_jalan', compact('byRM'))->with('no', 1);
+	}
+
+	public function byTanggal(Request $request)
+	{
+		request()->validate(['tga' => 'required', 'tgb' => 'required']);
+		$tga = $request['tga'];
+		$tgb = $request['tgb'];
+		$today = Registrasi::whereBetween('created_at', [$tga, $tgb])->get();
+		return view('kasir.rawat_jalan', compact('today'))->with('no', 1);
+	}
+
+	public function bayar_rawat_jalan($reg_id, $pasien_id)
+	{
+		$data['tag'] = Tagihan::where('registrasi_id', '=', $reg_id)->get();
+		$data['fol'] = Folio::where('folios.registrasi_id', '=', $reg_id)->where('folios.lunas', 'N')->get();
+		// return $data['fol']; die;
+		$data['pasien'] = Pasien::find($pasien_id);
+		$data['tagihan'] = Folio::where('registrasi_id', $reg_id)->where('lunas', 'N')->sum('total');
+		$data['reg'] = Registrasi::find($reg_id);
+		$data['metode'] = MetodeBayar::all();
+		$data['eklaim'] = Inacbg::where('registrasi_id', $reg_id)->first();
+		$data['uang_racik'] = \App\Penjualan::join('penjualandetails', 'penjualans.no_resep', '=', 'penjualandetails.no_resep')
+			->join('folios', 'folios.namatarif', '=', 'penjualans.no_resep')
+			->where('folios.lunas', '=', 'N')
+			->where('penjualans.registrasi_id', $reg_id)
+			->sum('uang_racik');
+		$data['jasa_racik'] = Folio::where('registrasi_id', '=', $reg_id)->where('folios.lunas', 'N')->sum('jasa_racik');
+		// return $data; die;
+		return view('kasir.bayar_rawat_jalan', $data)->with('no', 1);
+	}
+
+	public function save_bayar_rawat_jalan(Request $request)
+	{
+		// dd($request->all());
+		// return $request->all(); die;
+		$r = Registrasi::find($request['registrasi_id']);
+		if (substr($r->status_reg, 0, 1) == 'G') {
+			$cek_kuitansi = Pembayaran::where('no_kwitansi', 'LIKE', 'RD-' . date('Ymd') . '-%')->count() + 1;
+			$no_kuitansi = 'RD-' . date('Ymd') . '-' . sprintf("%05s", $cek_kuitansi);
+		} else {
+			$cek_kuitansi = Pembayaran::where('no_kwitansi', 'LIKE', 'RJ-' . date('Ymd') . '-%')->count() + 1;
+			$no_kuitansi = 'RJ-' . date('Ymd') . '-' . sprintf("%05s", $cek_kuitansi);
+		}
+		$id_condition_ss= NULL;
+		if(satusehat()) {
+			// API TOKEN
+			$client_id = config('app.client_id');
+			$client_secret = config('app.client_secret'); 
+			// create code satusehat
+			$urlcreatetoken = config('app.create_token');
+			$curl_token = curl_init();
+
+			curl_setopt_array($curl_token, array(
+			CURLOPT_URL => $urlcreatetoken,
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_ENCODING => '',
+			CURLOPT_MAXREDIRS => 10,
+			CURLOPT_TIMEOUT => 0,
+			CURLOPT_FOLLOWLOCATION => true,
+			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+			CURLOPT_CUSTOMREQUEST => 'POST',
+			CURLOPT_POSTFIELDS => 'client_id='.$client_id.'&client_secret='.$client_secret,
+			CURLOPT_HTTPHEADER => array(
+				'Content-Type: application/x-www-form-urlencoded'
+			),
+			));
+
+			$response_token = curl_exec($curl_token);
+			$token = json_decode($response_token);
+			$access_token = $token->access_token;
+			// dd($access_token);
+			curl_close($curl_token);
+			// END OF API TOKEN
+
+			//API CONDITION - MEINGGALKAN FASKES
+			$create_condition = config('app.create_condition');
+			$pasien_ss = Pasien::find(Registrasi::find($request['registrasi_id'])->pasien_id)->nama;
+			$pasien_ss_id = Pasien::find(Registrasi::find($request['registrasi_id'])->pasien_id)->id_patient_ss;
+			$id_encounter_ss = Registrasi::find($request['registrasi_id'])->id_encounter_ss;
+			$time_2 = date('H:i');
+			$date = date('d F Y');
+			$waktu= time();
+			$today = date("Y-m-d",$waktu);
+
+			$curl_condition = curl_init();
+
+			curl_setopt_array($curl_condition, array(
+			CURLOPT_URL => $create_condition,
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_ENCODING => '',
+			CURLOPT_MAXREDIRS => 10,
+			CURLOPT_TIMEOUT => 0,
+			CURLOPT_FOLLOWLOCATION => true,
+			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+			CURLOPT_CUSTOMREQUEST => 'POST',
+			CURLOPT_POSTFIELDS =>'{
+				"resourceType": "Condition",
+				"clinicalStatus": {
+					"coding": [
+						{
+							"system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+							"code": "active",
+							"display": "Active"
+						}
+					]
+				},
+				"category": [
+					{
+						"coding": [
+							{
+								"system": "http://terminology.hl7.org/CodeSystem/condition-category",
+								"code": "encounter-diagnosis",
+								"display": "Encounter Diagnosis"
+							}
+						]
+					}
+				],
+				"code": {
+					"coding": [
+						{
+							"system": "http://terminology.kemkes.go.id/CodeSystem/clinical-term",
+							"code": "MN000001",
+							"display": "Stabil"
+						}
+					]
+				},
+				"subject": {
+					"reference": "Patient/'.$pasien_ss_id.'",
+					"display": "'.$pasien_ss.'"
+				},
+				"encounter": {
+					"reference": "Encounter/'.$id_encounter_ss.'",
+					"display": "Kunjungan '.$pasien_ss.' pada tanggal '.$today.'"
+				}
+			}',
+			CURLOPT_HTTPHEADER => array(
+				'Authorization: Bearer '.$access_token.'',
+				'Content-Type: application/json'
+			),
+			));
+
+			$response_condition = curl_exec($curl_condition);
+			$condition_ss = json_decode($response_condition);
+			if(!empty($condition_ss->id)){
+				$id_condition_ss = $condition_ss->id;
+			}else{
+				$id_condition_ss = NULL;
+			}
+			// dd($id_condition_ss);
+			curl_close($curl_condition);
+			// echo $response;
+			//END OF API CONDITION - MEINGGALKAN FASKES
+		}
+
+		if ($request['total'] != 0) {
+			if (rupiah($request['totalBayar']) < rupiah($request['total_tagihan'] && $request['diskon_persen'] == 0 && $request['diskon_rupiah'] == 0)) {
+				Flashy::info('Total Kurang !');
+				return redirect('kasir/rawatjalan/bayar/' . $r->id . '/' . $r->pasien_id);
+			} else {
+				DB::transaction(function () use ($request, $no_kuitansi, $r,$id_condition_ss) {
+					$reg = Registrasi::find($request['registrasi_id']);
+					//Journal Accounting
+					$journal = Journal::create([
+						'id_customer'		=> $reg->pasien_id,
+						'contact_type'		=> 'customer',
+						'code'				=> $no_kuitansi,
+						'tanggal'			=> date('Y-m-d'),
+						'total_transaksi'	=> rupiah($request['total_tagihan']),
+						'type'				=> 'rawat_jalan',
+						'keterangan'		=> 'Jurnal Rawat Jalan a.n ' . $reg->pasien->nama,
+						'verifikasi'		=> 1
+					]);
+
+					// Insert pembayaran
+					$pem = new Pembayaran();
+					$pem->jenis = $request['jenis'];
+					$pem->user_id = Auth::user()->id;
+					$pem->total = $request['total'];
+					$pem->metode_bayar_id = $request['metode_bayar_id'];
+					$pem->dibayar = !empty($request['totalBayar']) ? rupiah($request['totalBayar']) : $request['total'];
+					$pem->iur = !empty($request['iur']) ? rupiah($request['iur']) : 0;
+					$pem->flag = 'Y';
+					$pem->registrasi_id = $reg->id;
+					$pem->dokter_id = $reg->dokter_id;
+					$pem->id_condition_ss = @$id_condition_ss;
+					$pem->diskon_persen = !empty($request['diskon_persen']) ? $request['diskon_persen'] : 0;
+					$pem->diskon_rupiah = !empty($request['diskon_rupiah']) ? rupiah($request['diskon_rupiah']) : 0;
+					$pem->no_kwitansi = $no_kuitansi;
+					$pem->pasien_id = $reg->pasien_id;
+					$pem->journal_id = $journal->id;
+					$pem->save();
+					Activity::log('kasir_' . Auth::user()->name . ' menerima pembayaran senilai ' . number_format($pem->total) . ' no kuitansi ' . $pem->no_kwitansi);
+					//Update Folio
+					$fol = Folio::with('tarif')->where('registrasi_id', $request['registrasi_id'])->where('lunas', 'N')->get();
+					foreach ($fol as $key => $d) {
+						$d->lunas = 'Y';
+						$d->dibayar = $d->total;
+						$d->waktu_dibayar = date('Y-m-d');
+						$d->no_kuitansi = $pem->no_kwitansi;
+						$d->update();
+					}
+					session(['idk' => $pem->id]);
+					//Update registrasi
+					$reg->lunas = 'Y';
+					if (substr($reg->status_reg, 0, 1) == 'G') {
+						$reg->status_reg = 'G3';
+					} else {
+						$reg->status_reg = 'J3';
+					}
+					$reg->journal_id = $journal->id;
+					$reg->update();
+
+					$piutang = Piutang::where('registrasi_id', $request['registrasi_id'])->first();
+					if ($piutang) {
+						$piutang->tglbayar = date('Y-m-d');
+						$piutang->update();
+					}
+					$cara_bayar =  baca_carabayar($reg->bayar);
+
+					$akunSementaraKas = AkunCOA::where('code', '101109099')->first();
+					$akunPiutangPerorangan = AkunCOA::where('code', '101201101')->first();
+					$akunPiutangJKNPBI = AkunCOA::where('code', '101201104')->first();
+					$akunUtangSelisihTarif = AkunCOA::where('code', '401900008')->first();
+					$akunPersediaanObat = AkunCOA::where('code', '101301001')->first();
+
+					$journalDetail = [];
+					switch (strtolower($cara_bayar)) {
+						case 'umum':
+							if ((int) rupiah($request['total_tagihan']) == (int) rupiah($request['totalBayar'])) {
+								foreach ($fol as $d) {
+									$journalDetail[] = JournalDetail::create([
+										'id_journal'		=> $journal->id,
+										'id_akun_coa'		=> $akunSementaraKas->id,
+										'debit'				=> (int) $d->total,
+										'credit'			=> 0,
+										'is_kas_bank'		=> 1,
+										'type'				=> 'rawat_jalan_umum',
+										'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunSementaraKas->nama
+									]);
+									if (!empty($d->tarif->akun_coa->id)) {
+										$akunTarifCOA = AkunCOA::where('id', $d->tarif->akun_coa->id)->first();
+										$journalDetail[] = JournalDetail::create([
+											'id_journal'		=> $journal->id,
+											'id_akun_coa'		=> $akunTarifCOA->id,
+											'debit'				=> 0,
+											'credit'			=> (int) $d->total,
+											'is_operasional'	=> 1,
+											'is_kas_bank'		=> 1,
+											'id_tarif'			=> $d->tarif_id,
+											'type'				=> 'rawat_jalan',
+											'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunTarifCOA->nama
+										]);
+									} else {
+										$journalDetail[] = JournalDetail::create([
+											'id_journal'		=> $journal->id,
+											'id_akun_coa'		=> $akunPersediaanObat->id,
+											'debit'				=> 0,
+											'credit'			=> (int) $d->total,
+											'is_operasional'	=> 1,
+											'is_kas_bank'		=> 1,
+											'id_tarif'			=> $d->tarif_id,
+											'type'				=> 'rawat_jalan',
+											'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunPersediaanObat->nama
+										]);
+									}
+								}
+							} elseif ((int) rupiah($request['totalBayar']) == 0) {
+								$journalDetail[] = JournalDetail::create([
+									'id_journal'		=> $journal->id,
+									'id_akun_coa'		=> $akunPiutangPerorangan->id,
+									'debit'				=> (int) rupiah($request['total_tagihan']),
+									'credit'			=> 0,
+									'type'				=> 'rawat_jalan_umum',
+									'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunPiutangPerorangan->nama
+								]);
+								$journalDetail[] = JournalDetail::create([
+									'id_journal'		=> $journal->id,
+									'id_akun_coa'		=> $akunSementaraKas->id,
+									'debit'				=> 0,
+									'credit'			=> (int) rupiah($request['total_tagihan']),
+									'type'				=> 'rawat_jalan_umum',
+									'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunSementaraKas->nama
+								]);
+							} elseif ((int) rupiah($request['total_tagihan']) > (int) rupiah($request['totalBayar'])) {
+								$journalDetail[] = JournalDetail::create([
+									'id_journal'		=> $journal->id,
+									'id_akun_coa'		=> $akunSementaraKas->id,
+									'debit'				=> (int) rupiah($request['totalBayar']),
+									'credit'			=> 0,
+									'is_kas_bank'		=> 1,
+									'type'				=> 'rawat_jalan_umum',
+									'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunSementaraKas->nama
+								]);
+								$journalDetail[] = JournalDetail::create([
+									'id_journal'		=> $journal->id,
+									'id_akun_coa'		=> $akunPiutangPerorangan->id,
+									'debit'				=> (int) rupiah($request['total_tagihan']) - (int) rupiah($request['totalBayar']),
+									'credit'			=> 0,
+									'is_kas_bank'		=> 1,
+									'type'				=> 'rawat_jalan_umum',
+									'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunPiutangPerorangan->nama
+								]);
+								$journalDetail[] = JournalDetail::create([
+									'id_journal'		=> $journal->id,
+									'id_akun_coa'		=> $akunSementaraKas->id,
+									'debit'				=> 0,
+									'is_kas_bank'		=> 1,
+									'credit'			=> (int) rupiah($request['total_tagihan']),
+									'type'				=> 'rawat_jalan_umum',
+									'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunSementaraKas->nama
+								]);
+							}
+							break;
+						default:
+							if (isset($request['dijamin'])) {
+								$totalTagihan = (int) rupiah($request['total_tagihan']);
+								if ((int) rupiah($request['iur']) > 0) {
+									$journalDetail[] = JournalDetail::create([
+										'id_journal'		=> $journal->id,
+										'id_akun_coa'		=> $akunSementaraKas->id,
+										'debit'				=> (int) rupiah($request['iur']),
+										'credit'			=> 0,
+										'is_kas_bank'		=> 1,
+										'type'				=> 'rawat_jalan',
+										'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunSementaraKas->nama
+									]);
+									$totalTagihan -= (int) rupiah($request['iur']);
+								}
+								if ((int) rupiah($request['dijamin']) == $totalTagihan) {
+									$journalDetail[] = JournalDetail::create([
+										'id_journal'		=> $journal->id,
+										'id_akun_coa'		=> $akunPiutangJKNPBI->id,
+										'debit'				=> $totalTagihan,
+										'credit'			=> 0,
+										'type'				=> 'rawat_jalan_bpjs',
+										'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunPiutangJKNPBI->nama
+									]);
+									$journalDetail[] = JournalDetail::create([
+										'id_journal'		=> $journal->id,
+										'id_akun_coa'		=> $akunPiutangPerorangan->id,
+										'debit'				=> 0,
+										'credit'			=> $totalTagihan,
+										'type'				=> 'rawat_jalan_bpjs',
+										'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunPiutangPerorangan->nama
+									]);
+								} elseif ($totalTagihan < (int) rupiah($request['dijamin'])) {
+									$journalDetail[] = JournalDetail::create([
+										'id_journal'		=> $journal->id,
+										'id_akun_coa'		=> $akunPiutangJKNPBI->id,
+										'debit'				=> $totalTagihan,
+										'credit'			=> 0,
+										'type'				=> 'rawat_jalan_bpjs',
+										'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunPiutangJKNPBI->nama
+									]);
+									$journalDetail[] = JournalDetail::create([
+										'id_journal'		=> $journal->id,
+										'id_akun_coa'		=> $akunUtangSelisihTarif->id,
+										'debit'				=> 0,
+										'credit'			=> abs((int) rupiah($request['dijamin']) - $totalTagihan),
+										'type'				=> 'rawat_jalan',
+										'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunUtangSelisihTarif->nama
+									]);
+									$journalDetail[] = JournalDetail::create([
+										'id_journal'		=> $journal->id,
+										'id_akun_coa'		=> $akunPiutangPerorangan->id,
+										'debit'				=> 0,
+										'credit'			=> (int) rupiah($request['dijamin']),
+										'type'				=> 'rawat_jalan_bpjs',
+										'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunPiutangPerorangan->nama
+									]);
+								} elseif ($totalTagihan > (int) rupiah($request['dijamin'])) {
+									$journalDetail[] = JournalDetail::create([
+										'id_journal'		=> $journal->id,
+										'id_akun_coa'		=> $akunPiutangJKNPBI->id,
+										'debit'				=> (int) rupiah($request['dijamin']),
+										'credit'			=> 0,
+										'type'				=> 'rawat_jalan_bpjs',
+										'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunPiutangJKNPBI->nama
+									]);
+									$journalDetail[] = JournalDetail::create([
+										'id_journal'		=> $journal->id,
+										'id_akun_coa'		=> $akunUtangSelisihTarif->id,
+										'debit'				=> abs((int) rupiah($request['dijamin']) - $totalTagihan),
+										'credit'			=> 0,
+										'type'				=> 'rawat_jalan',
+										'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunUtangSelisihTarif->nama
+									]);
+									$journalDetail[] = JournalDetail::create([
+										'id_journal'		=> $journal->id,
+										'id_akun_coa'		=> $akunPiutangPerorangan->id,
+										'debit'				=> 0,
+										'credit'			=> $totalTagihan,
+										'type'				=> 'rawat_jalan_bpjs',
+										'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunPiutangPerorangan->nama
+									]);
+								}
+							} else {
+								if ((int) rupiah($request['iur']) > 0 && (int) rupiah($request['totalBayar']) > 0) {
+									$journalDetail[] = JournalDetail::create([
+										'id_journal'		=> $journal->id,
+										'id_akun_coa'		=> $akunSementaraKas->id,
+										'debit'				=> rupiah($request['iur']),
+										'credit'			=> 0,
+										'type'				=> 'rawat_jalan_bpjs',
+										'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunSementaraKas->nama
+									]);
+									$journalDetail[] = JournalDetail::create([
+										'id_journal'		=> $journal->id,
+										'id_akun_coa'		=> $akunPiutangPerorangan->id,
+										'debit'				=> (int) rupiah($request['totalBayar']),
+										'credit'			=> 0,
+										'is_kas_bank'		=> 1,
+										'type'				=> 'rawat_jalan',
+										'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunPiutangPerorangan->nama
+									]);
+								} else {
+									$journalDetail[] = JournalDetail::create([
+										'id_journal'		=> $journal->id,
+										'id_akun_coa'		=> $akunPiutangPerorangan->id,
+										'debit'				=> rupiah($request['total_tagihan']),
+										'credit'			=> 0,
+										'type'				=> 'rawat_jalan_bpjs',
+										'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunPiutangPerorangan->nama
+									]);
+								}
+								$journalDetail[] = JournalDetail::create([
+									'id_journal'		=> $journal->id,
+									'id_akun_coa'		=> $akunPiutangJKNPBI->id,
+									'debit'				=> 0,
+									'credit'			=> rupiah($request['total_tagihan']),
+									'type'				=> 'rawat_jalan',
+									'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunPiutangJKNPBI->nama
+								]);
+							}
+							break;
+					}
+				});
+				// return redirect('/kasir/cetak/cetakkuitansi/' . session('idk'));
+				return redirect('/kasir/rincian-biaya/' . session('idk'));
+			}
+		}
+	}
+
+	public function bayar_rawat_inap($reg_id, $pasien_id)
+	{
+		// $data['tag'] = Tagihan::where('registrasi_id', '=', $reg_id)->get();
+		$data['fol'] = Folio::where('registrasi_id', '=', $reg_id)->where('lunas', 'N')->get();
+		// $data['fol'] = Folio::leftJoin('tarifs','tarifs.id','=','folios.tarif_id')
+		// 	->leftJoin('mastermapping_biaya','mastermapping_biaya.id','=','tarifs.mapping_biaya_id')
+		// 	->where('folios.registrasi_id', '=',  $reg_id)->where('folios.lunas', 'N')
+		// 	->groupBy('mastermapping_biaya.id')
+		// 	->selectRaw('mastermapping_biaya.kelompok,folios.tarif_id, count(folios.tarif_id) as jumlah, sum(folios.total) as total')
+		// 	->get();
+		// dd($data['fol']);
+		$data['pasien'] = Pasien::find($pasien_id);
+
+		// $tagihan_total = 0;
+		// $tagihan_retur = 0;
+		// foreach( $data['fol'] as $item ){
+		// 	if( $item->tarif_id == 9999 ){
+		// 		$tagihan_retur += $item->total;
+		// 	}else{
+		// 		$tagihan_total += $item->total;
+		// 	}
+		// }
+		// $data['tagihan'] = $tagihan_total - $tagihan_retur;
+		$data['metode'] = MetodeBayar::all();
+		$data['tagihan'] = Folio::where('registrasi_id', $reg_id)->where('lunas', 'N')->sum('total');
+		$data['reg'] = Registrasi::find($reg_id);
+		$data['rawatinap'] = Rawatinap::where('registrasi_id', $reg_id)->first();
+		$data['eklaim'] = Inacbg::where('registrasi_id', $reg_id)->first();
+		$data['deposit'] = Deposit::where('registrasi_id', $reg_id)->sum('nominal');
+		$data['histori'] = Pembayaran::where('pasien_id', $pasien_id)->orderBy('created_at', 'desc')->get();
+		$data['terbaru'] = Pembayaran::where('pasien_id', $pasien_id)->where('registrasi_id', $reg_id)->where('flag', 'Y')->orderBy('created_at', 'desc')->first();
+		$data['piutang'] = Piutang::where('registrasi_id', $reg_id)->orderBy('created_at', 'desc')->get();
+		$data['uang_muka'] = Deposit::where('registrasi_id', $reg_id)->sum('nominal');
+		if (!empty($data['eklaim'])) {
+			$data['dijamin'] = $data['eklaim']->dijamin;
+			$data['urun_bayar'] = $data['eklaim']->urun_bayar_rupiah;
+		} else {
+			$data['dijamin'] = 0;
+			$data['urun_bayar'] = 0;
+		}
+		$data['uang_racik'] = 0;
+		foreach ($data['fol'] as $d) {
+			$data['uang_racik'] += \App\Penjualandetail::where('no_resep', $d->namatarif)->sum('uang_racik');
+		}
+		$data['jasa_racik'] = Folio::where('registrasi_id', '=', $reg_id)->where('lunas', 'N')->sum('jasa_racik');
+		if ($data['reg']->bayar == 1) {
+			return view('kasir.bayar_rawat_inap_jkn', $data)->with('no', 1);
+		} else {
+			return view('kasir.bayar_rawat_inap_non_jkn', $data)->with('no', 1);
+		}
+	}
+
+	public function save_bayar_rawat_inap(Request $request)
+	{
+		// return $request->all(); die;
+		$r = Registrasi::find($request['registrasi_id']);
+
+		$cek_kuitansi = Pembayaran::where('no_kwitansi', 'LIKE', 'IRNA-' . date('Ymd') . '-%')->count() + 1;
+		$no_kuitansi = 'IRNA-' . date('Ymd') . '-' . sprintf("%05s", $cek_kuitansi);
+
+		if ($request['total'] != 0 && rupiah($request['totalBayar']) > $request['total']) {
+			Flashy::info('Jumlah Uang Terlalu Banyak');
+			return redirect()->back();
+		} else {
+			DB::transaction(function () use ($request, $no_kuitansi) {
+				$reg = Registrasi::find($request['registrasi_id']);
+				//Journal Accounting
+				$journal = Journal::create([
+					'id_customer'		=> $reg->pasien_id,
+					'contact_type'		=> 'customer',
+					'code'				=> $no_kuitansi,
+					'tanggal'			=> date('Y-m-d'),
+					'total_transaksi'	=> rupiah($request['total_tagihan']),
+					'type'				=> 'rawat_inap',
+					'keterangan'		=> 'Jurnal Rawat Inap a.n ' . $reg->pasien->nama,
+					'verifikasi'		=> 1
+				]);
+
+				// Insert pembayaran
+				$pem = new Pembayaran();
+				$pem->jenis = $request['jenis'];
+				$pem->user_id = Auth::user()->id;
+				$pem->total = $request['total'];
+				$pem->metode_bayar_id = $request['metode_bayar_id'];
+				$pem->dibayar = !empty($request['totalBayar']) ? rupiah($request['totalBayar']) : $request['total'];
+				$pem->iur = !empty($request['iur']) ? rupiah($request['iur']) : 0;
+				$pem->flag = 'Y';
+				$pem->registrasi_id = $reg->id;
+				$pem->dokter_id = $reg->dokter_id;
+				$pem->diskon_persen = !empty($request['diskon_persen']) ? $request['diskon_persen'] : 0;
+				$pem->diskon_rupiah = !empty($request['diskon_rupiah']) ? rupiah($request['diskon_rupiah']) : 0;
+				$pem->no_kwitansi = $no_kuitansi;
+				$pem->pasien_id = $reg->pasien_id;
+				$pem->journal_id = $journal->id;
+				$pem->hrs_bayar = !empty($request['harusBayar']) ? rupiah($request['harusBayar']) : 0;
+				$pem->save();
+				Activity::log('kasir_' . Auth::user()->name . ' menerima pembayaran rawatinap senilai ' . number_format($pem->total) . ' no kuitansi ' . $pem->no_kwitansi);
+				//Update Folio
+				$fol = Folio::where('registrasi_id', $request['registrasi_id'])->where('lunas', 'N')->get();
+				foreach ($fol as $key => $d) {
+					$d->lunas = 'Y';
+					$d->dibayar = $d->total;
+					$d->waktu_dibayar = date('Y-m-d');
+					$d->no_kuitansi = $pem->no_kwitansi;
+					$d->update();
+				}
+				session(['idk' => $pem->id]);
+				//Update registrasi
+				$reg->lunas = 'Y';
+				$reg->status_reg = 'I3';
+				$reg->journal_id = $journal->id;
+				$reg->update();
+
+				// Insert Histori
+				$bed = Rawatinap::where('registrasi_id', $request['registrasi_id'])->first();
+				$history = new HistoriStatus();
+				$history->registrasi_id = $request['registrasi_id'];
+				$history->status = 'I3';
+				$history->bed_id = !empty($bed->bed_id) ? $bed->bed_id : 0;
+				$history->user_id = Auth::user()->id;
+				$history->save();
+
+				$bed = Bed::find($bed->bed_id);
+				if ($bed) {
+					$bed->reserved = 'N';
+					$bed->update();
+				}
+
+				if (rupiah($request['harusBayar']) > rupiah($request['totalBayar'])) {
+					$pt = new Piutang();
+					$pt->registrasi_id = $request['registrasi_id'];
+					$pt->pasien_id	   = $reg->pasien_id;
+					$pt->total_piutang = rupiah($request['harusBayar']) - rupiah($request['totalBayar']);
+					$pt->dibayar	   = 0;
+					$pt->pembayaran_id = $pem->id;
+					$pt->user_id	   = Auth::user()->id;
+					$pt->kwitansi_pembayaran = $no_kuitansi;
+					$pt->save();
+				}
+
+				$cara_bayar =  baca_carabayar($reg->bayar);
+
+				$akunSementaraKas = AkunCOA::where('code', '101109099')->first();
+				$akunPiutangPerorangan = AkunCOA::where('code', '101201101')->first();
+				$akunPiutangJKNPBI = AkunCOA::where('code', '101201104')->first();
+				$akunUtangSelisihTarif = AkunCOA::where('code', '401900008')->first();
+				$akunPersediaanObat = AkunCOA::where('code', '101301001')->first();
+
+				$journalDetail = [];
+				switch (strtolower($cara_bayar)) {
+					case 'umum':
+						if ((int) rupiah($request['total_tagihan']) == (int) rupiah($request['totalBayar'])) {
+							foreach ($fol as $d) {
+								$journalDetail[] = JournalDetail::create([
+									'id_journal'		=> $journal->id,
+									'id_akun_coa'		=> $akunSementaraKas->id,
+									'debit'				=> (int) $d->total,
+									'credit'			=> 0,
+									'is_kas_bank'		=> 1,
+									'type'				=> 'rawat_inap_umum',
+									'keterangan'		=> 'Jurnal Rawat Inap ' . $no_kuitansi . ' Akun ' . $akunSementaraKas->nama
+								]);
+								if (!empty($d->tarif->akun_coa->id)) {
+									$akunTarifCOA = AkunCOA::where('id', $d->tarif->akun_coa->id)->first();
+									$journalDetail[] = JournalDetail::create([
+										'id_journal'		=> $journal->id,
+										'id_akun_coa'		=> $akunTarifCOA->id,
+										'debit'				=> 0,
+										'credit'			=> (int) $d->total,
+										'is_operasional'	=> 1,
+										'is_kas_bank'		=> 1,
+										'id_tarif'			=> $d->tarif_id,
+										'type'				=> 'rawat_inap',
+										'keterangan'		=> 'Jurnal Rawat Inap ' . $no_kuitansi . ' Akun ' . $akunTarifCOA->nama
+									]);
+								} else {
+									$journalDetail[] = JournalDetail::create([
+										'id_journal'		=> $journal->id,
+										'id_akun_coa'		=> $akunPersediaanObat->id,
+										'debit'				=> 0,
+										'credit'			=> (int) $d->total,
+										'is_operasional'	=> 1,
+										'is_kas_bank'		=> 1,
+										'id_tarif'			=> $d->tarif_id,
+										'type'				=> 'rawat_inap',
+										'keterangan'		=> 'Jurnal Rawat Inap ' . $no_kuitansi . ' Akun ' . $akunPersediaanObat->nama
+									]);
+								}
+							}
+						} elseif ((int) rupiah($request['totalBayar']) == 0) {
+							$journalDetail[] = JournalDetail::create([
+								'id_journal'		=> $journal->id,
+								'id_akun_coa'		=> $akunPiutangPerorangan->id,
+								'debit'				=> (int) rupiah($request['total_tagihan']),
+								'credit'			=> 0,
+								'type'				=> 'rawat_inap_umum',
+								'keterangan'		=> 'Jurnal Rawat Inap ' . $no_kuitansi . ' Akun ' . $akunPiutangPerorangan->nama
+							]);
+							$journalDetail[] = JournalDetail::create([
+								'id_journal'		=> $journal->id,
+								'id_akun_coa'		=> $akunSementaraKas->id,
+								'debit'				=> 0,
+								'credit'			=> (int) rupiah($request['total_tagihan']),
+								'type'				=> 'rawat_inap_umum',
+								'keterangan'		=> 'Jurnal Rawat Inap ' . $no_kuitansi . ' Akun ' . $akunSementaraKas->nama
+							]);
+						} elseif ((int) rupiah($request['total_tagihan']) > (int) rupiah($request['totalBayar'])) {
+							$journalDetail[] = JournalDetail::create([
+								'id_journal'		=> $journal->id,
+								'id_akun_coa'		=> $akunSementaraKas->id,
+								'debit'				=> (int) rupiah($request['totalBayar']),
+								'credit'			=> 0,
+								'is_kas_bank'		=> 1,
+								'type'				=> 'rawat_inap_umum',
+								'keterangan'		=> 'Jurnal Rawat Inap ' . $no_kuitansi . ' Akun ' . $akunSementaraKas->nama
+							]);
+							$journalDetail[] = JournalDetail::create([
+								'id_journal'		=> $journal->id,
+								'id_akun_coa'		=> $akunPiutangPerorangan->id,
+								'debit'				=> (int) rupiah($request['total_tagihan']) - (int) rupiah($request['totalBayar']),
+								'credit'			=> 0,
+								'is_kas_bank'		=> 1,
+								'type'				=> 'rawat_inap_umum',
+								'keterangan'		=> 'Jurnal Rawat Inap ' . $no_kuitansi . ' Akun ' . $akunPiutangPerorangan->nama
+							]);
+							$journalDetail[] = JournalDetail::create([
+								'id_journal'		=> $journal->id,
+								'id_akun_coa'		=> $akunSementaraKas->id,
+								'debit'				=> 0,
+								'is_kas_bank'		=> 1,
+								'credit'			=> (int) rupiah($request['total_tagihan']),
+								'type'				=> 'rawat_inap_umum',
+								'keterangan'		=> 'Jurnal Rawat Inap ' . $no_kuitansi . ' Akun ' . $akunSementaraKas->nama
+							]);
+						}
+						break;
+					default:
+						if (isset($request['dijamin'])) {
+							$totalTagihan = (int) rupiah($request['total_tagihan']);
+							if ((int) rupiah($request['iur']) > 0) {
+								$journalDetail[] = JournalDetail::create([
+									'id_journal'		=> $journal->id,
+									'id_akun_coa'		=> $akunSementaraKas->id,
+									'debit'				=> (int) rupiah($request['iur']),
+									'credit'			=> 0,
+									'is_kas_bank'		=> 1,
+									'type'				=> 'rawat_inap',
+									'keterangan'		=> 'Jurnal Rawat Inap ' . $no_kuitansi . ' Akun ' . $akunSementaraKas->nama
+								]);
+								$totalTagihan -= (int) rupiah($request['iur']);
+							}
+							if ((int) rupiah($request['dijamin']) == $totalTagihan) {
+								$journalDetail[] = JournalDetail::create([
+									'id_journal'		=> $journal->id,
+									'id_akun_coa'		=> $akunPiutangJKNPBI->id,
+									'debit'				=> $totalTagihan,
+									'credit'			=> 0,
+									'type'				=> 'rawat_inap_bpjs',
+									'keterangan'		=> 'Jurnal Rawat Inap ' . $no_kuitansi . ' Akun ' . $akunPiutangJKNPBI->nama
+								]);
+								$journalDetail[] = JournalDetail::create([
+									'id_journal'		=> $journal->id,
+									'id_akun_coa'		=> $akunPiutangPerorangan->id,
+									'debit'				=> 0,
+									'credit'			=> $totalTagihan,
+									'type'				=> 'rawat_inap_bpjs',
+									'keterangan'		=> 'Jurnal Rawat Inap ' . $no_kuitansi . ' Akun ' . $akunPiutangPerorangan->nama
+								]);
+							} elseif ($totalTagihan < (int) rupiah($request['dijamin'])) {
+								$journalDetail[] = JournalDetail::create([
+									'id_journal'		=> $journal->id,
+									'id_akun_coa'		=> $akunPiutangJKNPBI->id,
+									'debit'				=> $totalTagihan,
+									'credit'			=> 0,
+									'type'				=> 'rawat_inap_bpjs',
+									'keterangan'		=> 'Jurnal Rawat Inap ' . $no_kuitansi . ' Akun ' . $akunPiutangJKNPBI->nama
+								]);
+								$journalDetail[] = JournalDetail::create([
+									'id_journal'		=> $journal->id,
+									'id_akun_coa'		=> $akunUtangSelisihTarif->id,
+									'debit'				=> 0,
+									'credit'			=> abs((int) rupiah($request['dijamin']) - $totalTagihan),
+									'type'				=> 'rawat_inap',
+									'keterangan'		=> 'Jurnal Rawat Inap ' . $no_kuitansi . ' Akun ' . $akunUtangSelisihTarif->nama
+								]);
+								$journalDetail[] = JournalDetail::create([
+									'id_journal'		=> $journal->id,
+									'id_akun_coa'		=> $akunPiutangPerorangan->id,
+									'debit'				=> 0,
+									'credit'			=> (int) rupiah($request['dijamin']),
+									'type'				=> 'rawat_inap_bpjs',
+									'keterangan'		=> 'Jurnal Rawat Inap ' . $no_kuitansi . ' Akun ' . $akunPiutangPerorangan->nama
+								]);
+							} elseif ($totalTagihan > (int) rupiah($request['dijamin'])) {
+								$journalDetail[] = JournalDetail::create([
+									'id_journal'		=> $journal->id,
+									'id_akun_coa'		=> $akunPiutangJKNPBI->id,
+									'debit'				=> (int) rupiah($request['dijamin']),
+									'credit'			=> 0,
+									'type'				=> 'rawat_inap_bpjs',
+									'keterangan'		=> 'Jurnal Rawat Inap ' . $no_kuitansi . ' Akun ' . $akunPiutangJKNPBI->nama
+								]);
+								$journalDetail[] = JournalDetail::create([
+									'id_journal'		=> $journal->id,
+									'id_akun_coa'		=> $akunUtangSelisihTarif->id,
+									'debit'				=> abs((int) rupiah($request['dijamin']) - $totalTagihan),
+									'credit'			=> 0,
+									'type'				=> 'rawat_inap',
+									'keterangan'		=> 'Jurnal Rawat Inap ' . $no_kuitansi . ' Akun ' . $akunUtangSelisihTarif->nama
+								]);
+								$journalDetail[] = JournalDetail::create([
+									'id_journal'		=> $journal->id,
+									'id_akun_coa'		=> $akunPiutangPerorangan->id,
+									'debit'				=> 0,
+									'credit'			=> $totalTagihan,
+									'type'				=> 'rawat_inap_bpjs',
+									'keterangan'		=> 'Jurnal Rawat Inap ' . $no_kuitansi . ' Akun ' . $akunPiutangPerorangan->nama
+								]);
+							}
+						} else {
+							if ((int) rupiah($request['iur']) > 0 && (int) rupiah($request['totalBayar']) > 0) {
+								$journalDetail[] = JournalDetail::create([
+									'id_journal'		=> $journal->id,
+									'id_akun_coa'		=> $akunPiutangPerorangan->id,
+									'debit'				=> rupiah($request['iur']),
+									'credit'			=> 0,
+									'type'				=> 'rawat_inap_bpjs',
+									'keterangan'		=> 'Jurnal Rawat Inap ' . $no_kuitansi . ' Akun ' . $akunPiutangPerorangan->nama
+								]);
+								$journalDetail[] = JournalDetail::create([
+									'id_journal'		=> $journal->id,
+									'id_akun_coa'		=> $akunSementaraKas->id,
+									'debit'				=> (int) rupiah($request['totalBayar']),
+									'credit'			=> 0,
+									'is_kas_bank'		=> 1,
+									'type'				=> 'rawat_inap',
+									'keterangan'		=> 'Jurnal Rawat Inap ' . $no_kuitansi . ' Akun ' . $akunSementaraKas->nama
+								]);
+							} else {
+								$journalDetail[] = JournalDetail::create([
+									'id_journal'		=> $journal->id,
+									'id_akun_coa'		=> $akunPiutangPerorangan->id,
+									'debit'				=> rupiah($request['total_tagihan']),
+									'credit'			=> 0,
+									'type'				=> 'rawat_inap_bpjs',
+									'keterangan'		=> 'Jurnal Rawat Inap ' . $no_kuitansi . ' Akun ' . $akunPiutangPerorangan->nama
+								]);
+							}
+							$journalDetail[] = JournalDetail::create([
+								'id_journal'		=> $journal->id,
+								'id_akun_coa'		=> $akunSementaraKas->id,
+								'debit'				=> 0,
+								'credit'			=> rupiah($request['total_tagihan']),
+								'type'				=> 'rawat_inap',
+								'keterangan'		=> 'Jurnal Rawat Inap ' . $no_kuitansi . ' Akun ' . $akunSementaraKas->nama
+							]);
+						}
+						break;
+				}
+			});
+			return redirect()->back();
+			// return redirect('/kasir/rawatjalan/cetakkuitansi/' . session('idk'));
+		}
+	}
+
+	public function cetak_kuitansi_langsung_irna($id = '')
+	{
+		$kuitansi = Pembayaran::find($id);
+		$reg      = Registrasi::find($kuitansi->registrasi_id);
+		$folio    = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->get();
+		$jml      = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->sum('total');
+		if (substr($reg->status_reg, 0, 1) == 'I') {
+			$kamar = Rawatinap::where('registrasi_id', $reg->id)->first();
+		} else {
+			$kamar = NULL;
+		}
+		return view('kasir.kuitansi_rawat_inap', compact('kuitansi', 'folio', 'jml', 'reg', 'kamar'));
+		// $pdf = PDF::loadView('kasir.kuitansi', compact('kuitansi', 'folio', 'jml'));
+		// return $pdf->stream();
+	}
+
+	public function cetak_kuitansi_langsung($id = '')
+	{
+		$kuitansi = Pembayaran::find($id);
+		$reg     = Registrasi::with('bayars')->find($kuitansi->registrasi_id);
+		$folio    = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->where('jenis', 'TA')->get();
+		$jml      = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->where('no_kuitansi', $kuitansi->no_kwitansi)->sum('total');
+		$jasa_racik  = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('jenis', 'ORJ')->where('lunas', 'Y')->where('no_kuitansi', $kuitansi->no_kwitansi)->first();
+		$obat     = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('jenis', 'ORJ')->where('lunas', 'Y')->where('no_kuitansi', $kuitansi->no_kwitansi)->get();
+       //dd($obat);
+
+	   if(!$jasa_racik ){
+	     $noresep = '';
+	   }else{
+		 $noresep = $jasa_racik->namatarif;
+	   }
+
+	   $penjualan = Penjualan::join('penjualandetails','penjualans.id','=','penjualandetails.penjualan_id')
+	                    //->where('penjualandetails.no_resep',$noresep)
+						->where('penjualans.registrasi_id',$kuitansi->registrasi_id)
+						->select('penjualandetails.*')
+						->get();
+		if (empty($jasa_racik->namatarif)) {
+			$uang_racik = 0;
+		} else {
+			$uang_racik = \App\Penjualandetail::where('no_resep', $jasa_racik->namatarif)->sum('uang_racik');
+		}
+
+		// $uangracik = Penjualan::join('penjualandetails','penjualans.id','=','penjualandetails.penjualan_id')
+		// 	->join('folios', 'folios.namatarif', '=', 'penjualans.no_resep')
+		// 	->where('folios.lunas', 'Y')
+		// 	->where('penjualans.registrasi_id', $kuitansi->registrasi_id)
+		// 	->where('folios.jenis','ORJ')
+		// 	->where('folios.no_kuitansi', $kuitansi->registrasi_id)->sum('uang_racik');
+		// 	$uang_racik = \App\Penjualandetail::where('no_resep', $jasa_racik->namatarif)->sum('uang_racik');
+		//dd($uang_racik);
+
+		$jasa_racik = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->sum('jasa_racik');
+
+		$jml_obat = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)
+					->where('namatarif','!=','Retur penjualan')
+					->where('jenis','ORJ')
+					->where('lunas', 'Y')
+					->sum('total');
+		$uangracik = Penjualan::join('penjualandetails','penjualans.id','=','penjualandetails.penjualan_id')
+					->where('penjualans.registrasi_id', $kuitansi->registrasi_id)->sum('uang_racik');
+
+		$Totracik = Penjualan::join('penjualandetails','penjualans.id','=','penjualandetails.penjualan_id')
+			->join('folios', 'folios.namatarif', '=', 'penjualans.no_resep')
+			->where('folios.lunas', 'Y')
+			->where('penjualans.registrasi_id', $kuitansi->registrasi_id)
+			->where('folios.jenis','ORJ')
+			->groupBy('uang_racik')
+			->where('folios.no_kuitansi', $kuitansi->no_kwitansi)
+			->selectRaw('count(penjualandetails.uang_racik) as Tot')
+			->get();
+		$jenisracik = Penjualan::join('penjualandetails','penjualans.id','=','penjualandetails.penjualan_id')
+		        ->join('uang_raciks','penjualandetails.uang_racik_id','=','uang_raciks.id')
+				->where('penjualans.registrasi_id', $kuitansi->registrasi_id)
+				->groupBy('uang_racik_id')
+				->select('penjualandetails.uang_racik','uang_raciks.nama',DB::raw('sum(penjualandetails.uang_racik) as uracik'),DB::raw('count(penjualandetails.uang_racik) as jmlracik'))
+				->get();
+
+		$jml_irj = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)
+			->where('jenis','TA')
+			->where('lunas', 'Y')
+			->where('no_kuitansi', $kuitansi->no_kwitansi)->sum('total');
+		// return compact('kuitansi', 'folio', 'jml','jasa_racik','uang_racik'); die;
+		return view('kasir.kuitansi', compact('jenisracik','kuitansi', 'folio', 'jml', 'jasa_racik','uang_racik','obat','penjualan','reg','jml_obat','jml_irj','Totracik','uangracik'));
+		// $pdf = PDF::loadView('kasir.kuitansi', compact('kuitansi', 'folio', 'jml'));
+		// return $pdf->stream();
+	}
+
+	public function cetak_RincianBiaya($id = '') {
+		$data['kuitansi'] = Pembayaran::where('id',$id)->first();
+		//dd($data['kuitansi']);
+		$data['reg']      = Registrasi::with('bayars')->find($data['kuitansi']->registrasi_id);
+		$nokuitansi       = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)->where('jenis', 'ORJ')->where('lunas', 'Y')->where('no_kuitansi', $data['kuitansi']->no_kwitansi)->first();
+		if(!$nokuitansi){
+		  $noresep = '';
+		}else{
+		  $noresep = $nokuitansi->namatarif;
+		}
+
+		$data['penjualan'] = Penjualan::join('penjualandetails','penjualans.id','=','penjualandetails.penjualan_id')
+							 //->where('penjualandetails.no_kuitansi',$noresep)
+							->where('penjualandetails.jumlah','!=','0')
+							->where('penjualans.registrasi_id',$data['reg']->id)
+							->select('penjualandetails.*')
+							->get();
+
+        //dd($data['penjualan'] );
+		// return $data['penjualan']; die;
+       
+		//kondisi to lab rajal
+		$data['folio_irj_lab'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+			->where('no_kuitansi', '=', $data['kuitansi']->no_kwitansi)->where('lunas', 'Y')
+			->where('jenis','TA')
+			->where('poli_tipe','L')
+			->groupBy('tarif_id')
+			->selectRaw('tarif_id, count(tarif_id) as jumlah, sum(total) as total')
+			->get();
+       
+		//kondisi to rad rajal
+		$data['folio_irj_rad'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+			->where('no_kuitansi', '=', $data['kuitansi']->no_kwitansi)->where('lunas', 'Y')
+			->where('jenis','TA')
+			->where('poli_tipe','R')
+			->groupBy('tarif_id')
+			->selectRaw('tarif_id, count(tarif_id) as jumlah, sum(total) as total')
+			->get();
+
+		//kondisi to lab igd
+		$data['folio_igd_lab'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+			->where('no_kuitansi', '=', $data['kuitansi']->no_kwitansi)->where('lunas', 'Y')
+			->where('jenis','TG')
+			->where('poli_tipe','L')
+			->groupBy('tarif_id')
+			->selectRaw('tarif_id, count(tarif_id) as jumlah, sum(total) as total')
+			->get();
+
+		//kondisi to rad igd
+		$data['folio_igd_rad'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+			->where('no_kuitansi', '=', $data['kuitansi']->no_kwitansi)->where('lunas', 'Y')
+			->where('jenis','TG')
+			->where('poli_tipe','R')
+			->groupBy('tarif_id')
+			->selectRaw('tarif_id, count(tarif_id) as jumlah, sum(total) as total')
+			->get();
+
+		//kondisi to lab irna
+		$data['folio_irna_lab'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+			->where('no_kuitansi', '=', $data['kuitansi']->no_kwitansi)->where('lunas', 'Y')
+			->where('jenis','TI')
+			->where('poli_tipe','L')
+			->groupBy('tarif_id')
+			->selectRaw('tarif_id, count(tarif_id) as jumlah, sum(total) as total')
+			->get();
+
+	    //kondisi to lab irna
+		$data['folio_irna_rad'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+			->where('no_kuitansi', '=', $data['kuitansi']->no_kwitansi)->where('lunas', 'Y')
+			->where('jenis','TI')
+			->where('poli_tipe','R')
+			->groupBy('tarif_id')
+			->selectRaw('tarif_id, count(tarif_id) as jumlah, sum(total) as total')
+			->get();
+
+		//Master Loop
+		$data['folio_irj'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+			->where('no_kuitansi', '=', $data['kuitansi']->no_kwitansi)->where('lunas', 'Y')
+			->where('jenis','TA')
+			->where('poli_tipe', 'J')
+			->groupBy('tarif_id')
+			->selectRaw('tarif_id, count(tarif_id) as jumlah, sum(total) as total')
+			->get();
+
+		$data['folio_igd'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+			->where('no_kuitansi', '=', $data['kuitansi']->no_kwitansi)->where('lunas', 'Y')
+			->where('jenis','TG')
+			->where('poli_tipe', 'G')
+			// ->where('poli_tipe', 'J')
+			->groupBy('tarif_id')
+			->selectRaw('tarif_id, count(tarif_id) as jumlah, sum(total) as total')
+			->get();
+
+		$data['folio_irna'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+			->where('no_kuitansi', '=', $data['kuitansi']->no_kwitansi)->where('lunas', 'Y')
+			->where('jenis','TI')
+			->where('poli_tipe', null)
+			->groupBy('tarif_id')
+			->selectRaw('tarif_id, count(tarif_id) as jumlah, sum(total) as total')
+			->get();
+	   // $data['folio_irna']   = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)->groupBy('tarif_id')->where('lunas', 'Y')->where('jenis', 'TI')->where('no_kuitansi', $data['kuitansi']->no_kwitansi)->get();
+
+		$data['folio_obat'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+			->where('no_kuitansi', '=', $data['kuitansi']->no_kwitansi)->where('lunas', 'Y')
+			->where('jenis','ORJ')
+			->get();
+		
+		$data['folio'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+			->where('no_kuitansi', '=', $data['kuitansi']->no_kwitansi)->where('lunas', 'Y')
+			//->where('jenis','TI')
+			->groupBy('tarif_id')
+			->selectRaw('tarif_id, count(tarif_id) as jumlah, sum(total) as total')
+			->get();
+
+		$data['listDokter'] = [];
+			foreach (Pegawai::where('kategori_pegawai', 1)->whereNotIn('id', [$data['reg']->dokter_id])->get() as $d) {
+			$data['listDokter'][] = '' . $d->id . '';
+		}
+		$data['dokter'] = Folio::where('no_kuitansi', '=', $data['kuitansi']->no_kwitansi)
+			->where('registrasi_id', $data['reg']->id)->whereIn('dokter_pelaksana', [$data['listDokter']])
+			->groupBy('dokter_pelaksana')->select('dokter_pelaksana')->get();
+
+		$data['jml'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+			->where('lunas', 'Y')->where('no_kuitansi', $data['kuitansi']->no_kwitansi)->sum('total');
+			$data['no'] = 1;
+
+		//JUMLAH IGD
+
+		$data['jml_igd'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+			->where('jenis','TG')
+			->where('lunas', 'Y')
+			// ->where('poli_tipe', 'J')
+			->Where('poli_tipe','G')
+			->where('no_kuitansi', $data['kuitansi']->no_kwitansi)
+			->sum('total');
+
+		$data['jml_igd_lab'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+			->where('jenis','TG')
+			->where('lunas', 'Y')
+			->where('poli_tipe','L')
+			->where('no_kuitansi', $data['kuitansi']->no_kwitansi)->sum('total');
+
+		$data['jml_igd_rad'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+			->where('jenis','TG')
+			->where('lunas', 'Y')
+			->where('poli_tipe','R')
+			->where('no_kuitansi', $data['kuitansi']->no_kwitansi)->sum('total');
+
+		//JUMLAH RAJAL
+
+		$data['jml_irj_lab'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+			->where('jenis','TA')
+			->where('lunas', 'Y')
+			->where('poli_tipe','L')
+			->where('no_kuitansi', $data['kuitansi']->no_kwitansi)->sum('total');
+
+		$data['jml_irj_rad'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+			->where('jenis','TA')
+			->where('lunas', 'Y')
+			->where('poli_tipe','R')
+			->where('no_kuitansi', $data['kuitansi']->no_kwitansi)->sum('total');
+		
+		$data['jml_irj'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+			->where('jenis','TA')
+			->where('lunas', 'Y')
+			->where('poli_tipe', 'J')
+			->where('no_kuitansi', $data['kuitansi']->no_kwitansi)->sum('total');
+
+
+		//JUMLAH IRNA
+
+		$data['jml_irna_lab'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+			->where('jenis','TI')
+			->where('lunas', 'Y')
+			->where('poli_tipe','L')
+			->where('no_kuitansi', $data['kuitansi']->no_kwitansi)->sum('total');
+
+		$data['jml_irna_rad'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+			->where('jenis','TI')
+			->where('lunas', 'Y')
+			->where('poli_tipe','R')
+			->where('no_kuitansi', $data['kuitansi']->no_kwitansi)->sum('total');
+
+		$data['jml_irna'] = Folio::where('registrasi_id', $data['kuitansi']->registrasi_id)
+			->where('jenis','TI')
+			->where('lunas', 'Y')
+			->where('poli_tipe', null)
+			->where('no_kuitansi', $data['kuitansi']->no_kwitansi)->sum('total');
+
+		// $data['jml_obat'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+		//     ->where('namatarif','!=','Retur penjualan')
+		//     ->where('jenis','ORJ')
+		// 	->where('lunas', 'Y')
+		// 	->where('no_kuitansi', $data['kuitansi']->no_kwitansi)->sum('total');
+
+		//new commant
+		$data['jml_obat'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+		    ->where('namatarif','!=','Retur penjualan')
+		    ->where('jenis','ORJ')
+			->where('lunas', 'Y')
+			->sum('total');
+
+		// $data['jml_obat'] = Folio::join('penjualans','folios.registrasi_id','=','penjualans.registrasi_id')
+		// 					->join('penjualandetails','penjualans.id','=','penjualandetails.penjualan_id')
+		// 					->where('folios.registrasi_id', '=', $data['kuitansi']->registrasi_id)
+		// 					->where('folios.namatarif','!=','Retur penjualan')
+		// 					->where('penjualandetails.jumlah','!=','0')
+		// 					->where('folios.jenis','ORJ')
+		// 					->where('folios.lunas', 'Y')
+		// 					->sum('total');
+
+			//dd($data['jml_obat']);
+		
+		$data['embalase'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+			->where('jenis','ORJ')
+			->where('lunas', 'Y')
+			->where('no_kuitansi', $data['kuitansi']->no_kwitansi)->sum('embalase');
+		
+		$data['jasaracik'] = Folio::where('registrasi_id', '=', $data['kuitansi']->registrasi_id)
+			->where('jenis','ORJ')
+			->where('lunas', 'Y')
+			->where('no_kuitansi', $data['kuitansi']->no_kwitansi)->sum('jasa_racik');
+  
+		$data['uangracik'] = Penjualan::join('penjualandetails','penjualans.id','=','penjualandetails.penjualan_id')
+			    ->where('penjualans.registrasi_id', $data['kuitansi']->registrasi_id)->sum('uang_racik');
+   
+		$data['jmlracikper'] = Penjualan::join('penjualandetails','penjualans.id','=','penjualandetails.penjualan_id')
+		        ->groupBy('uang_racik_id')
+			    ->where('penjualans.registrasi_id', $data['kuitansi']->registrasi_id)->sum('uang_racik');
+
+	    $data['Totracik'] = Penjualan::join('penjualandetails','penjualans.id','=','penjualandetails.penjualan_id')
+				->where('penjualans.registrasi_id', $data['kuitansi']->registrasi_id)
+				->groupBy('uang_racik_id')
+				->selectRaw('count(penjualandetails.uang_racik) as Tot')
+				->get();
+
+		$data['jenisracik'] = Penjualan::join('penjualandetails','penjualans.id','=','penjualandetails.penjualan_id')
+		        ->join('uang_raciks','penjualandetails.uang_racik_id','=','uang_raciks.id')
+				->where('penjualans.registrasi_id', $data['kuitansi']->registrasi_id)
+				->groupBy('uang_racik_id')
+				->select('penjualandetails.uang_racik','uang_raciks.nama',DB::raw('sum(penjualandetails.uang_racik) as uracik'),DB::raw('count(penjualandetails.uang_racik) as jmlracik'))
+				->get();
+        
+		$data['no'] = 1;
+		$pdf        = PDF::loadView('kasir.cetakUlangKuitansi-all', $data)->setpaper('folio', 'landscape');
+		return $pdf->stream();
+	}
+
+	// public function cetak_RincianBiaya($id = '')
+	// {
+	// 	$kuitansi = Pembayaran::find($id);
+	// 	$reg = Registrasi::find($kuitansi->registrasi_id);
+
+	// 	// $folio = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('no_kuitansi', '=', $kuitansi->no_kwitansi)->where('lunas', 'Y')
+	// 	// 	->groupBy('tarif_id')
+	// 	// 	->selectRaw('tarif_id, count(tarif_id) as jumlah, sum(total) as total')
+	// 	// 	->get();
+
+	// 	// FAIQ JADI TARIF BY MAPPING BIAYA
+	// 	$folio = Folio::leftJoin('tarifs', 'tarifs.id', '=', 'folios.tarif_id')
+	// 		->leftJoin('mastermapping_biaya', 'mastermapping_biaya.id', '=', 'tarifs.mapping_biaya_id')
+	// 		->where('folios.registrasi_id', '=', $kuitansi->registrasi_id)->where('folios.no_kuitansi', '=', $kuitansi->no_kwitansi)->where('folios.lunas', 'Y')
+	// 		->groupBy('mastermapping_biaya.id')
+	// 		->selectRaw('mastermapping_biaya.kelompok,folios.tarif_id, count(folios.tarif_id) as jumlah, sum(folios.total) as total')
+	// 		->get();
+	// 	// dd($folio);
+
+	// 	$listDokter = [];
+	// 	foreach (Pegawai::where('kategori_pegawai', 1)->whereNotIn('id', [$reg->dokter_id])->get() as $d) {
+	// 		$listDokter[] = '' . $d->id . '';
+	// 	}
+	// 	$dokter = Folio::where('no_kuitansi', '=', $kuitansi->no_kwitansi)
+	// 		->where('registrasi_id', $reg->id)
+	// 		->whereIn('dokter_pelaksana', [$listDokter])
+	// 		->groupBy('dokter_pelaksana')
+	// 		->select('dokter_pelaksana')
+	// 		->get();
+	// 	$uang_racik = \App\Penjualan::join('penjualandetails', 'penjualans.no_resep', '=', 'penjualandetails.no_resep')
+	// 		->join('folios', 'folios.namatarif', '=', 'penjualans.no_resep')
+	// 		->where('folios.lunas', '=', 'Y')
+	// 		->where('penjualans.registrasi_id', $kuitansi->registrasi_id)
+	// 		->sum('uang_racik');
+	// 	$jasa_racik = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->sum('jasa_racik');
+
+	// 	$jml = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->where('no_kuitansi', $kuitansi->no_kwitansi)->sum('total');
+	// 	$no = 1;
+	// 	// return compact('reg', 'kuitansi', 'folio', 'jml', 'no', 'dokter', 'uang_racik', 'jasa_racik'); die;
+	// 	$pdf = PDF::loadView('kasir.cetakUlangKuitansi', compact('reg', 'kuitansi', 'folio', 'jml', 'no', 'dokter', 'uang_racik', 'jasa_racik'));
+	// 	return $pdf->stream();
+	// }
+
+	public function cetak_RincianBiayaNonJasa($id = '')
+	{
+		
+		$kuitansi = Pembayaran::find($id);
+		$reg = Registrasi::find($kuitansi->registrasi_id);
+		$folio = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('no_kuitansi', '=', $kuitansi->no_kwitansi)->where('lunas', 'Y')
+			->groupBy('tarif_id')
+			->selectRaw('tarif_id, count(tarif_id) as jumlah, sum(total) as total')
+			->get();
+		$listDokter = [];
+		foreach (Pegawai::where('kategori_pegawai', 1)->whereNotIn('id', [$reg->dokter_id])->get() as $d) {
+			$listDokter[] = '' . $d->id . '';
+		}
+		$dokter = Folio::where('no_kuitansi', '=', $kuitansi->no_kwitansi)
+			->where('registrasi_id', $reg->id)
+			->whereIn('dokter_pelaksana', [$listDokter])
+			->groupBy('dokter_pelaksana')
+			->select('dokter_pelaksana')
+			->get();
+		$uang_racik = \App\Penjualan::join('penjualandetails', 'penjualans.no_resep', '=', 'penjualandetails.no_resep')
+			->join('folios', 'folios.namatarif', '=', 'penjualans.no_resep')
+			->where('folios.lunas', '=', 'Y')
+			->where('penjualans.registrasi_id', $reg->id)
+			->sum('uang_racik');
+		$jasa_racik = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->sum('jasa_racik');
+		// return $obat; die;
+		$jml = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->where('no_kuitansi', $kuitansi->no_kwitansi)->sum('total');
+		$no = 1;
+		// return compact('reg', 'kuitansi', 'folio', 'jml', 'no', 'dokter', 'uang_racik', 'jasa_racik'); die;
+		
+		$pdf = PDF::loadView('kasir.cetakUlangKuitansiNonJasa', compact('reg', 'kuitansi', 'folio', 'jml', 'no', 'dokter', 'uang_racik', 'jasa_racik'));
+		return $pdf->stream();
+	}
+
+	public function cetakIGD()
+	{
+		$pemb = Pembayaran::where('created_at', 'LIKE', date('Y-m-d') . '%')->where('flag', 'Y')->orderBy('id', 'desc')->where('no_kwitansi', 'LIKE', 'RD%')->get();
+		return view('kasir.cetakIGD', compact('pemb'))->with('no', 1);
+	}
+
+	public function cetakIGDByTanggal(Request $request)
+	{
+		request()->validate(['tga' => 'required', 'tgb' => 'required']);
+		$pemb = Pembayaran::whereBetween('created_at', [valid_date($request['tga']) . ' 00:00:00', valid_date($request['tgb']) . ' 23:59:59'])->where('flag', 'Y')->where('no_kwitansi', 'LIKE', 'RD%')->get();
+		return view('kasir.cetakIGD', compact('pemb'))->with('no', 1);
+	}
+
+	public function cetakIRNA()
+	{
+		$pemb =  Pembayaran::join('rawatinaps', 'rawatinaps.registrasi_id', '=', 'pembayarans.registrasi_id')
+			->where('rawatinaps.tgl_keluar', 'LIKE', date('Y-m-d') . '%')
+			->where('flag', 'Y')->orderBy('id', 'desc')->where('no_kwitansi', 'LIKE', 'IRNA%')
+			->select('pembayarans.id as id', 'pembayarans.registrasi_id as registrasi_id', 'pembayarans.pasien_id as pasien_id')
+			->get();
+		return view('kasir.cetakIRNA', compact('pemb'))->with('no', 1);
+	}
+
+	public function cetakIRNAByTanggal(Request $request)
+	{
+		request()->validate(['tga' => 'required', 'tgb' => 'required']);
+		$pemb = Pembayaran::join('rawatinaps', 'rawatinaps.registrasi_id', '=', 'pembayarans.registrasi_id')
+			->whereBetween('rawatinaps.tgl_keluar', [valid_date($request['tga']) . ' 00:00:00', valid_date($request['tgb']) . ' 23:59:59'])->where('flag', 'Y')->where('no_kwitansi', 'LIKE', 'IRNA%')
+			->select('pembayarans.id as id', 'pembayarans.registrasi_id as registrasi_id', 'pembayarans.pasien_id as pasien_id', 'rawatinaps.tgl_keluar as tgl_keluar')
+			->get();
+		// return $pemb; die;
+		return view('kasir.cetakIRNA', compact('pemb'))->with('no', 1);
+	}
+
+	public function cetakRj()
+	{
+		$pemb = Pembayaran::where('created_at', 'LIKE', date('Y-m-d') . '%')->where('flag', 'Y')->orderBy('id', 'desc')->where('no_kwitansi', 'LIKE', 'RJ%')->get();
+		return view('kasir.cetak', compact('pemb'))->with('no', 1);
+	}
+
+	public function cetakRjByTanggal(Request $request)
+	{
+		request()->validate(['tga' => 'required', 'tgb' => 'required']);
+		$pemb = Pembayaran::whereBetween('created_at', [valid_date($request['tga']) . ' 00:00:00', valid_date($request['tgb']) . ' 23:59:59'])->where('flag', 'Y')->where('no_kwitansi', 'LIKE', 'RJ%')->get();
+		return view('kasir.cetak', compact('pemb'))->with('no', 1);
+	}
+
+	public function cetakkuitansiigd($id = ''){
+
+		$kuitansi = Pembayaran::find($id);
+		$reg      = Registrasi::with('bayars')->find($kuitansi->registrasi_id);
+		$folio    = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->where('jenis', 'TG')->get();
+		$jml      = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->where('jenis', 'TG')->sum('total');
+		$jasa_racik  = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('jenis', 'ORJ')->where('lunas', 'Y')->first();
+		$obat     = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('jenis', 'ORJ')->where('no_kuitansi', $kuitansi->no_kwitansi)->where('lunas', 'Y')->get();
+        //dd($jml);
+		if(!$jasa_racik ){
+			$noresep = '';
+		  }else{
+			$noresep = $jasa_racik->namatarif;
+		  }
+	
+	    $penjualan = Penjualan::join('penjualandetails','penjualans.id','=','penjualandetails.penjualan_id')
+		                // ->where('penjualandetails.no_resep',$noresep)
+						->where('penjualandetails.jumlah','!=','0')
+						->where('penjualans.registrasi_id',$kuitansi->registrasi_id)
+						->select('penjualandetails.*')
+						->get();
+		
+		if (empty($jasa_racik->namatarif)) {
+			$uang_racik = 0;
+		} else {
+			$uang_racik = \App\Penjualandetail::where('no_resep', $noresep)->sum('uang_racik');
+		}
+
+		$jasa_racik = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('jenis', 'ORJ')->sum('jasa_racik');
+
+		$jml_obat = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)
+					// ->where('namatarif','!=','Retur penjualan')
+					->where('jenis','ORJ')
+					->where('lunas', 'Y')
+					->sum('total');
+		$uangracik = Penjualan::join('penjualandetails','penjualans.id','=','penjualandetails.penjualan_id')
+					->where('penjualans.registrasi_id', $kuitansi->registrasi_id)->sum('uang_racik');
+		
+		$Totracik = Penjualan::join('penjualandetails','penjualans.id','=','penjualandetails.penjualan_id')
+			->join('folios', 'folios.namatarif', '=', 'penjualans.no_resep')
+			->where('folios.lunas', 'Y')
+			->where('penjualans.registrasi_id', $kuitansi->registrasi_id)
+			->where('folios.jenis','ORJ')
+			->groupBy('uang_racik')
+			->where('folios.no_kuitansi', $kuitansi->no_kwitansi)
+			->selectRaw('count(penjualandetails.uang_racik) as Tot')
+			->get();
+		$jenisracik = Penjualan::join('penjualandetails','penjualans.id','=','penjualandetails.penjualan_id')
+			->join('uang_raciks','penjualandetails.uang_racik_id','=','uang_raciks.id')
+			->where('penjualans.registrasi_id', $kuitansi->registrasi_id)
+			->groupBy('uang_racik_id')
+			->select('penjualandetails.uang_racik','uang_raciks.nama',DB::raw('sum(penjualandetails.uang_racik) as uracik'),DB::raw('count(penjualandetails.uang_racik) as jmlracik'))
+			->get();
+
+		$jml_irj = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)
+			->where('jenis','TG')
+			->where('lunas', 'Y')
+			->where('no_kuitansi', $kuitansi->no_kwitansi)->sum('total');
+		// return compact('kuitansi', 'folio', 'jml','jasa_racik','uang_racik'); die;
+		return view('kasir.kuitansi_igd', compact('Totracik','jenisracik','uangracik','kuitansi', 'folio', 'jml', 'jasa_racik','uang_racik','obat','penjualan','reg','jml_obat','jml_irj'));
+
+	}
+
+	public function cetakkuitansi($id = '')
+	{
+		// $kuitansi = Pembayaran::find($id);
+
+		// $reg = Registrasi::find($kuitansi->registrasi_id);
+		// if (substr($reg->status_reg, 0, 1) == 'I') {
+		// 	$kamar = Rawatinap::where('registrasi_id', $reg->id)->first();
+		// } else {
+		// 	$kamar = NULL;
+		// }
+		// $folio = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->where('no_kuitansi', $kuitansi->no_kwitansi)
+		// 	->groupBy('poli_id')
+		// 	->selectRaw('poli_id')
+		// 	->get();
+		// $jasa = Folio::where('namatarif', 'like', '%sarana%')->where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->where('no_kuitansi', $kuitansi->no_kwitansi)->count();
+		// $konsul = Folio::where('namatarif', 'like', '%konsul%')->where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->where('no_kuitansi', $kuitansi->no_kwitansi)->get();
+		// $obat = Folio::where('tarif_id', '10000')->where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->where('no_kuitansi', $kuitansi->no_kwitansi)->get();
+		// $jml = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->where('no_kuitansi', $kuitansi->no_kwitansi)->sum('total');
+
+		// $listDokter = [];
+		// foreach (Pegawai::where('kategori_pegawai', 1)->whereNotIn('id', [$reg->dokter_id])->get() as $d) {
+		// 	$listDokter[] = '' . $d->id . '';
+		// }
+
+		// $dokter = Folio::where('no_kuitansi', '=', $kuitansi->no_kwitansi)
+		// 	->where('registrasi_id', $reg->id)
+		// 	->groupBy('dokter_pelaksana')
+		// 	->select('dokter_pelaksana')
+		// 	->get();
+		// // return $dokter; die;
+		// $uang_racik = \App\Penjualan::join('penjualandetails', 'penjualans.no_resep', '=', 'penjualandetails.no_resep')
+		// 	->join('folios', 'folios.namatarif', '=', 'penjualans.no_resep')
+		// 	->where('folios.lunas', '=', 'Y')
+		// 	->where('penjualans.registrasi_id', $kuitansi->registrasi_id)
+		// 	->sum('uang_racik');
+		// $jasa_racik = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->sum('jasa_racik');
+		// return view('kasir.kuitansi_rawat_darurat', compact('kuitansi', 'folio', 'jml', 'reg', 'kamar', 'jasa', 'konsul', 'obat', 'dokter', 'uang_racik', 'jasa_racik'));
+	
+
+		$kuitansi = Pembayaran::find($id);
+		$reg      = Registrasi::with('bayars')->find($kuitansi->registrasi_id);
+		$folio    = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->get();
+		$jml      = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->sum('total');
+		$jasa_racik  = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('jenis', 'ORJ')->where('lunas', 'Y')->first();
+		$obat     = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('jenis', 'ORJ')->where('no_kuitansi', $kuitansi->no_kwitansi)->where('lunas', 'Y')->get();
+        //dd($jml);
+		if(!$jasa_racik ){
+			$noresep = '';
+		  }else{
+			$noresep = $jasa_racik->namatarif;
+		  }
+		
+		  $penjualan = Penjualan::join('penjualandetails','penjualans.id','=','penjualandetails.penjualan_id')
+						// ->where('penjualandetails.no_resep',$noresep)
+						->where('penjualandetails.jumlah','!=','0')
+						->where('penjualans.registrasi_id',$kuitansi->registrasi_id)
+						->select('penjualandetails.*')
+						->get();
+		
+		if (empty($jasa_racik->namatarif)) {
+			$uang_racik = 0;
+		} else {
+			$uang_racik = \App\Penjualandetail::where('no_resep', $noresep)->sum('uang_racik');
+		}
+
+		$jasa_racik = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('jenis', 'ORJ')->sum('jasa_racik');
+
+		$jml_obat = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)
+					->where('namatarif','!=','Retur penjualan')
+					->where('jenis','ORJ')
+					->where('lunas', 'Y')
+					->sum('total');
+		$uangracik = Penjualan::join('penjualandetails','penjualans.id','=','penjualandetails.penjualan_id')
+					->where('penjualans.registrasi_id', $kuitansi->registrasi_id)->sum('uang_racik');
+
+		$Totracik = Penjualan::join('penjualandetails','penjualans.id','=','penjualandetails.penjualan_id')
+			->join('folios', 'folios.namatarif', '=', 'penjualans.no_resep')
+			->where('folios.lunas', 'Y')
+			->where('penjualans.registrasi_id', $kuitansi->registrasi_id)
+			->where('folios.jenis','ORJ')
+			->groupBy('uang_racik')
+			->where('folios.no_kuitansi', $kuitansi->no_kwitansi)
+			->selectRaw('count(penjualandetails.uang_racik) as Tot')
+			->get();
+			
+		$jenisracik = Penjualan::join('penjualandetails','penjualans.id','=','penjualandetails.penjualan_id')
+			->join('uang_raciks','penjualandetails.uang_racik_id','=','uang_raciks.id')
+			->where('penjualans.registrasi_id', $kuitansi->registrasi_id)
+			->groupBy('uang_racik_id')
+			->select('penjualandetails.uang_racik','uang_raciks.nama',DB::raw('sum(penjualandetails.uang_racik) as uracik'),DB::raw('count(penjualandetails.uang_racik) as jmlracik'))
+			->get();
+
+		$jml_irj = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)
+			->where('jenis','TI')
+			->where('lunas', 'Y')
+			->where('no_kuitansi', $kuitansi->no_kwitansi)->sum('total');
+			
+		// return compact('kuitansi', 'folio', 'jml','jasa_racik','uang_racik'); die;
+		return view('kasir.kuitansi_inap', compact('jenisracik','Totracik','uangracik','kuitansi', 'folio', 'jml', 'jasa_racik','uang_racik','obat','penjualan','reg','jml_obat','jml_irj'));
+		// $pdf = PDF::loadView('kasir.kuitansi', compact('kuitansi', 'folio', 'jml'));
+	
+	}
+
+	public function cetaknonjasakuitansi($id = '')
+	{
+		$kuitansi = Pembayaran::find($id);
+
+		$reg = Registrasi::find($kuitansi->registrasi_id);
+		if (substr($reg->status_reg, 0, 1) == 'I') {
+			$kamar = Rawatinap::where('registrasi_id', $reg->id)->first();
+		} else {
+			$kamar = NULL;
+		}
+		$folio = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->where('no_kuitansi', $kuitansi->no_kwitansi)
+			->groupBy('poli_id')
+			->selectRaw('poli_id')
+			->get();
+		$jasa = Folio::where('namatarif', 'like', '%sarana%')->where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->where('no_kuitansi', $kuitansi->no_kwitansi)->count();
+		$konsul = Folio::where('namatarif', 'like', '%konsul%')->where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->where('no_kuitansi', $kuitansi->no_kwitansi)->get();
+		$obat = Folio::where('tarif_id', '10000')->where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->where('no_kuitansi', $kuitansi->no_kwitansi)->get();
+		$jml = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->where('no_kuitansi', $kuitansi->no_kwitansi)->sum('total');
+
+		$listDokter = [];
+		foreach (Pegawai::where('kategori_pegawai', 1)->whereNotIn('id', [$reg->dokter_id])->get() as $d) {
+			$listDokter[] = '' . $d->id . '';
+		}
+
+		$dokter = Folio::where('no_kuitansi', '=', $kuitansi->no_kwitansi)
+			->where('registrasi_id', $reg->id)
+			// ->whereIn('foliopelaksanas.dokter_pelaksana', [$listDokter])
+			->groupBy('dokter_pelaksana')
+			->select('dokter_pelaksana')
+			->get();
+		// return $dokter; die;
+		$uang_racik = \App\Penjualan::join('penjualandetails', 'penjualans.no_resep', '=', 'penjualandetails.no_resep')
+			->join('folios', 'folios.namatarif', '=', 'penjualans.no_resep')
+			->where('folios.lunas', '=', 'Y')
+			->where('penjualans.registrasi_id', $kuitansi->registrasi_id)
+			->sum('uang_racik');
+		$jasa_racik = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->sum('jasa_racik');
+		// return compact('kuitansi', 'folio', 'jml', 'reg', 'kamar', 'jasa', 'konsul', 'obat', 'dokter', 'jasa_racik', 'uang_racik'); die;
+		return view('kasir.kuitansi_non_jasa_racik_rawat_jalan', compact('kuitansi', 'folio', 'jml', 'reg', 'kamar', 'jasa', 'konsul', 'obat', 'dokter', 'jasa_racik', 'uang_racik'));
+	}
+
+	//======== RAWAT INAP =================================
+	public function verifikasi()
+	{
+		return view('kasir.verifikasiDataTable');
+	}
+
+	public function getDataVerifInap(Request $request)
+	{
+		$pasien = Pasien::where('no_rm', $request['no_rm'])->first();
+		if ($pasien) {
+			$verif = Registrasi::join('rawatinaps', 'registrasis.id', '=', 'rawatinaps.registrasi_id')
+				// ->where('registrasis.status_reg', 'I3')
+				->where('registrasis.pasien_id', $pasien->id)
+				->select('registrasis.id', 'registrasis.pasien_id', 'registrasis.bayar', 'registrasis.tipe_jkn', 'rawatinaps.kamar_id', 'rawatinaps.bed_id', 'rawatinaps.kelas_id', 'rawatinaps.kelompokkelas_id', 'rawatinaps.tgl_masuk', 'rawatinaps.tgl_keluar')
+				->orderBy('registrasis.updated_at', 'asc')->get();
+		} else {
+			Flashy::info('Data tidak ditemukan');
+			$verif = [];
+		}
+		return view('kasir.verifikasiDataTable', compact('verif'))->with('no', 1);
+	}
+
+	function getDataVerifikasi()
+	{
+		$verif = Registrasi::join('rawatinaps', 'registrasis.id', '=', 'rawatinaps.registrasi_id')
+			->where('registrasis.status_reg', 'I3')
+			->where('rawatinaps.tgl_keluar', '!=', '')
+			->select('registrasis.id', 'registrasis.pasien_id', 'registrasis.bayar', 'registrasis.tipe_jkn', 'rawatinaps.kamar_id', 'rawatinaps.bed_id', 'rawatinaps.kelas_id', 'rawatinaps.kelompokkelas_id', 'rawatinaps.tgl_masuk', 'rawatinaps.tgl_keluar')
+			->orderBy('registrasis.updated_at', 'asc')->get();
+		return DataTables::of($verif)
+			->addColumn('no_rm', function ($verif) {
+				return $verif->pasien->no_rm;
+			})
+			->addColumn('nama', function ($verif) {
+				return strtoupper($verif->pasien->nama);
+			})
+			->addColumn('carabayar', function ($verif) {
+				$b = strtoupper(baca_carabayar($verif->bayar));
+				$c = !empty($verif->tipe_jkn) ? ' - ' . $verif->tipe_jkn : '';
+				return $b . '' . $c;
+			})
+			->addColumn('kelompok', function ($verif) {
+				return strtoupper(baca_kelompok($verif->kelompokkelas_id));
+			})
+			->addColumn('kelas', function ($verif) {
+				return strtoupper(baca_kelas($verif->kelas_id));
+			})
+			->addColumn('kamar', function ($verif) {
+				return strtoupper(baca_kamar($verif->kamar_id));
+			})
+			->addColumn('bed', function ($verif) {
+				return strtoupper(baca_bed($verif->bed_id));
+			})
+			->addColumn('verifikasi', function ($verif) {
+				$vrf = '<a href="' . url('kasir/detail-verifikasi/' . $verif->id) . '" class="btn btn-primary btn-sm btn-flat"><i class="fa fa-check"></i></a>';
+				if (Folio::where('registrasi_id', $verif->id)->where('verif_kasa', 'Y')->sum('total') > 0) {
+					$cetak = '<a href="' . url('kasir/cetak-verifikasi/' . $verif->id) . '" target="_blank" class="btn btn-danger btn-sm btn-flat"><i class="fa fa-print"></i></a>';
+				} else {
+					$cetak = NULL;
+				}
+				return $vrf . ' ' . $cetak;
+			})
+			->rawColumns(['verifikasi'])
+			->make(true);
+	}
+
+	public function detailVerifikasi($registrasi_id = '')
+	{
+		// dd($registrasi_id);
+		$data['reg'] = Registrasi::where('id', '=', $registrasi_id)->first();
+		$data['folio'] = Folio::where(['registrasi_id' => $registrasi_id, 'lunas' => 'N', 'jenis' => 'TI'])->groupBy('poli_tipe')
+			// ->selectRaw('tarif_id, sum(total) as total, count(verif_kasa) as verif_kasa')
+			->selectRaw('sum(total) as total, count(namatarif) as qty, poli_tipe')
+			->get();
+		// return $data['folio'];die;
+
+		$data['reg_id'] = $registrasi_id;
+		$data['poli'] = Folio::where('registrasi_id', '=', $registrasi_id)->distinct();
+		$data['tagihan'] = Folio::where(['registrasi_id' => $registrasi_id, 'lunas' => 'N', 'jenis' => 'TI'])->sum('total');
+		$data['dokter'] = Pegawai::where('kategori_pegawai', 1)->pluck('nama', 'id');
+		$data['perawat'] = Pegawai::pluck('nama', 'id');
+		$data['kat_tarif'] = Kategoritarif::pluck('namatarif', 'id');
+		$data['tarif'] = Tarif::pluck('nama', 'id');
+		$data['jmlbaris'] = Folio::where('registrasi_id', $registrasi_id)->groupBy('poli_tipe')
+			->selectRaw('tarif_id, sum(total) as total')
+			->count();
+		$data['i_verif'] = 1;
+		$data['i_hapus'] = 1;
+		// dd($data);
+		return view('kasir.detailVerifikasi', $data)->with('no', 1);
+	}
+
+	public function detailTindakanVerifikasi($registrasi_id = '', $poli_tipe = '')
+	{
+		// $data['folio'] = Folio::where('registrasi_id', $registrasi_id)->where('tarif_id', $tarif_id)->get();
+		$data['reg'] = Registrasi::where('id', '=', $registrasi_id)->first();
+		// if ($data['reg']->bayar == 1) {
+		// 	$data['folio'] = Folio::leftJoin('foliopelaksanas', 'folios.id', '=', 'foliopelaksanas.folio_id')
+		// 		->where('folios.registrasi_id', $registrasi_id)->where('folios.poli_tipe', $poli_tipe)
+		// 		->select('folios.*', 'foliopelaksanas.dokter_pelaksana')
+		// 		->get();
+		// } else {
+		// 	$data['folio'] = Folio::leftJoin('foliopelaksanas', 'folios.id', '=', 'foliopelaksanas.folio_id')
+		// 		->where('folios.registrasi_id', $registrasi_id)->where('folios.poli_tipe', $poli_tipe)->where('folios.lunas', 'N')
+		// 		->select('folios.*', 'foliopelaksanas.dokter_pelaksana')
+		// 		->get();
+		// }
+		if ($poli_tipe == '') {
+			$data['folio'] = Folio::where(['registrasi_id' => $registrasi_id, 'poli_tipe' => null, 'lunas' => 'N'])->get();
+		} else {
+			$data['folio'] = Folio::where(['folios.registrasi_id' => $registrasi_id, 'folios.poli_tipe' => $poli_tipe, 'folios.lunas' => 'N'])->select('folios.*')->get();
+		}
+		$data['reg_id'] = $registrasi_id;
+		$data['poli'] = Folio::where('registrasi_id', '=', $registrasi_id)->distinct();
+		$data['tagihan'] = Folio::where('registrasi_id', $registrasi_id)->where('lunas', 'N')->sum('total');
+		$data['dokter'] = Pegawai::where('kategori_pegawai', 1)->pluck('nama', 'id');
+		$data['perawat'] = Pegawai::pluck('nama', 'id');
+		$data['kat_tarif'] = Kategoritarif::pluck('namatarif', 'id');
+		$data['tarif'] = Tarif::pluck('nama', 'id');
+		$data['jmlbaris'] = Folio::where('registrasi_id', $registrasi_id)->where('poli_tipe', $poli_tipe)->count();
+		$data['i_verif'] = 1;
+		$data['i_hapus'] = 1;
+		$data['poli_tipe'] = $poli_tipe;
+		$data['tipe']	= 'ranap';
+		return view('kasir.detailTindakanVerifikasi', $data)->with('no', 1);
+	}
+
+	public function save_tindakan(Request $request)
+	{
+		$reg = Registrasi::find($request['registrasi_id']);
+		if (substr($reg->status_reg, 0, 1) == 'G') {
+			$poli_tipe = 'G';
+		} else {
+			$poli_tipe = 'J';
+		}
+		request()->validate(['tarif_id' => 'required']);
+		DB::transaction(function () use ($request,$reg) {
+			// dd($request->all());
+			
+			$tarif = Tarif::find($request['tarif_id']);
+			$fol = new Folio();
+			$fol->registrasi_id = $request['registrasi_id'];
+			$fol->lunas = 'N';
+			$fol->namatarif = $tarif->nama;
+			$fol->tarif_id = $request['tarif_id'];
+			$fol->jenis = 'TI';
+			$fol->total = ($tarif->total * $request['jumlah']);
+			$fol->jenis_pasien = $request['jenis'];
+			if (substr($reg->status_reg, 0, 1) == 'G') {
+				$fol->poli_tipe = 'G';
+			} else {
+				$fol->poli_tipe = 'J';
+			}
+			$fol->pasien_id = $request['pasien_id'];
+			$fol->dokter_id = $request['dokter_id'];
+			if (!empty($request['tanggal'])) {
+				$fol->created_at = valid_date($request['tanggal']);
+			}
+			$fol->user_id = Auth::user()->id;
+
+			//revisi foliopelaksana
+			$fol->dpjp = $request['dokter_id'];
+			$fol->dokter_pelaksana = $request['pelaksana'];
+			$fol->perawat = $request['perawat'];
+			$fol->pelaksana_tipe = 'TI';
+			$fol->save();
+			
+
+			// $fp = new Foliopelaksana();
+			// $fp->folio_id = $fol->id;
+			// $fp->dpjp = $request['dokter_id'];
+			// $fp->dokter_pelaksana = $request['pelaksana'];
+			// $fp->perawat = $request['perawat'];
+			// $fp->pelaksana_tipe = 'TI';
+			// $fp->user = Auth::user()->id;
+			// $fp->save();
+
+			if($request['jenis'] !== '1'){
+				// Insert Histori
+				$bed = Rawatinap::where('registrasi_id', $request['registrasi_id'])->first();
+				$history = new HistoriStatus();
+				$history->registrasi_id = $request['registrasi_id'];
+				$history->status = 'I3';
+				$history->bed_id = $bed->bed_id;
+				$history->user_id = Auth::user()->id;
+				$history->save();
+	
+				$bed = Bed::find($bed->bed_id);
+				if ($bed) {
+					$bed->reserved = 'N';
+					$bed->update();
+				}
+
+			}else{
+				// Insert Kunjungan IRJ
+				if ($fol->poli_tipe == 'J') {
+					$cek = HistorikunjunganIRJ::where('registrasi_id', $request['registrasi_id'])->where('poli_id', $reg->poli_id)->count();
+					if ($cek < 1) {
+						$rj = new HistorikunjunganIRJ();
+						$rj->registrasi_id = $request['registrasi_id'];
+						$rj->pasien_id = $request['pasien_id'];
+						$rj->poli_id = $request['poli_id'];
+						$rj->dokter_id = @$request['dokter_id'];
+						$rj->user = Auth::user()->id;
+						$rj->save();
+					}
+				}
+			}
+		});
+		Flashy::info('Tindakan berhasil ditambahkan');
+		if($request['jenis'] !== '1'){
+			return redirect('kasir/detail-verifikasi-rajal/' . $request['registrasi_id']).'/'.$poli_tipe;
+		}else{
+			return redirect('kasir/detail-verifikasi/' . $request['registrasi_id']);
+
+		}
+	}
+
+	public function ubahTipeJKN(Request $request)
+	{
+		$reg = Registrasi::find($request['registrasi_id']);
+		$reg->tipe_jkn = $request['tipe_jkn'];
+		$reg->update();
+		Flashy::info('Pasien berhasil diubah tipe jkn');
+		if ($request->tipe == 'irna') {
+			return redirect('kasir/detail-verifikasi/' . $request['registrasi_id']);
+		} else {
+			return redirect('kasir/verifikasi-rajal/' . $request['registrasi_id']);
+		}
+	}
+
+	public function batalPulang($registrasi_id)
+	{
+		$reg = Registrasi::find($registrasi_id);
+		$reg->status_reg = 'I2';
+		$reg->update();
+		Flashy::info('Pasien berhasil kembali ke rawat inap');
+		return redirect('kasir/verifikasi');
+	}
+
+	//Uang Muka Rawat Inap
+	public function uangmuka_rawatinap()
+	{
+		$type = 'Rawat Inap';
+		return view('kasir.uangmuka', compact('type'));
+	}
+	// Uang Muka Rawat Darurat
+	public function uangmuka_rawatdarurat()
+	{
+		$type = 'Rawat Darurat';
+		return view('kasir.uangmuka', compact('type'));
+	}
+
+	public function uangmuka_rawatinap_byPasien(Request $request)
+	{
+		$data['type']	= $request['type'];
+		$data['reg']	= Registrasi::find($request['registrasi_id']);
+		$data['inap']	= Rawatinap::where('registrasi_id', $request['registrasi_id'])->first();
+		return view('kasir.uangmuka', $data)->with('no', 1);
+	}
+
+	public function dataPasienInap()
+	{
+		$reg = Registrasi::join('pasiens', 'registrasis.pasien_id', '=', 'pasiens.id')
+			->whereIn('registrasis.status_reg', ['I2', 'I3'])
+			->select('registrasis.id', 'pasiens.no_rm', 'pasiens.nama', 'pasiens.alamat')
+			->get();
+		return DataTables::of($reg)
+			->addColumn('input', function ($reg) {
+				return '<button type="button" class="btn btn-primary btn-sm btn-flat inputPasien" data-registrasi_id="' . $reg->id . '" data-nama="' . $reg->nama . '" data-no_rm="' . $reg->no_rm . '"><i class="fa fa-check"></i></button>';
+			})
+			->rawColumns(['input'])
+			->make(true);
+	}
+
+	public function dataPasienDarurat()
+	{
+		$reg = Registrasi::join('pasiens', 'registrasis.pasien_id', '=', 'pasiens.id')
+			->whereIn('registrasis.status_reg', ['G2', 'G1'])
+			->select('registrasis.id', 'pasiens.no_rm', 'pasiens.nama', 'pasiens.alamat')
+			->get();
+		return DataTables::of($reg)
+			->addColumn('input', function ($reg) {
+				return '<button type="button" class="btn btn-primary btn-sm btn-flat inputPasien" data-registrasi_id="' . $reg->id . '" data-nama="' . $reg->nama . '" data-no_rm="' . $reg->no_rm . '"><i class="fa fa-check"></i></button>';
+			})
+			->rawColumns(['input'])
+			->make(true);
+	}
+
+	public function save_uangmuka(Request $request)
+	{
+		$cek = Validator::make($request->all(), [
+			'nominal' => 'required',
+			'keluarga' => 'required',
+		]);
+
+		if ($cek->passes()) {
+			$dp = new Deposit();
+			$dp->registrasi_id = $request['registrasi_id'];
+			$dp->nominal = rupiah($request['nominal']);
+			$dp->keluarga = $request['keluarga'];
+			$dp->umur = $request['umur'];
+			$dp->pekerjaan = $request['pekerjaan'];
+			$dp->alamat = $request['alamat'];
+			$dp->kasir = Auth::user()->name;
+			$dp->save();
+			return response()->json(['success' => '1', 'registrasi_id' => $request['registrasi_id']]);
+		} else {
+			return response()->json(['errors' => $cek->errors()]);
+		}
+	}
+
+	public function save_return($id)
+	{
+		$dp = Deposit::find($id);
+		$dp->return = $dp->nominal;
+		$dp->kasir = Auth::user()->name;
+		$dp->update();
+		return response()->json(['success' => '1']);
+	}
+
+	public function viewDeposit($registrasi_id)
+	{
+		$dp = Deposit::where('registrasi_id', $registrasi_id)->get();
+		$total = Deposit::where('registrasi_id', $registrasi_id)->sum('nominal');
+		return view('kasir.viewDeposit', compact('dp', 'total'))->with('no', 1);
+	}
+
+	public function cetakDeposit($id)
+	{
+		$dp = Deposit::find($id);
+		$reg = Registrasi::find($dp->registrasi_id);
+		$irna = Rawatinap::where('registrasi_id', $reg->id)->first();
+		return view('kasir.kuitansiDeposit', compact('dp', 'reg', 'irna'));
+	}
+
+	public function cetakReturn($id)
+	{
+		$dp = Deposit::find($id);
+		$reg = Registrasi::find($dp->registrasi_id);
+		$irna = Rawatinap::where('registrasi_id', $reg->id)->first();
+		return view('kasir.returnDeposit', compact('dp', 'reg', 'irna'));
+	}
+
+	public function tutup_transaksi()
+	{
+		return view('kasir.tutup_transaksi');
+	}
+
+	//TRANSAKSI LAIN LAIN
+	public function transaksi_lain_lain()
+	{
+		$reg = Registrasi::whereIn('status_reg', ['R1', 'L1', 'A1'])->where('created_at', 'LIKE', date('Y-m-d' . '%'))->orderBy('lunas', 'desc')->get(['id', 'pasien_id', 'status_reg', 'bayar', 'user_create', 'lunas', 'created_at']);
+		// return $reg; die;
+
+		$no = 1;
+		$row = [];
+		foreach ($reg as $key => $d) {
+			$row[] = [
+				'no' => $no++,
+				'registrasi_id' => $d->id,
+				'nama' => ($d->status_reg == 'A1') ? Penjualanbebas::where('registrasi_id', $d->id)->first()->nama : Pasienlangsung::where('registrasi_id', $d->id)->first()->nama,
+				'alamat' => ($d->status_reg == 'A1') ? Penjualanbebas::where('registrasi_id', $d->id)->first()->alamat : Pasienlangsung::where('registrasi_id', $d->id)->first()->alamat,
+				'jenis_transaksi' => $d->status_reg,
+				'lunas' => $d->lunas,
+				'created_at' => $d->created_at,
+				'user_create' => $d->user_create,
+				// 'total' => Folio::where('registrasi_id', $d->id)->where('lunas', 'N')->first()->total
+			];
+		}
+		$data = $row;
+		return view('kasir.lain_lain', compact('data'));
+	}
+
+	//TRANSAKSI LAIN LAIN
+	public function transaksi_lain_lain_by(Request $request)
+	{
+		request()->validate(['tga' => 'required', 'tgb' => 'required']);
+
+		$reg = Registrasi::whereIn('status_reg', ['R1', 'L1', 'A1'])
+			->whereBetween('created_at', [valid_date($request['tga']) . ' 00:00:00', valid_date($request['tgb']) . ' 23:59:59'])
+			->orderBy('lunas', 'desc')->get(['id', 'pasien_id', 'status_reg', 'bayar', 'user_create', 'lunas', 'created_at']);
+		// return $reg; die;
+
+		$no = 1;
+		$row = [];
+		foreach ($reg as $key => $d) {
+			$row[] = [
+				'no' => $no++,
+				'registrasi_id' => $d->id,
+				'nama' => ($d->status_reg == 'A1') ? Penjualanbebas::where('registrasi_id', $d->id)->first()->nama : Pasienlangsung::where('registrasi_id', $d->id)->first()->nama,
+				'alamat' => ($d->status_reg == 'A1') ? Penjualanbebas::where('registrasi_id', $d->id)->first()->alamat : Pasienlangsung::where('registrasi_id', $d->id)->first()->alamat,
+				'jenis_transaksi' => $d->status_reg,
+				'lunas' => $d->lunas,
+				'created_at' => $d->created_at,
+				'user_create' => $d->user_create,
+				// 'total' => Folio::where('registrasi_id', $d->id)->where('lunas', 'N')->first()->total
+			];
+		}
+		$data = $row;
+		return view('kasir.lain_lain', compact('data'));
+	}
+
+
+
+	public function form_bayar_lain_lain($registrasi_id = '')
+	{
+		$reg = Registrasi::find($registrasi_id);
+		$data['pasien'] = ($reg->status_reg != 'A1') ? Pasienlangsung::where('registrasi_id', $reg->id)->first() : Penjualanbebas::where('registrasi_id', $registrasi_id)->first();
+		if ($data['pasien'] == null) {
+			$data['pasien'] = $reg->pasien;
+		}
+		if ($reg->status_reg == 'A1') {
+			// $data['total'] = Folio::where('registrasi_id', $registrasi_id)->where('lunas', 'N')->first()->total;
+			$data['total'] = Folio::where('registrasi_id', $registrasi_id)->where('lunas', 'N')->sum('total');
+			$no_resep = Penjualan::where('registrasi_id', $registrasi_id)->first()->no_resep;
+			$data['rincian'] = Penjualandetail::where('no_resep', $no_resep)->get();
+			$data['uang_racik'] = \App\Penjualan::join('penjualandetails', 'penjualans.no_resep', '=', 'penjualandetails.no_resep')
+				->join('folios', 'folios.namatarif', '=', 'penjualans.no_resep')
+				->where('folios.lunas', '=', 'N')
+				->where('penjualans.registrasi_id', $registrasi_id)
+				->sum('penjualandetails.uang_racik');
+			$data['jasa_racik'] = Folio::where('registrasi_id', '=', $registrasi_id)->where('folios.lunas', 'N')->sum('jasa_racik');
+			// return $data; die;
+			return view('kasir.form_bayar_lain_lain', $data)->with('no', 1);
+		} else {
+			$data['total'] = Folio::where('registrasi_id', $registrasi_id)->where('lunas', 'N')->sum('total');
+			$data['rincian'] = Folio::where('registrasi_id', $registrasi_id)->where('lunas', 'N')->get();
+			return view('kasir.form_bayar_PasienLangsung', $data)->with('no', 1);
+		}
+	}
+
+	public function save_bayar_lain_lain(Request $request)
+	{
+		$r = Registrasi::find($request['registrasi_id']);
+		$cek_kuitansi = Pembayaran::where('no_kwitansi', 'LIKE', 'PB-' . date('Ymd') . '-%')->count() + 1;
+		$no_kuitansi = 'PB-' . date('Ymd') . '-' . sprintf("%05s", $cek_kuitansi);
+		// dd($request->all());
+		if ($request['total'] != 0) {
+			DB::beginTransaction();
+			try {
+				// DB::beginTransaction();
+				$reg = Registrasi::find($request['registrasi_id']);
+				//Journal Accounting
+				$journal = Journal::create([
+					'id_customer'		=> $reg->pasien_id,
+					'contact_type'		=> 'customer',
+					'code'				=> $no_kuitansi,
+					'tanggal'			=> date('Y-m-d'),
+					'total_transaksi'	=> rupiah($request['total_tagihan']),
+					'type'				=> 'lain-lain',
+					'keterangan'		=> 'Jurnal Lain-lain',
+					'verifikasi'		=> 1
+				]);
+				// Insert pembayaran
+				$pem = new Pembayaran();
+				$pem->user_id = Auth::user()->id;
+				$pem->jenis = 0;
+				$pem->total = $request['total'];
+				$pem->dibayar = rupiah($request['dibayar']);
+				$pem->flag = 'Y';
+				$pem->registrasi_id = $reg->id;
+				$pem->dokter_id = 1;
+				$pem->diskon_persen = 0;
+				$pem->diskon_rupiah = 0;
+				$pem->no_kwitansi = $no_kuitansi;
+				$pem->pasien_id = 0;
+				$pem->journal_id = $journal->id;
+				$pem->save();
+				Activity::log('kasir_' . Auth::user()->name . ' menerima pembayaran pasien no medrek ' . number_format($pem->total) . ' no kuitansi ' . $pem->no_kwitansi);
+				//Update Folio
+				$fol = Folio::where('registrasi_id', $request['registrasi_id'])->get();
+				foreach ($fol as $key => $d) {
+					$d->lunas = 'Y';
+					$d->dibayar = $d->total;
+					$d->waktu_dibayar = date('Y-m-d');
+					$d->no_kuitansi = $pem->no_kwitansi;
+					$d->update();
+				}
+				session(['idk' => $pem->id]);
+				//Update registrasi
+				$reg->lunas = 'Y';
+				$reg->update();
+
+				$akunSementaraKas = AkunCOA::where('code', '101109099')->first();
+				$akunPersediaanObat = AkunCOA::where('code', '101301001')->first();
+
+				$journalDetail = [];
+				foreach ($fol as $d) {
+					$journalDetail[] = JournalDetail::create([
+						'id_journal'		=> $journal->id,
+						'id_akun_coa'		=> $akunSementaraKas->id,
+						'debit'				=> (int) $d->total,
+						'credit'			=> 0,
+						'is_kas_bank'		=> 1,
+						'type'				=> 'rawat_jalan_umum',
+						'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunSementaraKas->nama
+					]);
+					if (!empty($d->tarif->akun_coa->id)) {
+						$akunTarifCOA = AkunCOA::where('id', $d->tarif->akun_coa->id)->first();
+						$journalDetail[] = JournalDetail::create([
+							'id_journal'		=> $journal->id,
+							'id_akun_coa'		=> $akunTarifCOA->id,
+							'debit'				=> 0,
+							'credit'			=> (int) $d->total,
+							'is_operasional'	=> 1,
+							'is_kas_bank'		=> 1,
+							'id_tarif'			=> $d->tarif_id,
+							'type'				=> 'rawat_jalan',
+							'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunTarifCOA->nama
+						]);
+					} else {
+						$journalDetail[] = JournalDetail::create([
+							'id_journal'		=> $journal->id,
+							'id_akun_coa'		=> $akunPersediaanObat->id,
+							'debit'				=> 0,
+							'credit'			=> (int) $d->total,
+							'is_operasional'	=> 1,
+							'is_kas_bank'		=> 1,
+							'id_tarif'			=> $d->tarif_id,
+							'type'				=> 'rawat_jalan',
+							'keterangan'		=> 'Jurnal Rawat Jalan ' . $no_kuitansi . ' Akun ' . $akunPersediaanObat->nama
+						]);
+					}
+				}
+				DB::commit();
+				return redirect('kasir/cetakkuitansibebas/' . session('idk'));
+			} catch (Exception $e) {
+				Flashy::error('Transaksi gagal');
+				return redirect()->back();
+				// return response()->json(['sukses' => false, 'data' => []]);
+			}
+			// DB::transaction(function () use ($request, $no_kuitansi, $r) {
+
+			// });
+
+		} else {
+			Flashy::error('Transaksi gagal');
+			return redirect()->back();
+		}
+	}
+
+	public function cetak_kuitansi_bebas($id = '')
+	{
+		$kuitansi = Pembayaran::find($id);
+		$reg = Registrasi::find($kuitansi->registrasi_id);
+		$jasa_racik = 0;
+		$uang_racik = 0;
+		if ($reg->status_reg == 'A1') {
+			$pasien = Penjualanbebas::where('registrasi_id', $kuitansi->registrasi_id)->first();
+			$uang_racik = \App\Penjualan::join('penjualandetails', 'penjualans.no_resep', '=', 'penjualandetails.no_resep')
+				->join('folios', 'folios.namatarif', '=', 'penjualans.no_resep')
+				->where('folios.lunas', '=', 'Y')
+				->where('penjualans.registrasi_id', $kuitansi->registrasi_id)
+				->sum('uang_racik');
+			$jasa_racik = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('folios.lunas', 'Y')->sum('jasa_racik');
+		} else {
+			$pasien = Pasienlangsung::where('registrasi_id', $kuitansi->registrasi_id)->first();
+		}
+		$folio = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->get();
+		$jml = Folio::where('registrasi_id', '=', $kuitansi->registrasi_id)->where('lunas', 'Y')->sum('total');
+		return view('kasir.kuitansi_bebas', compact('kuitansi', 'folio', 'jml', 'pasien', 'uang_racik', 'jasa_racik'));
+	}
+
+	//SUPERVISOR
+	public function edit_transaksi()
+	{
+		return view('kasir.edit_transaksi');
+	}
+
+	public function batal_bayar()
+	{
+		$data['reg'] = Registrasi::where('created_at', 'LIKE', date('Y-m-d') . '%')->where('lunas', 'Y')->where('bayar', '<>', '1')->get();
+		Pembayaran::where('flag', 'N')->where('created_at', '<', date('Y-m-d 00:00:00'))->delete();
+		return view('kasir.batal_bayar', $data)->with('no', 1);
+	}
+
+	public function batal_bayar_byTanggal(Request $request)
+	{
+		request()->validate(['tga' => 'required', 'tgb' => 'required']);
+		$data['reg'] = Registrasi::whereBetween('created_at', [valid_date($request['tga']) . ' 00:00:00', valid_date($request['tgb']) . ' 23:59:59'])->where('lunas', 'Y')->get();
+		// return $data; die;
+		return view('kasir.batal_bayar', $data)->with('no', 1);
+	}
+
+	public function rincian_pembayaran($registrasi_id)
+	{
+		$data['reg'] = Registrasi::where('id', $registrasi_id)->first();
+		$data['rincian'] = Folio::where('registrasi_id', $registrasi_id)->get();
+		$data['jasa_racik'] = Folio::where('registrasi_id', $registrasi_id)->sum('jasa_racik');
+		$data['total'] = Folio::where('registrasi_id', $registrasi_id)->sum('total');
+		$data['pembayaran'] = Pembayaran::where('registrasi_id', $registrasi_id)->where('flag', 'Y')->first();
+		return view('kasir.view_rincian_pembayaran', $data)->with('no', 1);
+	}
+
+	public function save_pembatalan($registrasi_id, $no_kwitansi)
+	{
+		// return $request->all(); die;
+		$pembayaran = Pembayaran::where('no_kwitansi', $no_kwitansi)->first();
+		$dibayar = $pembayaran->dibayar;
+
+		DB::transaction(function () use ($registrasi_id, $no_kwitansi, $dibayar) {
+			$reg = Registrasi::where('id', $registrasi_id)->first();
+			$reg->lunas = 'N';
+			$reg->update();
+
+			$pembayaran = Pembayaran::where('no_kwitansi', $no_kwitansi)->first();
+			$pembayaran->flag = 'N';
+			$pembayaran->update();
+
+			$piutang = Piutang::where('registrasi_id', $registrasi_id)->first();
+			$pasien = Pasien::where('id', $reg->pasien_id)->first();
+			if ($piutang && $reg->lunas == 'Y') {
+				$pt = new Piutang();
+				$pt->registrasi_id = $reg->id;
+				$pt->nama	   	   = $pasien->nama;
+				$pt->total = rupiah($pembayaran->hrs_bayar);
+				$pt->dibayar	   = 0;
+				$pt->tglbayar		=  date('Y-m-d');
+				// $pt->user_id	   = Auth::user()->id;
+				// $pt->pembayaran_id = $pembayaran->id;
+				// $pt->kwitansi_pembayaran = $no_kwitansi;
+				$pt->save();
+			}
+			Activity::log('kasir_' . Auth::user()->name . ' batalkan pembayaran no kuitansi ' . $pembayaran->no_kwitansi);
+
+			$ptA = Piutang::where('registrasi_id', $registrasi_id)->where('dibayar', 0)->first();
+			if ($ptA) {
+				$ptA->total_piutang = $ptA->total_piutang + $dibayar;
+				$ptA->update();
+			}
+
+			//batal pelunasan
+			if ($pembayaran->total == $pembayaran->dibayar) {
+				$pt = new Piutang();
+				$pt->registrasi_id = $reg->id;
+				$pt->nama	   	   = $pasien->nama;
+				$pt->total = rupiah($pembayaran->total);
+				$pt->dibayar	   = 0;
+				$pt->tglbayar		=  date('Y-m-d');
+				// $pt->user_id	   = Auth::user()->id;
+				// $pt->pembayaran_id = $pembayaran->id;
+				// $pt->kwitansi_pembayaran = $no_kwitansi;
+				$pt->save();
+			}
+
+			$pt = Piutang::where('id', $pembayaran->id)->where('dibayar', '!=', 0)->first();
+			if ($pt) {
+				$pt->delete();
+			}
+
+			$cek_piutang = Pembayaran::where('registrasi_id', $registrasi_id)->where('flag', 'Y')->count();
+			if ($cek_piutang <= 0) {
+				$folio = Folio::where('registrasi_id', $registrasi_id)->get();
+				foreach ($folio as $d) {
+					$fol = Folio::find($d->id);
+					$fol->lunas = 'N';
+					$fol->waktu_dibayar = NULL;
+					$fol->update();
+				}
+				$pembayaran->delete(); //Hapus tabel pembayaran
+				$ptA = Piutang::where('registrasi_id', $registrasi_id)->first();
+				if ($ptA) {
+					$ptA->delete();
+				}
+			}
+		});
+		Flashy::success('Pembayaran berhasil di batalkan');
+		return redirect()->back();
+	}
+
+	public function batal_piutang()
+	{
+		return view('kasir.batal_piutang');
+	}
+
+	//LAPORAN
+	public function lap_detail_tindakan()
+	{
+		return view('kasir.lap_detail_tindakan');
+	}
+
+	public function lap_detail_tindakanByFilter(Request $request)
+	{
+		request()->validate(['tga' => 'required', 'tgb' => 'required']);
+		$dokter = Pegawai::select('id')->get();
+		$di = [];
+		foreach ($dokter as $key => $d) {
+			$di[] = '' . $d->id . '';
+		}
+
+		//return $request->all(); die;
+
+		$data['reg'] = Registrasi::whereBetween('created_at', [valid_date($request['tga']) . ' 00:00:00', valid_date($request['tgb']) . ' 23:59:59'])
+			->where('lunas', 'Y')
+			->whereIn('bayar', !empty($request['jenis_pasien']) ? [$request['jenis_pasien']] : ['1', '2'])
+			->whereIn('dokter_id', !empty($request['dokter']) ? [$request['dokter']] : $di)
+			->whereIn('tipe_layanan', !empty($request['tipe_layanan']) ? [$request['tipe_layanan']] : ['1', '2'])
+			->get();
+		return view('kasir.lap_detail_tindakan', $data)->with('no', 1);
+	}
+
+	public function lap_penerimaan_tunai()
+	{
+		return view('kasir.lap_penerimaan_tunai');
+	}
+
+	public function lap_penerimaan_tunai_byTanggal(Request $request)
+	{
+		request()->validate(['tga' => 'required', 'tgb' => 'required']);
+		$data['tunai'] = Pembayaran::whereBetween('created_at', [valid_date($request['tga']) . ' 00:00:00', valid_date($request['tgb']) . ' 23:59:59'])
+			->where('jenis', 'tunai')
+			->sum('dibayar');
+		$data['piutang'] = Pembayaran::whereBetween('created_at', [valid_date($request['tga']) . ' 00:00:00', valid_date($request['tgb']) . ' 23:59:59'])
+			->where('jenis', 'piutang')
+			->sum('dibayar');
+		return view('kasir.lap_penerimaan_tunai', $data);
+	}
+
+	public function tutup_kasir()
+	{
+		$user = User::join('role_user', 'users.id', '=', 'role_user.user_id')
+			->join('roles', 'roles.id', '=', 'role_user.role_id')
+			->select('users.id as user_id', 'users.name as nama', 'users.email', 'roles.name as Role')
+			->where('roles.name', '=', 'kasir')
+			->get();
+		return view('kasir.tutup_kasir', compact('user'));
+	}
+
+	public function tutup_kasir_byRequest(Request $request)
+	{
+		request()->validate(['tga' => 'required', 'tgb' => 'required']);
+		$user = User::join('role_user', 'users.id', '=', 'role_user.user_id')
+			->join('roles', 'roles.id', '=', 'role_user.role_id')
+			->select('users.id as user_id', 'users.name as nama', 'users.email', 'roles.name as Role')
+			->where('roles.name', '=', 'kasir')
+			->get();
+		$iduser = [];
+		foreach ($user as $key => $d) {
+			$iduser[] = '' . $d->user_id . '';
+		}
+
+		$pembayaran = Pembayaran::whereBetween('pembayarans.created_at', [valid_date($request['tga']) . ' 00:00:00', valid_date($request['tgb']) . ' 23:59:59'])
+			->join('registrasis', 'registrasis.id', '=', 'pembayarans.registrasi_id')
+			->join('pasiens', 'pasiens.id', '=', 'pembayarans.pasien_id')
+			->whereIn('pembayarans.user_id', !empty($request['petugas']) ? [$request['petugas']] : $iduser)
+			->select('registrasis.bayar', 'registrasis.tipe_jkn', 'registrasis.poli_id', 'pasiens.no_rm', 'pasiens.nama', 'pembayarans.*')
+			->get();
+		$tunai = Pembayaran::whereBetween('pembayarans.created_at', [valid_date($request['tga']) . ' 00:00:00', valid_date($request['tgb']) . ' 23:59:59'])
+			->whereIn('pembayarans.user_id', !empty($request['petugas']) ? [$request['petugas']] : $iduser)
+			->where('jenis', 'tunai')->sum('dibayar');
+		$piutang = Pembayaran::whereBetween('pembayarans.created_at', [valid_date($request['tga']) . ' 00:00:00', valid_date($request['tgb']) . ' 23:59:59'])
+			->whereIn('pembayarans.user_id', !empty($request['petugas']) ? [$request['petugas']] : $iduser)
+			->where('jenis', 'piutang')->sum('dibayar');
+
+		if ($request['lanjut']) {
+			return view('kasir.tutup_kasir', compact('user', 'pembayaran', 'tunai', 'piutang'))->with('no', 1);
+		} elseif ($request['excel']) {
+			Excel::create('Laporan Keuangan', function ($excel) use ($pembayaran, $tunai, $piutang) {
+				// Set the properties
+				$excel->setTitle('Tutup Kasir')
+					->setCreator('Digihealth')
+					->setCompany('Digihealth')
+					->setDescription('Tutup Kasir');
+				$excel->sheet('Tutup Kasir', function ($sheet) use ($pembayaran, $tunai, $piutang) {
+					$row = 1;
+					$no = 1;
+					$sheet->row($row, [
+						'No',
+						'No Kuitansi',
+						'Tgl / Waktu',
+						'No. RM',
+						'Nama',
+						'Cara bayar',
+						'Tunai',
+						'Piutang',
+						'Subsidi',
+						'Kasir',
+						'Poli',
+						'Dokter',
+					]);
+					foreach ($pembayaran as $key => $d) {
+						$sheet->row(++$row, [
+							$no++,
+							$d->no_kwitansi,
+							$d->created_at,
+							$d->no_rm,
+							$d->nama,
+							baca_carabayar($d->bayar) . ' ' . $d->tipe_jkn,
+							($d->jenis == 'tunai') ? $d->dibayar : '',
+							($d->jenis == 'piutang') ? $d->dibayar : '',
+							$d->subsidi,
+							User::find($d->user_id)->name,
+							baca_poli($d->poli_id),
+							baca_dokter($d->dokter_id),
+						]);
+					};
+					$sheet->row(++$row, ['', '', '', '', '', 'TOTAL', $tunai, $piutang, '', '', '', '']);
+				});
+			})->export('xlsx');
+		} elseif ($request['pdf']) {
+			$no = 1;
+			$petugas = !empty($request['petugas']) ? User::find($request['petugas'])->name : '';
+			$periode = $request['tga'] . ' s/d ' . $request['tgb'];
+			$pdf = PDF::loadView('kasir.pdf_tutup_kasir', compact('user', 'pembayaran', 'tunai', 'piutang', 'no', 'petugas', 'periode'));
+			$pdf->setPaper('A4', 'landscape');
+			return $pdf->download('laporan keuangan.pdf');
+		}
+	}
+
+	public function getTarif($kat_id)
+	{
+		$tarif = Tarif::where('kategoritarif_id', $kat_id)->pluck('nama', 'id');
+		return json_encode($tarif);
+	}
+
+	public function piutang($registrasi_id)
+	{
+		DB::transaction(function () use ($registrasi_id) {
+			$reg = Registrasi::with('pasien')->where('id', $registrasi_id)->first();
+			$total = Folio::where('registrasi_id', $registrasi_id)->sum('total');
+
+			// $journal = Journal::create([
+			// 	'id_customer'		=> $reg->pasien_id,
+			// 	'contact_type'		=> 'customer',
+			// 	'code'				=> 'PT-'.date('Ymd').'-'.$reg->id,
+			// 	'tanggal'			=> date('Y-m-d'),
+			// 	'total_transaksi'	=> rupiah($total),
+			// 	'type'				=> 'rawat_inap',
+			// 	'keterangan'		=> 'Jurnal Rawat Inap a.n ' . $reg->pasien->nama,
+			// 	'verifikasi'		=> 1
+			// ]);
+
+			$piutang = new Piutang();
+			$piutang->registrasi_id = $reg->id;
+			$piutang->nama = $reg->pasien->nama;
+			$piutang->total = $total;
+			$piutang->dibayar = 0;
+			$piutang->tglbayar = null;
+			// $piutang->journal_id = $journal->id;
+			$piutang->save();
+
+			$reg->lunas = 'P';
+			$reg->update();
+
+			// $akunSementaraKas = AkunCOA::where('code', '101109099')->first();
+			// $akunPiutangPerorangan = AkunCOA::where('code', '101201101')->first();
+
+			// $journalDetail[] = JournalDetail::create([
+			// 	'id_journal'		=> $journal->id,
+			// 	'id_akun_coa'		=> $akunPiutangPerorangan->id,
+			// 	'debit'				=> (int) rupiah($total),
+			// 	'credit'			=> 0,
+			// 	'is_kas_bank'		=> 0,
+			// 	'type'				=> 'piutang',
+			// 	'keterangan'		=> 'Jurnal Rawat Jalan ' . $reg->pasien->nama . ' Akun ' . $akunPiutangPerorangan->nama
+			// ]);
+			// $journalDetail[] = JournalDetail::create([
+			// 	'id_journal'		=> $journal->id,
+			// 	'id_akun_coa'		=> $akunSementaraKas->id,
+			// 	'debit'				=> 0,
+			// 	'credit'			=> (int) rupiah($total),
+			// 	'is_kas_bank'		=> 1,
+			// 	'type'				=> 'piutang',
+			// 	'keterangan'		=> 'Jurnal Rawat Jalan ' . $reg->pasien->nama . ' Akun ' . $akunSementaraKas->nama
+			// ]);
+		});
+		$reg = Registrasi::where('id', $registrasi_id)->first();
+		Flashy::success('Pembayaran pasien ' . $reg->pasien->nama . ' RM ' . $reg->pasien->no_rm . ' masuk piutang.');
+		if (substr($reg->status_reg, 0, 1) == 'I') {
+			return redirect('/kasir/rawatinap');
+		} else {
+			return redirect('/kasir/rawatjalan');
+		}
+	}
+
+	public function piutangIgd($registrasi_id)
+	{
+		DB::transaction(function () use ($registrasi_id) {
+			$reg = Registrasi::where('id', $registrasi_id)->first();
+			$total = Folio::where('registrasi_id', $registrasi_id)->sum('total');
+			$piutang = new Piutang();
+			$piutang->registrasi_id = $reg->id;
+			$piutang->nama = $reg->pasien->nama;
+			$piutang->total = $total;
+			$piutang->dibayar = 0;
+			$piutang->tglbayar = null;
+			$piutang->carabayar = $reg->bayar;
+			$piutang->save();
+
+			$reg->lunas = 'P';
+			$reg->update();
+		});
+		return redirect('/kasir/igd');
+	}
+
+	public static function dataPiutang()
+	{
+		$piutang = Piutang::join('registrasis', 'registrasis.id', '=', 'piutangs.registrasi_id')
+			->join('pasiens', 'pasiens.id', '=', 'registrasis.pasien_id')
+			->where('registrasis.lunas', 'P')
+			->select('registrasis.id', 'registrasis.pasien_id', 'registrasis.status_reg', 'registrasis.bayar', 'registrasis.tipe_jkn', 'pasiens.nama', 'pasiens.no_rm')
+			->get();
+		return view('kasir.dataPiutang', compact('piutang'))->with('no', 1);
+	}
+
+	//VERIFIKASI KASA =========================================================================
+	public function verifikasiRajal($id = '')
+	{
+		$data['reg'] = Registrasi::where('id', '=', $id)->first();
+		$data['folio'] = Folio::where(['registrasi_id' => $id, 'jenis' => 'TA', 'lunas' => 'N'])
+			->groupBy('poli_tipe')
+			->selectRaw('sum(total) as total, count(namatarif) as qty, poli_tipe')
+			->get();
+		$data['tagihan'] = Folio::where(['registrasi_id' => $id, 'jenis' => 'TA', 'lunas' => 'N'])
+			->get()->sum('total');
+		$data['reg']	= Registrasi::find($id);
+		$data['i_verif'] = 1;
+		$data['i_hapus'] = 1;
+		$data['dokter'] = Pegawai::where('kategori_pegawai', 1)->pluck('nama', 'id');
+		$data['perawat'] = Pegawai::pluck('nama', 'id');
+		$data['kat_tarif'] = Kategoritarif::pluck('namatarif', 'id');
+		$data['tarif'] = Tarif::pluck('nama', 'id');
+		// return $data['reg'];die;
+		// return $data['folio'];die;
+
+		return view('kasir.verifikasiRajal', $data)->with('no', 1);
+	}
+
+	public function detailVerifRajal($reg = '', $poli_tipe = '')
+	{
+		$data['reg'] = Registrasi::where('id', '=', $reg)->first();
+		$data['folio'] = Folio::where('folios.registrasi_id', $reg)->where('folios.poli_tipe', $poli_tipe)
+			->get();
+		$data['reg_id'] = $reg;
+		$data['poli'] = Folio::where('registrasi_id', '=', $reg)->distinct();
+		$data['tagihan'] = Folio::where('registrasi_id', $reg)->where('lunas', 'N')->sum('total');
+		$data['dokter'] = Pegawai::where('kategori_pegawai', 1)->pluck('nama', 'id');
+		$data['perawat'] = Pegawai::pluck('nama', 'id');
+		$data['kat_tarif'] = Kategoritarif::pluck('namatarif', 'id');
+		$data['tarif'] = Tarif::pluck('nama', 'id');
+		$data['jmlbaris'] = Folio::where('registrasi_id', $reg)->where('poli_tipe', $poli_tipe)->count();
+		$data['i_verif'] = 1;
+		$data['i_hapus'] = 1;
+		$data['poli_tipe'] = $poli_tipe;
+		$data['tipe']	= 'rajal';
+		return view('kasir.detailTindakanRajal', $data)->with('no', 1);
+	}
+
+	public static function verifikasirDetailKasirRajal(Request $request)
+	{
+		$jumlah = $request['jmlbaris'];
+		$jml = [];
+		$hps = 0;
+		for ($i = 1; $i < $jumlah; $i++) {
+			if (!empty($request['verif_kasa' . $i])) {
+				$fol = Folio::find($request['verif_kasa' . $i]);
+				$fol->verif_kasa = 'Y';
+				$fol->verif_kasa_user = Auth::user()->name;
+				$fol->update();
+				array_push($jml, $fol->id);
+			}
+
+			if (!empty($request['hapus' . $i])) {
+				$hps++;
+				$fol = Folio::find($request['hapus' . $i]);
+				$fol->delete();
+			}
+		}
+		$hps;
+		$data = Folio::whereIn('id', $jml)->get();
+		$pesan = $data->count() . ' tindakan berhasil di verifikasi. ' . $hps . ' tindakan berhasil di hapus.';
+		Flashy::success($pesan);
+		return redirect('kasir/verifikasi-rajal/' . $request['registrasi_id']);
+	}
+
+	public function verifikasiKasa()
+	{
+		$data['registrasi'] = Registrasi::whereIn('status_reg', ['J1', 'J2', 'G1', 'G2'])
+			->where('created_at', 'like', date('Y-m-d') . '%')
+			// ->where('verif_kasa', 'N')
+			->get();
+		return view('kasir.verifikasiKasa.verifikasiKasa', $data)->with('no', 1);
+	}
+
+	public function verifikasiKasaByRequest(Request $request)
+	{
+		$data['registrasi'] = Registrasi::whereIn('status_reg', ['J1', 'J2', 'G1', 'G2'])
+			->where('created_at', 'like', valid_date($request['tga']) . '%')
+			// ->where('verif_kasa', 'N')
+			->get();
+		return view('kasir.verifikasiKasa.verifikasiKasa', $data)->with('no', 1);
+	}
+
+	public function detailVerifikasiKasa($registrasi_id)
+	{
+		$data['registrasi'] = Registrasi::select('id', 'pasien_id', 'status_reg', 'dokter_id', 'poli_id', 'bayar')->where('id', $registrasi_id)->first();
+		$data['pasien'] = Pasien::find($data['registrasi']->pasien_id);
+		if ($data['registrasi']->bayar == 1) {
+			$data['folio'] = Folio::where('registrasi_id', $registrasi_id)->get();
+		} else {
+			$data['folio'] = Folio::where('registrasi_id', $registrasi_id)->where('lunas', 'N')->get();
+		}
+		return view('kasir.verifikasiKasa.detailVerifikasiKasa', $data)->with(['no' => 1, 'baris' => 1]);
+	}
+
+	public function saveVerifikasiKasa(Request $request)
+	{
+		// dd($request->all());
+		$jumlah = $request['jmlbaris'];
+		$jml = 0;
+		for ($i = 1; $i < $jumlah; $i++) {
+			if (!empty($request['verif_kasa' . $i])) {
+				$fol = Folio::where(['poli_tipe' => $request['verif_kasa' . $i], 'registrasi_id' => $request['registrasi_id']])
+					->update(['verif_kasa' => 'Y', 'verif_kasa_user' => Auth::user()->name]);
+				$cnt = Folio::where(['poli_tipe' => $request['verif_kasa' . $i], 'registrasi_id' => $request['registrasi_id']])->count();
+				$jml += $cnt;
+			}
+
+			if (!empty($request['hapus' . $i])) {
+				$fol = Folio::where('id', $request['hapus' . $i])->first();
+				$fol->delete();
+			}
+		}
+		// $data = Folio::whereIn('id', $jml)->get();
+		$pesan = $jml . ' tindakan berhasil di verifikasi';
+		// if ($data->count() >= 1) {
+		if ($jml >= 1) {
+			$reg = Registrasi::find($request['registrasi_id']);
+			$reg->tgl_verif = date('Y-m-d H:i:s');
+			$reg->update();
+		}
+		Flashy::success($pesan);
+		return redirect('kasir/verifikasi-rajal/' . $request['registrasi_id']);
+		// return response()->json(['sukses' => true, 'registrasi_id' => $request['registrasi_id']]);
+	}
+
+	public static function cetakVerifikasi($registrasi_id)
+	{
+		// $folio = Folio::where('registrasi_id', $registrasi_id)->groupBy('tarif_id')
+		// 	->selectRaw('tarif_id, sum(total) as total')
+		// 	->get();
+		// dd($folio);
+		// $kuitansi = Pembayaran::find(['$registrasi_id']);
+		$folio = Folio::where('registrasi_id', $registrasi_id)
+			// ->groupBy('tarif_id')
+			->leftJoin('tarifs', 'tarifs.id', '=', 'folios.tarif_id')
+			->leftJoin('mastermapping_biaya', 'mastermapping_biaya.id', '=', 'tarifs.mapping_biaya_id')
+			->groupBy('mastermapping_biaya.id')
+			// ->selectRaw('tarif_id, sum(folios.total) as total')
+			->selectRaw('mastermapping_biaya.kelompok,folios.tarif_id, sum(folios.total) as total')
+			->get();
+
+		// dd($folio);
+		$jml = Folio::where('registrasi_id', $registrasi_id)->sum('total');
+		$reg = Registrasi::find($registrasi_id);
+		$irna = Rawatinap::where('registrasi_id', $registrasi_id)->first();
+		$user_kasa = Folio::where('registrasi_id', $registrasi_id)->select('verif_kasa_user')->first();
+		$no = 1;
+		$pdf = PDF::loadView('kasir.verifikasiKasa.cetakVerifikasi', compact('folio', 'reg', 'jml', 'no', 'irna', 'user_kasa'));
+		$pdf->setPaper('legal');
+		return $pdf->stream();
+	}
+
+	//VERIFIKASI TAMBAH TINDAKAN
+	function tambahTindakan($registrasi_id)
+	{
+		$idreg = $registrasi_id;
+		$data['reg_id'] = $idreg;
+		$data['jenis'] = Registrasi::where('id', '=', $idreg)->first();
+		$data['pasien'] = Pasien::find($data['jenis']->pasien_id);
+		$data['poli'] = Folio::where('registrasi_id', '=', $idreg)->distinct();
+		$data['tagihan'] = Folio::where('registrasi_id', $idreg)->sum('total');
+		$data['dokter'] = Pegawai::where('kategori_pegawai', 1)->pluck('nama', 'id');
+		$data['perawat'] = Pegawai::pluck('nama', 'id');
+		$data['kat_tarif'] = Kategoritarif::select('namatarif', 'id')->get();
+		$jenis = $data['jenis']->status_reg;
+
+		if (substr($jenis, 0, 1) == 'G') {
+			$data['opt_poli'] = Poli::where('politype', 'G')->get();
+			session(['jenis' => 'TG']);
+			$data['tindakan'] = Tarif::where('jenis', '=', 'TG')->where('total', '<>', 0)->get();
+		} elseif (substr($jenis, 0, 1) == 'J') {
+			$data['opt_poli'] = Poli::where('politype', 'J')->get();
+			session(['jenis' => 'TA']);
+			$data['tindakan'] = Tarif::where('jenis', '=', 'TA')->where('total', '<>', 0)->get();
+		} elseif (substr($jenis, 0, 1) == 'I') {
+			session(['jenis' => 'TI']);
+			$data['opt_poli'] = Poli::where('politype', 'I')->get();
+		}
+		return view('kasir.verifikasiKasa.tambahTindakan', $data);
+	}
+
+	//SAVE TAMBAH TINDAKAN
+	public function saveTindakan(Request $request)
+	{
+		request()->validate(['tarif_id' => 'required']);
+		session(['dokter' => $request['dokter_id'], 'pelaksana' => $request['pelaksana'], 'perawat' => $request['perawat']]);
+
+		$reg = Registrasi::find($request['registrasi_id']);
+		$tarif = Tarif::find($request['tarif_id']);
+		$fol = new Folio();
+		$fol->registrasi_id = $request['registrasi_id'];
+		$fol->poli_id = $request['poli_id'];
+		$fol->lunas = 'N';
+		$fol->namatarif = $tarif->nama;
+		$fol->tarif_id = $request['tarif_id'];
+		$fol->jenis = $tarif->jenis;
+		$fol->cara_bayar_id = $reg->bayar;
+		if (substr($reg->status_reg, 0, 1) == 'G') {
+			$fol->poli_tipe = 'G';
+		} else {
+			$fol->poli_tipe = 'J';
+		}
+		$fol->total = ($tarif->total * $request['jumlah']);
+		$fol->jenis_pasien = $request['jenis'];
+		$fol->pasien_id = $request['pasien_id'];
+		$fol->dokter_id = $request['dokter_id'];
+		$fol->user_id = Auth::user()->id;
+		$fol->poli_id = $request['poli_id'];
+		if (!empty($request['tanggal'])) {
+			$fol->created_at = valid_date($request['tanggal']);
+		}
+
+		//revisi foliopelaksana
+		$fol->dpjp = $request['dokter_id'];
+		$fol->dokter_pelaksana = $request['pelaksana'];
+		$fol->perawat = $request['perawat'];
+		if (substr($reg->status_reg, 0, 1) == 'G') {
+			$fol->pelaksana_tipe = 'TG';
+		} else {
+			$fol->pelaksana_tipe = 'TA';
+		}
+		$fol->save();
+
+		// Insert Kunjungan IRJ
+		if ($fol->poli_tipe == 'J') {
+			$cek = HistorikunjunganIRJ::where('registrasi_id', $request['registrasi_id'])->where('poli_id', $request['poli_id'])->count();
+			if ($cek < 1) {
+				$rj = new HistorikunjunganIRJ();
+				$rj->registrasi_id = $request['registrasi_id'];
+				$rj->pasien_id = $request['pasien_id'];
+				$rj->poli_id = $request['poli_id'];
+				$rj->dokter_id = @$request['dokter_id'];
+				$rj->user = Auth::user()->id;
+				$rj->save();
+			}
+		}
+
+		// Insert Kunjungan IRD
+		if ($fol->poli_tipe == 'G') {
+			$cek = HistorikunjunganIGD::where('registrasi_id', $request['registrasi_id'])->where('triage_nama', baca_poli($request['poli_id']))->count();
+			if ($cek < 1) {
+				$rj = new HistorikunjunganIGD();
+				$rj->registrasi_id = $request['registrasi_id'];
+				$rj->pasien_id = $request['pasien_id'];
+				$rj->triage_nama = baca_poli($request['poli_id']);
+				$rj->user = Auth::user()->id;
+				$rj->save();
+			}
+		}
+
+		//input folio pelaksana
+		// $fp = new Foliopelaksana();
+		// $fp->folio_id = $fol->id;
+		// $fp->dpjp = $request['dokter_id'];
+		// $fp->dokter_pelaksana = $request['pelaksana'];
+		// $fp->perawat = $request['perawat'];
+		// if (substr($reg->status_reg, 0, 1) == 'G') {
+		// 	$fp->pelaksana_tipe = 'TG';
+		// } else {
+		// 	$fp->pelaksana_tipe = 'TA';
+		// }
+		// $fp->user = Auth::user()->id;
+		// $fp->save();
+
+		// Insert Histori
+		$history = new HistoriStatus();
+		$history->registrasi_id = $request['registrasi_id'];
+		if (substr($reg->status_reg, 0, 1) == 'G') {
+			$history->status = 'G2';
+		} elseif (substr($reg->status_reg, 0, 1) == 'J') {
+			$history->status = 'J2';
+		}
+
+		$history->poli_id = $request['poli_id'];
+		$history->bed_id = null;
+		$history->user_id = Auth::user()->id;
+		$history->save();
+		session()->forget('jenis');
+		return response()->json(['sukses' => true, 'registrasi_id' => $reg->id]);
+	}
+
+	//VERIFIKASI KASIR IRNA
+	public static function verifikasirKasirIrna(Request $request)
+	{
+		// return $request->all(); die;
+		$jumlah = $request['jmlbaris'];
+		$jml = [];
+		$hps = 0;
+		for ($i = 1; $i < $jumlah; $i++) {
+			if (!empty($request['verif_kasa' . $i])) {
+				$fol = Folio::where(['poli_tipe' => $request['verif_kasa' . $i], 'registrasi_id' => $request['registrasi_id']])->get();
+				foreach ($fol as $d) {
+					$d->verif_kasa = 'Y';
+					$d->verif_kasa_user = Auth::user()->name;
+					$d->update();
+					array_push($jml, $d->id);
+				}
+				$jml;
+			} else {
+				$fol = Folio::where(['poli_tipe' => null, 'registrasi_id' => $request['registrasi_id']])->get();
+				foreach ($fol as $d) {
+					$d->verif_kasa = 'Y';
+					$d->verif_kasa_user = Auth::user()->name;
+					$d->update();
+					array_push($jml, $d->id);
+				}
+				$jml;
+			}
+
+			if (!empty($request['hapus' . $i])) {
+				$hps++;
+				$fol = Folio::where('id', $request['hapus' . $i])->first();
+				$fol->delete();
+			}
+		}
+		$hps;
+		$data = Folio::whereIn('id', $jml)->get();
+		$pesan = $data->count() . ' tindakan berhasil di verifikasi. ' . $hps . ' tindakan berhasil di hapus.';
+		Flashy::success($pesan);
+		return redirect('kasir/detail-verifikasi/' . $request['registrasi_id']);
+	}
+
+	public static function verifikasirDetailKasirIrna(Request $request)
+	{
+		// return $request->all(); die;
+		$jumlah = $request['jmlbaris'];
+		$jml = [];
+		$hps = 0;
+		if ($request['tipe'] == 'rajal') {
+			Folio::where(['registrasi_id' => $request['registrasi_id'], 'poli_tipe' => $request['poli_tipe']])->update(['verif_kasa' => 'N']);
+		} else {
+			if ($request['poli_tipe'] == '') {
+				Folio::where(['registrasi_id' => $request['registrasi_id'], 'poli_tipe' => null])->update(['verif_kasa' => 'N']);
+			} else {
+				Folio::where(['registrasi_id' => $request['registrasi_id'], 'poli_tipe' => $request['poli_tipe']])->update(['verif_kasa' => 'N']);
+			}
+		}
+
+		for ($i = 1; $i < $jumlah; $i++) {
+			if (!empty($request['verif_kasa' . $i])) {
+				$fol = Folio::find($request['verif_kasa' . $i]);
+				$fol->verif_kasa = 'Y';
+				$fol->verif_kasa_user = Auth::user()->name;
+				$fol->update();
+				array_push($jml, $fol->id);
+			}
+
+			if (!empty($request['hapus' . $i])) {
+				$hps++;
+				$fol = Folio::find($request['hapus' . $i]);
+				$fol->delete();
+			}
+		}
+		$hps;
+		$data = Folio::whereIn('id', $jml)->get();
+		$pesan = $data->count() . ' tindakan berhasil di verifikasi. ' . $hps . ' tindakan berhasil di hapus.';
+		Flashy::success($pesan);
+		if ($request['tipe'] == 'rajal') {
+			return redirect('kasir/verifikasi-rajal/' . $request['registrasi_id']);
+		} else {
+			return redirect('kasir/detail-verifikasi/' . $request['registrasi_id']);
+		}
+	}
+
+	public static function unverifikasiKasirIrna($folio_id, $registrasi_id)
+	{
+		$fol = Folio::find($folio_id);
+		$fol->verif_kasa = 'N';
+		$fol->verif_kasa_user = Auth::user()->name;
+		$fol->update();
+		return redirect('kasir/detail-verifikasi/' . $registrasi_id);
+	}
+
+	public static function hapusTindakanIrna($folio_id, $registrasi_id)
+	{
+		$fol = Folio::find($folio_id);
+		$fol->delete();
+
+		// $fp = Foliopelaksana::where('folio_id', $folio_id)->first();
+		// if ($fp) {
+		// 	$fp->delete();
+		// }
+		return redirect('kasir/detail-verifikasi/' . $registrasi_id);
+	}
+
+	public static function kosongkanBed($reg_id, $pasien_id)
+	{
+		$ranap = Rawatinap::where('registrasi_id', $reg_id)->first();
+		$ranap->tgl_keluar = date('Y-m-d H:i:s');
+		$ranap->update();
+
+		$bed = Bed::find($ranap->bed_id);
+		$bed->reserved = 'N';
+		$bed->update();
+		return redirect('kasir/rawatinap/bayar/' . $reg_id . '/' . $pasien_id);
+	}
+
+	//PEMBIAYAAN DI KASIR
+	public static function getRegister($registrasi_id)
+	{
+		$reg = Registrasi::find($registrasi_id);
+		return response()->json(['reg' => $reg]);
+	}
+	public static function getTarifIrna()
+	{
+		$tarif = Tarif::where('jenis', 'TI')->select('id', 'nama', 'total')->get();
+		return response()->json(['tarif' => $tarif]);
+	}
+
+	public static function getPelaksana()
+	{
+		$pelaksana = Pegawai::where('kategori_pegawai', 1)->get(['id', 'nama']);
+		return response()->json(['pelaksana' => $pelaksana]);
+	}
+	public static function getPerawat()
+	{
+		$perawat = Pegawai::where('kategori_pegawai', 2)->get(['id', 'nama']);
+		return response()->json(['perawat' => $perawat]);
+	}
+
+	public static function saveBiayaTambahan(Request $request)
+	{
+		if ($request->jenisTarif == 2) {
+			request()->validate([
+				'namatarif' => 'required',
+				'tarifTotal' => 'required',
+				'qty' => 'required|numeric|min:0|not_in:0|max:100'
+			]);
+			//set tarif
+			$tarif_id = 11000;
+			$namatarif = $request->namatarif;
+			$tarifTotal = rupiah($request->tarifTotal);
+			$mapping_biaya_id = NULL;
+		} else {
+			request()->validate([
+				'qty' => 'required|numeric|min:0|not_in:0|max:100'
+			]);
+			$tarif = Tarif::find($request->tarif_id);
+			$tarif_id = $tarif->id;
+			$namatarif = $tarif->nama;
+			$tarifTotal = $tarif->total;
+			$mapping_biaya_id = $tarif->mapping_biaya_id;
+		}
+
+		$fol = new Folio();
+		$fol->registrasi_id = $request['registrasi_id'];
+		$fol->poli_id = NUll;
+		$fol->lunas = 'N';
+		$fol->namatarif = $namatarif;
+		$fol->tarif_id = $tarif_id;
+		$fol->jenis = 'TI';
+		$fol->cara_bayar_id = $request->cara_bayar_id;
+		$fol->poli_tipe = 'I';
+		$fol->total = $tarifTotal * $request->qty;
+		$fol->jenis_pasien = $request['jenis_pasien'];
+		$fol->pasien_id = $request['pasien_id'];
+		$fol->dokter_id = $request['dokter_id'];
+		$fol->user_id = Auth::user()->id;
+		$fol->poli_id = NULL;
+		$fol->mapping_biaya_id = $mapping_biaya_id;
+
+		//revisi foliopelaksana
+		$fol->dpjp = $request['dokter_id'];
+		$fol->dokter_pelaksana = $request['pelaksana'];
+		$fol->perawat = $request['perawat'];
+		$fol->pelaksana_tipe = 'TI';
+		$fol->save();
+
+		//input folio pelaksana
+		// $fp = new Foliopelaksana();
+		// $fp->folio_id = $fol->id;
+		// $fp->dpjp = $request['dokter_id'];
+		// $fp->dokter_pelaksana = $request['pelaksana'];
+		// $fp->pelaksana_tipe = 'TI';
+		// $fp->user = Auth::user()->id;
+		// $fp->save();
+		return response()->json(['sukses' => true]);
+	}
+
+	//Laporan Verif
+	public function laporanVerifiksiberkas()
+	{
+		return view('kasir.verifikasiKasa.laporanVerifikasi', compact('today'))->with('no', 1);
+	}
+
+	public function lap_Verifikasi_berkas_bytanggal(Request $request)
+	{
+		request()->validate(['cara_bayar' => 'required', 'status_pelayanan' => 'required', 'tga' => 'required', 'tgb' => 'required']);
+		$tga = valid_date($request['tga']);
+		$tgb = valid_date($request['tgb']);
+		$reg = Registrasi::whereBetween('created_at', [valid_date($request['tga']) . ' 00:00:00', valid_date($request['tgb']) . ' 23:59:59'])
+			->where('status_reg', 'LIKE', $request['status_pelayanan'] . '%')
+			->where('bayar', $request['cara_bayar'])
+			->orderBy('status_reg')
+			->get();
+		if ($request['tampil']) {
+			return view('kasir.verifikasiKasa.laporanVerifikasi', compact('reg', 'tga'))->with('no', 1);
+		} else {
+			Excel::create('Laporan Verifikasi', function ($excel) use ($reg) {
+				// Set the properties
+				$excel->setTitle('Laporan Verifikasi')
+					->setCreator('Digihealth')
+					->setCompany('Digihealth')
+					->setDescription('Laporan Verifikasi');
+				$excel->sheet('Laporan Verifikasi', function ($sheet) use ($reg) {
+					$row = 1;
+					$no = 1;
+					$sheet->row($row, [
+						'No',
+						'Nama',
+						'No RM',
+						'Cara Bayar',
+						'Dokter',
+						'Klinik / Ruangan',
+						'Tarif Rs',
+						'Petugas Verifkasi',
+						'Tanggal Pendaftaran',
+						'Status',
+					]);
+					foreach ($reg as $key => $d) {
+						$pasien = Pasien::find($d->pasien_id);
+						$folio = Folio::where('registrasi_id', $d->id)->where('verif_kasa', 'Y')->first();
+						$total = Folio::where('registrasi_id', $d->id)->sum('total');
+						$count = Folio::where('registrasi_id', $d->id)->where('verif_kasa', 'Y')->count();
+						if (substr($d->status_reg, 0, 1) == 'J' or substr($d->status_reg, 0, 1) == 'G') {
+							$poli = baca_poli($d->poli_id);
+						} elseif (substr($d->status_reg, 0, 1) == 'I') {
+							$irna = \App\Rawatinap::where('registrasi_id', $d->id)->first();
+							$poli = $irna ? baca_kamar($irna->kamar_id) : null;
+						} else {
+							$poli = baca_poli($d->poli_id);
+						}
+						if ($pasien) {
+							$sheet->row(++$row, [
+								$no++,
+								$pasien->nama,
+								$pasien->no_rm,
+								baca_carabayar($d->bayar),
+								baca_dokter($d->dokter_id),
+								$poli,
+								$total,
+								$folio ? $folio->verif_kasa_user : null,
+								$d->created_at->format('d-m-Y H:i:s'),
+								($count >= 1) ? 'Sudah Terverif' : 'Belum',
+							]);
+						}
+					};
+				});
+			})->export('xlsx');
+		}
+	}
+
+	public function cetak_kuitansi_naik_kelas($id = '')
+	{
+		$kuitansi = Pembayaran::find($id);
+		$reg = Registrasi::find($kuitansi->registrasi_id);
+		$inacbg = Inacbg::where('registrasi_id', $reg->id)->first();
+		$irna = Rawatinap::where('registrasi_id', $reg->id)->first();
+
+		$pdf = PDF::loadView('kasir.kuitansi_naik_kelas', compact('reg', 'kuitansi', 'inacbg', 'irna'));
+		return $pdf->stream();
+	}
+
+	public function detailRincianBayar($no_kwitansi)
+	{
+		$folio = Folio::where('no_kuitansi', $no_kwitansi)->get();
+		return response()->json(['folio' => $folio]);
+	}
+
+	public function detailPiutang($id)
+	{
+		$piutang = Piutang::find($id);
+		return response()->json($piutang);
+	}
+
+	public static function bayarPiutang(Request $request)
+	{
+		// return $request->all(); die;
+		$reg = Registrasi::find($request['registrasi_id']);
+
+		$cek_kuitansi = Pembayaran::where('no_kwitansi', 'LIKE', 'IRNA-' . date('Ymd') . '-%')->count() + 1;
+		$no_kuitansi = 'IRNA-' . date('Ymd') . '-' . sprintf("%05s", $cek_kuitansi);
+
+		$pem = new Pembayaran();
+		$pem->jenis = 'tunai';
+		$pem->user_id = Auth::user()->id;
+		$pem->total = $request['total_piutang'];
+		$pem->dibayar = rupiah($request['total']);
+		$pem->iur = 0;
+		$pem->flag = 'Y';
+		$pem->registrasi_id = $request->registrasi_id;
+		$pem->diskon_persen = $request->diskon_persen_Utang;
+		$pem->diskon_rupiah = rupiah($request->diskon_rupiah_Utang);
+		$pem->dokter_id = $reg->dokter_id;
+		$pem->no_kwitansi = $no_kuitansi;
+		$pem->pasien_id = $request->pasien_id;
+		$pem->hrs_bayar = rupiah($request['harusBayarUtang']);
+		$pem->save();
+
+		$piutang = Piutang::find($request->id);
+		$piutang->tglbayar = date('Y-m-d');
+		$piutang->dibayar  = rupiah($request->total);
+		$piutang->user_id  = Auth::user()->id;
+		$piutang->update();
+
+		if (rupiah($request->total) < rupiah($request->harusBayarUtang)) {
+			$pt = new Piutang();
+			$pt->registrasi_id = $request['registrasi_id'];
+			$pt->pasien_id	   = $request->pasien_id;
+			$pt->total_piutang = rupiah($request['harusBayarUtang']) - rupiah($request['total']);
+			$pt->dibayar	   = 0;
+			$pt->user_id	   = Auth::user()->id;
+			$pt->pembayaran_id = $pem->id;
+			$pt->kwitansi_pembayaran = $no_kuitansi;
+			$pt->save();
+		}
+		Flashy::success('Piutang berhasil dibayar');
+		return response()->json(['sukses' => true]);
+	}
+
+	public function diklat()
+	{
+		$tarif = Tarif::all();
+		return view('kasir.diklat', compact('tarif'));
+	}
+
+	public function diklatSave(Request $request)
+	{
+		$cek = Validator::make($request->all(), [
+			'nama' => 'required',
+			'keterangan' => 'required'
+		]);
+
+		if ($cek->fails()) {
+			return response()->json(['sukses' => false, 'error' => $cek->errors()]);
+		} else {
+			$tarif = \Modules\Tarif\Entities\Tarif::find($request->tarif_id);
+			$diklat = new \App\PendapatanDiklat();
+			$diklat->nama = $request->nama;
+			$diklat->tarif_id = $tarif->id;
+			$diklat->namatarif = $tarif->nama;
+			$diklat->total = $tarif->total;
+			$diklat->keterangan = $request->keterangan;
+			$diklat->user_id = Auth::user()->id;
+			$diklat->save();
+
+			$journal = Journal::create([
+				'id_customer'		=> 0,
+				'contact_type'		=> 'customer',
+				'code'				=> 'PLL-' . date('Ymd') . '-' . $diklat->id,
+				'tanggal'			=> date('Y-m-d'),
+				'total_transaksi'	=> rupiah($tarif->total),
+				'type'				=> 'rawat_inap',
+				'keterangan'		=> 'Jurnal Pendapatan Lain-lain a.n ' . $request->nama,
+				'verifikasi'		=> 1
+			]);
+
+			$akunSementaraKas = AkunCOA::where('code', '101109099')->first();
+			$akunPendapatanDiklat = AkunCOA::where('code', '591000002')->first();
+			$journalDetail[] = JournalDetail::create([
+				'id_journal'		=> $journal->id,
+				'id_akun_coa'		=> $akunSementaraKas->id,
+				'debit'				=> (int) rupiah($tarif->total),
+				'credit'			=> 0,
+				'is_kas_bank'		=> 1,
+				'type'				=> 'pendapatan_lain',
+				'keterangan'		=> 'Jurnal Pendapatan Lain-lain ' . $request->nama . ' Akun ' . $akunSementaraKas->nama
+			]);
+
+			$journalDetail[] = JournalDetail::create([
+				'id_journal'		=> $journal->id,
+				'id_akun_coa'		=> $akunPendapatanDiklat->id,
+				'debit'				=> 0,
+				'credit'			=> (int) rupiah($tarif->total),
+				'is_kas_bank'		=> 0,
+				'type'				=> 'pendapatan_lain',
+				'keterangan'		=> 'Jurnal Pendapatan Lain-lain ' . $request->nama . ' Akun ' . $akunPendapatanDiklat->nama
+			]);
+
+			return response()->json(['sukses' => true, 'data' => $diklat]);
+		}
+	}
+
+	public function batalBayarDiklat($id)
+	{
+		$diklat = \App\PendapatanDiklat::find($id);
+		$diklat->delete();
+		return response()->json(['sukses' => true]);
+	}
+
+	public function cetakDiklat($id)
+	{
+		$diklat = \App\PendapatanDiklat::find($id);
+		return view('kasir.cetakDiklat', compact('diklat'));
+	}
+
+	public function dataDiklat()
+	{
+		$diklat = \App\PendapatanDiklat::orderBy('id', 'desc')->get();
+		return DataTables::of($diklat)
+			->addIndexColumn()
+			->addColumn('total', function ($diklat) {
+				return number_format($diklat->total);
+			})
+			->addColumn('aksi', function ($diklat) {
+				return '<a onclick="hapus(' . $diklat->id . ')" class="btn btn-warning btn-sm btn-flat">BATAL</a>' .
+					'<a href="' . url('/kasir/diklat-cetak/' . $diklat->id) . '" target="_blank" class="btn btn-danger btn-sm btn-flat">CETAK</a>';
+			})
+			->rawColumns(['aksi'])
+			->make(true);
+	}
+
+	//Jaminan Jamkesda
+	public function jamkesda()
+	{
+		$data = [];
+		return view('kasir.jamkesda', compact('data'));
+	}
+
+	public function jamkesdaGetData(Request $request)
+	{
+		request()->validate(['no_rm' => 'required']);
+		$data = Registrasi::join('pasiens', 'registrasis.pasien_id', '=', 'pasiens.id')
+			->where('pasiens.no_rm', $request['no_rm'])
+			->select('registrasis.id as registrasi_id', 'registrasis.no_sep', 'registrasis.created_at', 'registrasis.poli_id', 'registrasis.status_reg', 'pasiens.no_rm', 'pasiens.nama')
+			->get();
+		return view('kasir.jamkesda', compact('data'))->with('no', 1);
+	}
+
+	public function saveJamkesda(Request $request)
+	{
+		$cek = Validator::make($request->all(), [
+			'dijamin' => 'required'
+		]);
+
+		if ($cek->fails()) {
+			return response()->json(['sukses' => false, 'error' => $cek->errors()]);
+		} else {
+			$jkd = \App\Jamkesda::where('registrasi_id', $request->registrasi_id)->first();
+			if ($jkd) {
+				$jkd->dijamin = rupiah($request->dijamin);
+				$jkd->registrasi_id = $request->registrasi_id;
+				$jkd->user_id = Auth::user()->id;
+				$jkd->update();
+			} else {
+				$jd = new \App\Jamkesda();
+				$jd->registrasi_id = $request->registrasi_id;
+				$jd->dijamin = rupiah($request->dijamin);
+				$jd->user_id = Auth::user()->id;
+				$jd->save();
+			}
+			return response()->json(['sukses' => true]);
+		}
+	}
+
+	public function hapusTindakan($id, $registrasi_id)
+	{
+		$folio = Folio::where('id', $id)->where('registrasi_id', $registrasi_id)->first();
+		// return $folio; die;
+		return response()->json($folio);
+	}
+
+	public function simpanHapusTindakan(Request $request)
+	{
+		// return $request->all(); die;
+		$cek = Validator::make($request->all(), [
+			'alasan' => 'required'
+		]);
+
+		if ($cek->fails()) {
+			return response()->json(['sukses' => false, 'error' => $cek->errors()]);
+		} else {
+			$simmpan = new \App\historiKasir();
+			$simmpan->registrasi_id = $request['registrasi_id'];
+			$simmpan->id_tarif = $request['tarif_id'];
+			$simmpan->alasan = $request['alasan'];
+			$simmpan->user_id = Auth::user()->id;
+			$simmpan->pasien_id = $request['pasien'];
+			$simmpan->folio_record = Folio::where('tarif_id', $request['tarif_id'])->where('registrasi_id', $request['registrasi_id'])->first();
+			$simmpan->save();
+
+			$hapus = Folio::find($request['id']);
+			$hapus->delete();
+			return response()->json(['sukses' => true]);
+		}
+	}
+
+	public function dunnoWhat()
+	{
+		$data['reg'] = Folio::join('registrasis', 'folios.registrasi_id', '=', 'registrasis.id')
+			->join('pasiens', 'registrasis.pasien_id', '=', 'pasiens.id')
+			->join('pembayarans', 'pembayarans.registrasi_id', '=', 'registrasis.id')
+			->join('users', 'pembayarans.user_id', '=', 'users.id')
+			->join('pegawais', 'folios.dokter_pelaksana', '=', 'pegawais.id')
+			->whereIn('pembayarans.user_id', [2, 6])
+			->whereIn('registrasis.status_reg', ['I1', 'I2', 'I3'])
+			->whereBetween('pembayarans.created_at', ['2021-01-01 00:00:00', '2021-01-23 23:59:59'])
+			->where('registrasis.lunas', 'Y')
+			->select('pembayarans.created_at', 'users.name', 'pasiens.no_rm', 'pasiens.nama', 'folios.namatarif', 'pegawais.nama as pelaksana', 'pembayarans.no_kwitansi')
+			->get();
+		return view('kasir.dunno_what', $data)->with('no', 1);
+	}
+
+
+	// Transaksi Keluar
+	public function transaksiKeluar()
+	{
+		$satuan = Satuanbeli::orderBy('nama', 'ASC')->get();
+		$klasifikasi = KlasifikasiPengeluaran::orderBy('name', 'ASC')->get();
+		$jenis = JenisPengeluaran::orderBy('name', 'ASC')->get();
+
+		$akunCoa = AkunCOA::where('akun_code_1', '5')->where('akun_code_9', '!=', '0')->get()->toArray();
+		foreach ($akunCoa as $value) {
+			$akun_coa[$value['id']] = implode(' - ', [$value['code'], $value['nama']]);
+		}
+
+		return view('kasir.transaksiKeluar', compact('satuan', 'klasifikasi', 'jenis', 'akun_coa'));
+	}
+
+	public function transaksiKeluarSave(Request $request)
+	{
+		$transaksi_keluar = TransaksiKeluar::where('tanggal', valid_date($request->tgl));
+
+		if ($transaksi_keluar->count() > 0) {
+			foreach ($transaksi_keluar->get() as $q) {
+				$no = $q->no_bkk + 1;
+				$kd = sprintf("%03s", $no);
+			}
+		} else {
+			$kd = sprintf("%03s", 1);
+		}
+		$no_bkk = $kd;
+
+
+		// dd($no_bkk);
+		$total = number_format($request->total, 0, '.', '');
+
+		$cek = Validator::make($request->all(), [
+			// 'nama' => 'required',
+			'keterangan' => 'required'
+		]);
+
+		if ($cek->fails()) {
+			return response()->json(['sukses' => false, 'error' => $cek->errors()]);
+		} else {
+			DB::beginTransaction();
+			try {
+				$transaksi = new TransaksiKeluar;
+				// $transaksi->nama = strtoupper($request->nama);
+				$transaksi->no_bkk = $no_bkk;
+				$transaksi->harga_satuan = $request->harga_satuan;
+				$transaksi->satuanbeli_id = $request->satuanbeli_id;
+				$transaksi->klasifikasi_pengeluaran_id = $request->klasifikasi_pengeluaran_id;
+				$transaksi->jenis_pengeluaran_id = $request->jenis_pengeluaran_id;
+				$transaksi->bukti_transaksi = $request->bukti_transaksi;
+				$transaksi->jumlah = $request->jumlah;
+				$transaksi->total = $request->harga_satuan * $request->jumlah;
+				$transaksi->tanggal = valid_date($request->tgl);
+				$transaksi->keterangan = strtoupper($request->keterangan);
+				$transaksi->user_id = Auth::user()->id;
+				$transaksi->save();
+
+				$jenis = JenisPengeluaran::where('id', $request->jenis_pengeluaran_id)->first();
+
+				$journal = Journal::create([
+					'id_customer'		=> 0,
+					'contact_type'		=> 'customer',
+					'code'				=> $no_bkk,
+					'tanggal'			=> date('Y-m-d'),
+					'total_transaksi'	=> rupiah($transaksi->total),
+					'type'				=> 'rawat_inap',
+					'keterangan'		=> 'Jurnal Pengeluaran a.n ' . $request->nama,
+					'verifikasi'		=> 1
+				]);
+
+				$akunSementaraKas = AkunCOA::where('code', '101109099')->first();
+				$akunTransaksiCOA = AkunCOA::where('id', $jenis->akutansi_akun_coa_id)->first();
+
+				$journalDetail[] = JournalDetail::create([
+					'id_journal'		=> $journal->id,
+					'id_akun_coa'		=> $akunTransaksiCOA->id,
+					'debit'				=> (int) rupiah($transaksi->total),
+					'credit'			=> 0,
+					'is_kas_bank'		=> 0,
+					'type'				=> 'pengeluaran',
+					'keterangan'		=> 'Jurnal Pengeluaran ' . $request->nama . ' Akun ' . $akunTransaksiCOA->nama
+				]);
+				$journalDetail[] = JournalDetail::create([
+					'id_journal'		=> $journal->id,
+					'id_akun_coa'		=> $akunSementaraKas->id,
+					'debit'				=> 0,
+					'credit'			=> (int) rupiah($transaksi->total),
+					'is_kas_bank'		=> 1,
+					'type'				=> 'pengeluaran',
+					'keterangan'		=> 'Jurnal Pengeluaran ' . $request->nama . ' Akun ' . $akunSementaraKas->nama
+				]);
+
+
+				// $pem = new Pembayaran();
+				// $pem->jenis = $request['jenis'];
+				// $pem->user_id = Auth::user()->id;
+				// $pem->total = $transaksi->total;
+				// $pem->metode_bayar_id = $request['metode_bayar_id'];
+				// $pem->dibayar = !empty($request['totalBayar']) ? rupiah($request['totalBayar']) : $request['total'];
+				// $pem->iur = !empty($request['iur']) ? rupiah($request['iur']) : 0;
+				// $pem->flag = 'Y';
+				// $pem->registrasi_id = $reg->id;
+				// $pem->dokter_id = $reg->dokter_id;
+				// $pem->diskon_persen = !empty($request['diskon_persen']) ? $request['diskon_persen'] : 0;
+				// $pem->diskon_rupiah = !empty($request['diskon_rupiah']) ? rupiah($request['diskon_rupiah']) : 0;
+
+				// $pem->save();
+				DB::commit();
+				return response()->json(['sukses' => true, 'data' => $transaksi]);
+			} catch (Exception $e) {
+				DB::rollback();
+
+				return response()->json(['sukses' => false, 'data' => []]);
+			}
+		}
+	}
+
+	public function batalBayarTransaksiKeluar($id)
+	{
+		$diklat = \App\TransaksiKeluar::find($id);
+		$diklat->delete();
+		return response()->json(['sukses' => true]);
+	}
+
+	public function cetakTransaksiKeluar($id)
+	{
+		$diklat = \App\TransaksiKeluar::find($id);
+		return view('kasir.cetakTransaksiKeluar', compact('diklat'));
+	}
+
+	public function dataTransaksiKeluar()
+	{
+		$diklat = \App\TransaksiKeluar::orderBy('tanggal', 'desc')->get();
+		return DataTables::of($diklat)
+			->addIndexColumn()
+			->addColumn('total', function ($diklat) {
+				return number_format($diklat->total);
+			})
+			->addColumn('jenis', function ($diklat) {
+				return @$diklat->jenis->name;
+			})
+			->addColumn('klasifikasi', function ($diklat) {
+				return @$diklat->klasifikasi->name;
+			})
+			->addColumn('tanggal', function ($diklat) {
+				return date('d/m/Y', strtotime($diklat->tanggal));
+			})
+			->addColumn('aksi', function ($diklat) {
+				return '<a href="' . url('/kasir/transaksi-keluar-cetak/' . $diklat->id) . '" target="_blank" class="btn btn-info btn-sm btn-flat"><i class="fa fa-eye"></i></a>' .
+					'<a href="' . url('/kasir/transaksi-keluar-cetak/' . $diklat->id) . '" target="_blank" class="btn btn-warning btn-sm btn-flat"><i class="fa fa-edit"></i></a>';
+			})
+			->rawColumns(['aksi'])
+			->make(true);
+	}
+
+	public function klasifikasiPengeluaranSave(Request $request)
+	{
+		$builder = new KlasifikasiPengeluaran();
+		$builder->name = $request->name;
+		$builder->save();
+		Flashy::info('Berhasil tambah klasifikasi pengeluaran');
+		return redirect('/kasir/transaksi-keluar');
+	}
+	public function jenisPengeluaranSave(Request $request)
+	{
+		$builder = new JenisPengeluaran();
+		$builder->name = $request->name;
+		$builder->akutansi_akun_coa_id = $request->id_akun_coa;
+		$builder->save();
+		Flashy::info('Berhasil tambah jenis pengeluaran');
+		return redirect('/kasir/transaksi-keluar');
+	}
+}
