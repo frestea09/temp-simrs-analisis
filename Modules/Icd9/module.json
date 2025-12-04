@@ -1,0 +1,16 @@
+{
+    "name": "Icd9",
+    "alias": "icd9",
+    "description": "",
+    "keywords": [],
+    "active": 1,
+    "order": 0,
+    "providers": [
+        "Modules\\Icd9\\Providers\\Icd9ServiceProvider"
+    ],
+    "aliases": {},
+    "files": [
+        "start.php"
+    ],
+    "requires": []
+}

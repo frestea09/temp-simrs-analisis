@@ -1,0 +1,16 @@
+{
+    "name": "Kategoritarif",
+    "alias": "kategoritarif",
+    "description": "",
+    "keywords": [],
+    "active": 1,
+    "order": 0,
+    "providers": [
+        "Modules\\Kategoritarif\\Providers\\KategoritarifServiceProvider"
+    ],
+    "aliases": {},
+    "files": [
+        "start.php"
+    ],
+    "requires": []
+}

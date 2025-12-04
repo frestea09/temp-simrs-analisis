@@ -1,0 +1,16 @@
+{
+    "name": "Tarif",
+    "alias": "tarif",
+    "description": "",
+    "keywords": [],
+    "active": 1,
+    "order": 0,
+    "providers": [
+        "Modules\\Tarif\\Providers\\TarifServiceProvider"
+    ],
+    "aliases": {},
+    "files": [
+        "start.php"
+    ],
+    "requires": []
+}

@@ -1,0 +1,16 @@
+{
+    "name": "Jenisjkn",
+    "alias": "jenisjkn",
+    "description": "",
+    "keywords": [],
+    "active": 1,
+    "order": 0,
+    "providers": [
+        "Modules\\Jenisjkn\\Providers\\JenisjknServiceProvider"
+    ],
+    "aliases": {},
+    "files": [
+        "start.php"
+    ],
+    "requires": []
+}

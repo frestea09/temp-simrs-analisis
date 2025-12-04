@@ -1,0 +1,16 @@
+{
+    "name": "Tindakan",
+    "alias": "tindakan",
+    "description": "",
+    "keywords": [],
+    "active": 1,
+    "order": 0,
+    "providers": [
+        "Modules\\Tindakan\\Providers\\TindakanServiceProvider"
+    ],
+    "aliases": {},
+    "files": [
+        "start.php"
+    ],
+    "requires": []
+}

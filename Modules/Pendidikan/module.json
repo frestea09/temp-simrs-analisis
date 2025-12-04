@@ -1,0 +1,16 @@
+{
+    "name": "Pendidikan",
+    "alias": "pendidikan",
+    "description": "",
+    "keywords": [],
+    "active": 1,
+    "order": 0,
+    "providers": [
+        "Modules\\Pendidikan\\Providers\\PendidikanServiceProvider"
+    ],
+    "aliases": {},
+    "files": [
+        "start.php"
+    ],
+    "requires": []
+}

@@ -1,0 +1,16 @@
+{
+    "name": "Politype",
+    "alias": "politype",
+    "description": "",
+    "keywords": [],
+    "active": 1,
+    "order": 0,
+    "providers": [
+        "Modules\\Politype\\Providers\\PolitypeServiceProvider"
+    ],
+    "aliases": {},
+    "files": [
+        "start.php"
+    ],
+    "requires": []
+}

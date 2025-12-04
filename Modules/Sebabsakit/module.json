@@ -1,0 +1,16 @@
+{
+    "name": "Sebabsakit",
+    "alias": "sebabsakit",
+    "description": "",
+    "keywords": [],
+    "active": 1,
+    "order": 0,
+    "providers": [
+        "Modules\\Sebabsakit\\Providers\\SebabsakitServiceProvider"
+    ],
+    "aliases": {},
+    "files": [
+        "start.php"
+    ],
+    "requires": []
+}

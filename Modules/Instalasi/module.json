@@ -1,0 +1,16 @@
+{
+    "name": "Instalasi",
+    "alias": "instalasi",
+    "description": "",
+    "keywords": [],
+    "active": 1,
+    "order": 0,
+    "providers": [
+        "Modules\\Instalasi\\Providers\\InstalasiServiceProvider"
+    ],
+    "aliases": {},
+    "files": [
+        "start.php"
+    ],
+    "requires": []
+}
