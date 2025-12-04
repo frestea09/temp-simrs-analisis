@@ -408,6 +408,7 @@ Route::group(['middleware' => ['web', 'auth']], function () {
 
 	// Route::resource('anak', 'AnakController');
 	//Resume Pasien
+	Route::get('/debug-otista/{status}', 'DebugController@toggle');
 	Route::get('resume-medis/{unit}/{registrasi_id}', 'ResumePasienController@create');
 	Route::get('cetak-rencana-kontrol/{registrasi_id}', 'ResumePasienController@cetakRencanaKontrol');
 	Route::post('save-resume-medis', 'ResumePasienController@save');

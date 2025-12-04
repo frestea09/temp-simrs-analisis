@@ -1240,6 +1240,20 @@
             </div>
             <div>
                 <input class="form-check-input"
+                    name="fisik[pelaksanaan_edukasi][diet_dan_nutrisi][materi][penyimpanan_makanan]"
+                    {{ @$assesment['pelaksanaan_edukasi']['diet_dan_nutrisi']['materi']['penyimpanan_makanan'] == 'Penyimpanan makanan yang dibawa dari luar rumah sakit' ? 'checked' : '' }}
+                    type="checkbox" value="Penyimpanan makanan yang dibawa dari luar rumah sakit">
+                <label class="form-check-label" style="font-weight: 400;">Penyimpanan makanan yang dibawa dari luar rumah sakit</label>
+            </div>
+            <div>
+                <input class="form-check-input"
+                    name="fisik[pelaksanaan_edukasi][diet_dan_nutrisi][materi][jenis_jenis_makanan]"
+                    {{ @$assesment['pelaksanaan_edukasi']['diet_dan_nutrisi']['materi']['jenis_jenis_makanan'] == 'Jenis-jenis makanan yang dapat dipilih selama perawatan' ? 'checked' : '' }}
+                    type="checkbox" value="Jenis-jenis makanan yang dapat dipilih selama perawatan">
+                <label class="form-check-label" style="font-weight: 400;">Jenis-jenis makanan yang dapat dipilih selama perawatan</label>
+            </div>
+            <div>
+                <input class="form-check-input"
                     name="fisik[pelaksanaan_edukasi][diet_dan_nutrisi][materi][lain1]"
                     {{ @$asessment['pelaksanaan_edukasi']['diet_dan_nutrisi']['materi']['lain1'] == 'Lain' ? 'checked' : '' }}
                     type="checkbox" value="Lain">

@@ -18,6 +18,7 @@
         <th>Tgl. Masuk</th>
         <th>Tgl. Keluar</th>
         <th class="text-center">EMR</th> 
+        <th class="text-center">Tarif IDRG</th> 
       </tr>
     </thead>
     <tbody>
@@ -61,6 +62,9 @@
                 data-dpjp="{{ $d->dokter_id }}"
                 data-tte="{{ @$d->tte_resume_pasien_status }}">
                 <i class="loading"><small>memuat...</small></i>
+            </td>
+            <td class="text-center">
+              <a class="btn btn-info btn-sm btn-flat" onclick="tarifIDRG({{ $d->id }}, '{{ $d->tarif_idrg ?? '' }}')"><i class="fa fa-edit"></i></a>
             </td>
       @endforeach
     </tbody>

@@ -56,6 +56,38 @@
                       <input type="text" class="form-control" name="nutrisi[bb][detail]" style="width: 100%" placeholder="BB" value="{{ @$nutrisi['bb']['detail'] }}">
                     </td>
                   </tr>
+                  {{-- {{dd($assesment->id)}} --}}
+                  <tr>
+                    <td style="width: 50%; font-weight:bold">TB</td>
+                    <td>
+                      <input type="text" class="form-control" name="nutrisi[tb][detail]" style="width: 100%" placeholder="TB" value="{{ @$nutrisi['tb']['detail'] }}">
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="width: 50%; font-weight:bold">Usia</td>
+                    <td>
+                      <input type="text" class="form-control" name="nutrisi[usia][detail]" style="width: 100%" placeholder="Usia" value="{{ @$nutrisi['usia']['detail'] }}">
+                    </td>
+                  </tr>
+                  <tr>
+                    <td rowspan="3" style="width: 50%; font-weight:bold">Skrining</td>
+                    <td>
+                      <b>BB/U</b>
+                      <input type="text" class="form-control" name="nutrisi[skrining][bb/u]" style="width: 100%" placeholder="BB/U" value="{{ @$nutrisi['skrining']['bb/u'] }}">
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <b>TB/U</b>
+                      <input type="text" class="form-control" name="nutrisi[skrining][tb/u]" style="width: 100%" placeholder="TB/U" value="{{ @$nutrisi['skrining']['tb/u'] }}">
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <b>BB/TB</b>
+                      <input type="text" class="form-control" name="nutrisi[skrining][bb/tb]" style="width: 100%" placeholder="BB/TB" value="{{ @$nutrisi['skrining']['bb/tb'] }}">
+                    </td>
+                  </tr>
     
                   <tr>
                     <td style="width:50%; font-weight:bold;">

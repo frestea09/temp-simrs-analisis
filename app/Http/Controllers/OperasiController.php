@@ -698,7 +698,7 @@ class OperasiController extends Controller {
 		$data['cetak']    = json_decode($data['riwayat']->fisik, true);
         
 		$pdf = PDF::loadView('operasi.cetak_daftar_tilik', $data);
-        $pdf->setPaper('A4', 'landscape');
+        $pdf->setPaper('A4', 'portrait');
 		return $pdf->stream('daftar-tilik.pdf');
     }
 
@@ -716,5 +716,100 @@ class OperasiController extends Controller {
 
         Flashy::error('Daftar Tilik Gagal dihapus.');
         return redirect()->back();
+    }
+
+	public function cetakPraAnestesi($registrasi_id, $id)
+	{
+        $data['reg'] 	  = Registrasi::find($registrasi_id);
+        $data['pasien']   = Pasien::find($data['reg']->pasien_id);
+        $data['dokter']   = Pegawai::find($data['reg']->dokter_id);
+        $data['laboratorium'] = Folio::where('registrasi_id', $registrasi_id)->where('poli_tipe', 'L')->select('namatarif')->get();
+        $data['riwayat']  = EmrInapPemeriksaan::where('registrasi_id', $registrasi_id)->where('type','pra-anestesi')->orderBy('id','DESC')->first();
+		$data['cetak']    = json_decode($data['riwayat']->fisik, true);
+        
+		$pdf = PDF::loadView('operasi.cetak_pra_anestesi', $data);
+        $pdf->setPaper('A4', 'portrait');
+		return $pdf->stream('pra-anestesi.pdf');
+    }
+
+	public function ttePDFPraAnestesi(Request $request)
+    {
+        $data['riwayat']  = EmrInapPemeriksaan::find($request->riwayat_id);
+		$data['reg']      = Registrasi::find($data['riwayat']->registrasi_id);
+        $data['dokter']   = Pegawai::find($data['reg']->dokter_id);
+        $data['laboratorium'] = Folio::where('registrasi_id', $data['reg']->id)->where('poli_tipe', 'L')->select('namatarif')->get();
+		$data['pasien']   = Pasien::find($data['riwayat']->pasien_id);
+		$data['cetak']    = json_decode($data['riwayat']->fisik, true);
+
+        // TTE
+        if ($request->method() == "POST") {
+            if (tte()) {
+                $data['cetak_tte'] = true;
+                $pdf    = PDF::loadView('operasi.cetak_pra_anestesi', $data);
+                $pdf->setPaper('A4', 'portrait');
+                $pdfContent = $pdf->output();
+    
+                // Create temp pdf
+                $filePath = uniqId() . '-pra-anestesi.pdf';
+                File::put(public_path($filePath), $pdfContent);
+    
+                // Generate QR code dengan gambar
+                $qrCode = QrCode::format('png')->size(200)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(Auth::user()->pegawai->nama . ', ' . date('d-m-Y H:i:s'));
+    
+                // Simpan QR code dalam file
+                $qrCodePath = uniqid() . '.png';
+                File::put(public_path($qrCodePath), $qrCode);
+    
+                $tte = tte_visible_koordinat($filePath, $request->nik, $request->passphrase, '#', $qrCodePath);
+                log_esign($data['reg']->id, $tte->response, "pra-anestesi", $tte->httpStatusCode);
+    
+                $resp = json_decode($tte->response);
+    
+                if ($tte->httpStatusCode == 200) {
+                    $data['riwayat']->tte = $tte->response;
+                    $data['riwayat']->update();
+                    Flashy::success('Berhasil melakukan proses TTE dokumen !');
+                    return redirect()->back();
+                } elseif ($tte->httpStatusCode == 400) {
+                    if (isset($resp->error)) {
+                        Flashy::error($resp->error);
+                        return redirect()->back();
+                    }
+                } elseif ($tte->httpStatusCode == 500) {
+                    Flashy::error($tte->response);
+                    return redirect()->back();
+                }
+                Flashy::error('Gagal melakukan proses TTE dokumen !');
+            } else {
+                $data['tte_nonaktif'] = true;
+                $pdf = PDF::loadView('operasi.cetak_pra_anestesi', $data);
+                $pdfContent = $pdf->output();
+
+                $data['riwayat']->tte = json_encode((object) [
+                    "base64_signed_file" => base64_encode($pdfContent),
+                ]);
+                $data['riwayat']->update();
+                Flashy::success('Berhasil menandatangani dokumen !');
+                return redirect()->back();
+            }
+        }
+
+        $pdf    = PDF::loadView('operasi.cetak_pra_anestesi', $data);
+        $pdf->setPaper('A4', 'portrait');
+
+        return $pdf->stream('pra-anestesi.pdf');
+    }
+
+	public function cetakTTEPDFPraAnestesi($registrasi_id, $id)
+    {
+        $riwayat    = EmrInapPemeriksaan::find($id);
+        $tte    	= json_decode($riwayat->tte);
+        $base64 	= $tte->base64_signed_file;
+
+        $pdfContent = base64_decode($base64);
+        return Response::make($pdfContent, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="Pra Anestesi-' . $registrasi_id . '.pdf"',
+        ]);
     }
 }

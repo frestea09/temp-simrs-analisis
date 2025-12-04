@@ -160,7 +160,7 @@
               <th>
                 @if ($val_a->unit == 'inap')
                   Rawat Inap
-                  {{ @$val_a->registrasi->rawat_inap->kamar->nama }}
+                  {{ @$val_a->histori_ranap_id ? @baca_histori_ranap_kamar($val_a->histori_ranap_id) : @$val_a->registrasi->rawat_inap->kamar->nama }}
                 @elseif ($val_a->unit == 'farmasi')
                   Apotik / Farmasi
                 @elseif (@$val_a->unit == 'gizi')
@@ -440,6 +440,13 @@
               <td colspan="2" class="" style="font-size:15px;">
                 {{-- <a href="" data-toggle="tooltip" title="Cetak"><i class="fa fa-print text-danger"></i></a>&nbsp;&nbsp; --}}
                 <p>
+                  {{-- @if (Auth::user()->pegawai->kategori_pegawai == 1)
+                      @if (empty($val_a->verifikasi_dpjp))
+                        <a href="{{url("/emr-soap-verif-dpjp/".$val_a->id)}}" class="btn btn-xs btn-flat btn-success">Verifikasi DPJP</a>
+                      @else
+                        <button type="button" class="btn btn-xs btn-flat btn-info">Sudah diverifikasi pada {{date('d-m-Y H:i:s', strtotime($val_a->verifikasi_dpjp))}}</button>
+                      @endif
+                  @endif --}}
                   @if (Auth::user()->id == $val_a->user_id || Auth::user()->id == 807)
                   <span class="pull-right">
                   @if (@$val_a->registrasi->poli_id == 3 || @$val_a->registrasi->poli_id == 4 || @$val_a->registrasi->poli_id == 34)

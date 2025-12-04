@@ -488,6 +488,25 @@
         </tr>
         @endif
 
+        {{-- CT. SCAN --}}
+        @if (count($ct_scan) > 0)
+          <tr>
+            <th colspan="3" style="border-bottom:1px solid black;border-top:1px solid black; text-align:start;">RINCIAN CT. SCAN</th>
+            <th class="text-right" style="border-bottom:1px solid black;border-top:1px solid black">TOTAL</th>
+          </tr>
+            @foreach ($ct_scan as $key => $item)
+                <tr>
+                  <td colspan="3"><span style="text-align:start;font-weight:900">{{$item->namatarif}}</span></td>
+                  <td><span style="color:grey">Rp.</span><span style="float:right"><b>{{number_format($item->total)}}</span></td>
+                </tr>
+            @endforeach
+            <tr>
+              <td colspan="3"><span style="text-align:start;font-weight:900">Total CT. Scan</span></td>
+              <td><span style="color:grey">Rp.</span><span style="float:right"><b>{{number_format($total_ct_scan)}}</b></span></td>
+            </tr>    
+            <tr><td colspan="4"><div style="height:5px;"></div></td></tr>
+          @endif
+        {{--END CT. SCAN--}}
 
         {{-- BIAYA OBAT --}}
         @php
@@ -603,7 +622,7 @@
         <tr><td colspan="4"><div style="height:5px;"></div></td></tr>
         <tr>
           <th class="dotTop text-right"colspan="3"><div style="float:right !important;text-align:right !important;">TOTAL BIAYA</div></th>
-          <td class="dotTop"><span style="color:grey">Rp.</span><span style="float:right"><b>{{number_format(@$total_obat_operasi+@$total_obat_rajal+@$tindakan_rajal+@$lab_irj+@$rad_irj+@$total_operasi+@$total_tindakan_bank_darah)}}</b></span></td>
+          <td class="dotTop"><span style="color:grey">Rp.</span><span style="float:right"><b>{{number_format(@$total_obat_operasi+@$total_obat_rajal+@$tindakan_rajal+@$lab_irj+@$rad_irj+@$total_operasi+@$total_tindakan_bank_darah+@$total_ct_scan)}}</b></span></td>
         </tr>
 
         </table>
@@ -3747,15 +3766,16 @@
             </td>
             <td style="padding: .3rem 0 0 .3rem; width: 20%">
                 <p style="margin: 0; padding: 0;">
-                  @if ($content['icdx_diagnosa_utama'])
+                  {{-- Penutupan pengambilan icd dari resume, sepakat untuk icd full dari input koding --}}
+                  {{-- @if ($content['icdx_diagnosa_utama'])
                     {{@baca_code_diagnosa($content['icdx_diagnosa_utama'])}}
-                  @else
+                  @else --}}
                   <ul>
                     @foreach ($icd10Primary as $icd)
                       <li>{{baca_icd10($icd->icd10)}}</li>
                     @endforeach
                   </ul>
-                  @endif
+                  {{-- @endif --}}
                 </p>
             </td>
         </tr>

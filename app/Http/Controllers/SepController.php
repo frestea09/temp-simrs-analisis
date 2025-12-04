@@ -50,6 +50,9 @@ class SepController extends Controller {
 		
 		if(isset($data['reg'])){
 			if($data['reg']->nomorantrian){
+				
+				@updateTaskId(3,$data['reg']->nomorantrian);//RUN TASKID 3
+				
 				if(status_consid(4)){
 					if($data['reg']->pasien->no_jkn){
 

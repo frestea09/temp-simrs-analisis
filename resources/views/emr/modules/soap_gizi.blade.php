@@ -286,6 +286,10 @@
                                         <textarea style="resize: vertical;" rows="5" class="form-control" name="assesment">
 {{ 'BB: ' . (@$fisikGizi['pengkajian']['antropometri']['dewasa']['bb_saat_ini'] ?? @$fisikGizi['pengkajian']['antropometri']['anak']['bb_saat_ini']) }}
 {{ 'TB: ' . (@$fisikGizi['pengkajian']['antropometri']['dewasa']['tinggi_badan'] ?? @$fisikGizi['pengkajian']['antropometri']['anak']['tinggi_badan']) }}
+Standar Deviasi:
+{{ 'BB / U: ' . (@$fisikGizi['pengkajian']['antropometri']['anak']['standar_deviasi']['1']) }} - {{ 'Status Gizi: ' . (@$fisikGizi['pengkajian']['antropometri']['anak']['standar_deviasi']['status_gizi_1']) }}
+{{ 'PB, TB / U: ' . (@$fisikGizi['pengkajian']['antropometri']['anak']['standar_deviasi']['2']) }} - {{ 'Status Gizi: ' . (@$fisikGizi['pengkajian']['antropometri']['anak']['standar_deviasi']['status_gizi_2']) }}
+{{ 'BB / PB , TB: ' . (@$fisikGizi['pengkajian']['antropometri']['anak']['standar_deviasi']['3']) }} - {{ 'Status Gizi: ' . (@$fisikGizi['pengkajian']['antropometri']['anak']['standar_deviasi']['status_gizi_3']) }}
 {{ 'Status Gizi: ' . (@$fisikGizi['pengkajian']['antropometri']['dewasa']['status_gizi'] ?? @$fisikGizi['pengkajian']['antropometri']['anak']['status_gizi']) }}
 {{ 'Asupan Nutrisi RS: ' . @$fisikGizi['pengkajian']['riwayat_diet']['asupan_nutrisi_rs'] }}
 {{ 'Asupan Nutrisi SMRS: ' . @$fisikGizi['pengkajian']['riwayat_diet']['asupan_nutrisi_smrs'] }}
@@ -293,19 +297,51 @@
 {{ 'Bio Kimia: ' . @$fisikGizi['pengkajian']['biokimia'] }}
 {{ 'Riwayat Konseling Gizi: ' . @$fisikGizi['pengkajian']['riwayat_diet']['riwayat_konseling'] }}
 Fisik Klinis Gizi:
-{{ '- Nafsu Makan: '.@$fisikGizi['pengkajian']['fisik_klinis_gizi']['gangguan_nafsu_makan']}}
-{{ '- Kembung: '.@$fisikGizi['pengkajian']['fisik_klinis_gizi']['kembung']}}
-{{ '- Mual: '.@$fisikGizi['pengkajian']['fisik_klinis_gizi']['mual']}}
-{{ '- Konstipasi: '.@$fisikGizi['pengkajian']['fisik_klinis_gizi']['konstipasi']}}
-{{ '- Kepala dan Mata: '.@$fisikGizi['pengkajian']['fisik_klinis_gizi']['kepala_dan_mata']}}
-{{ '- Atropi Otot Lengan: '.@$fisikGizi['pengkajian']['fisik_klinis_gizi']['antropi_otot_lengan']}}
-{{ '- Gigi Geligi: '.@$fisikGizi['pengkajian']['fisik_klinis_gizi']['gigi_geligi']}}
-{{ '- Hilang Lemak Subkutan: '.@$fisikGizi['pengkajian']['fisik_klinis_gizi']['hilang_lemak_subkutan']}}
-{{ '- Gangguan Menelan: '.@$fisikGizi['pengkajian']['fisik_klinis_gizi']['gangguan_menelan']}}
-{{ '- Gangguan Mengunyah: '.@$fisikGizi['pengkajian']['fisik_klinis_gizi']['gangguan_mengunyah']}}
-{{ '- Gangguan Menghisap: '.@$fisikGizi['pengkajian']['fisik_klinis_gizi']['gangguan_menghisap']}}
-{{ '- Gangguan Sesak: '.@$fisikGizi['pengkajian']['fisik_klinis_gizi']['sesak']}}
-{{ '- Gangguan Stomatitis: '.@$fisikGizi['pengkajian']['fisik_klinis_gizi']['stomatitis']}}
+@php
+  $fisik = @$fisikGizi['pengkajian']['fisik_klinis_gizi'] ?? [];
+@endphp
+@if (!empty($fisik['gangguan_nafsu_makan']) && $fisik['gangguan_nafsu_makan'] == 'Ya')
+- Nafsu Makan: Ya
+@endif
+@if (!empty($fisik['kembung']) && $fisik['kembung'] == 'Ya')
+- Kembung: Ya
+@endif
+@if (!empty($fisik['mual']) && $fisik['mual'] == 'Ya')
+- Mual: Ya
+@endif
+@if (!empty($fisik['konstipasi']) && $fisik['konstipasi'] == 'Ya')
+- Konstipasi: Ya
+@endif
+@if (!empty($fisik['kepala_dan_mata']) && $fisik['kepala_dan_mata'] == 'Ya')
+- Kepala dan Mata: Ya
+@endif
+@if (!empty($fisik['antropi_otot_lengan']) && $fisik['antropi_otot_lengan'] == 'Ya')
+- Atropi Otot Lengan: Ya
+@endif
+@if (!empty($fisik['gigi_geligi']) && $fisik['gigi_geligi'] == 'Ya')
+- Gigi Geligi: Ya
+@endif
+@if (!empty($fisik['hilang_lemak_subkutan']) && $fisik['hilang_lemak_subkutan'] == 'Ya')
+- Hilang Lemak Subkutan: Ya
+@endif
+@if (!empty($fisik['gangguan_menelan']) && $fisik['gangguan_menelan'] == 'Ya')
+- Gangguan Menelan: Ya
+@endif
+@if (!empty($fisik['gangguan_mengunyah']) && $fisik['gangguan_mengunyah'] == 'Ya')
+- Gangguan Mengunyah: Ya
+@endif
+@if (!empty($fisik['gangguan_menghisap']) && $fisik['gangguan_menghisap'] == 'Ya')
+- Gangguan Menghisap: Ya
+@endif
+@if (!empty($fisik['sesak']) && $fisik['sesak'] == 'Ya')
+- Gangguan Sesak: Ya
+@endif
+@if (!empty($fisik['stomatitis']) && $fisik['stomatitis'] == 'Ya')
+- Gangguan Stomatitis: Ya
+@endif
+@if (!empty($fisik['lainnya']))
+- Lainnya: {{$fisik['lainnya']}}
+@endif
 - Tanda Vital:
 {{ 'Tekanan Darah: '.@$fisikGizi['pengkajian']['fisik_klinis_gizi']['tanda_vital']['tekanan_darah']}}
 {{ 'Suhu: '.@$fisikGizi['pengkajian']['fisik_klinis_gizi']['tanda_vital']['suhu']}}
@@ -326,12 +362,13 @@ Fisik Klinis Gizi:
                                     <td style="padding: 5px;">
                                         <textarea style="resize: vertical;" class="form-control" rows="5" name="intervensi">
 Tujuan: {{ @$fisikGizi['intervensi_gizi']['tujuan'] }}
-@if (@$fisikGizi['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'])
-@if (@$fisikGizi['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] == 'Lainnya')
-Bentuk Makanan: {{ @$fisikGizi['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] }}, {{ @$fisikGizi['intervensi_gizi']['preskripsi_diet']['bentuk_makanan_lain'] }}
-@else
-Bentuk Makanan: {{ @$fisikGizi['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] }}
-@endif
+@if (!empty($fisikGizi['intervensi_gizi']['preskripsi_diet']['bentuk_makanan']))
+@php
+$bentuk = $fisikGizi['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'];
+$bentukText = is_array($bentuk) ? implode(', ', $bentuk) : $bentuk;
+@endphp
+Bentuk Makanan: {{ $bentukText }}
+@if (in_array('Lainnya', (array)$bentuk)), {{ @$fisikGizi['intervensi_gizi']['preskripsi_diet']['bentuk_makanan_lain'] }}@endif
 @endif
 @if (@$fisikGizi['intervensi_gizi']['preskripsi_diet']['jenis_diet'])
 @if (@$fisikGizi['intervensi_gizi']['preskripsi_diet']['jenis_diet'] == 'Lainnya')

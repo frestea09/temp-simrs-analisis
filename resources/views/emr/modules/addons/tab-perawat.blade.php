@@ -752,6 +752,9 @@
         <li class="{{ $route == 'pemeriksaan-penunjang' ? 'active' : '' }}"><a
                 href="{{ url('emr/pemeriksaan-penunjang/' . $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}">Hasil
                 Penunjang</a></li>
+        <li class="{{ $route == 'pemeriksaan-laporan-operasi' ? 'active' : '' }}"><a
+                href="{{ url('emr/pemeriksaan-laporan-operasi/' . $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}">Hasil
+                Laporan Operasi</a></li>
         <li class="{{ $route == 'emr-resume' ? 'active' : '' }}"><a
                 href="{{ url('emr/resume/' . $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}">Histori</a>
         </li>

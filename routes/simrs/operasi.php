@@ -30,6 +30,7 @@ Route::group(['middleware' => ['web', 'auth', 'role:operasi|administrator']], fu
 
 	// Output & TTE
 	Route::get('operasi/cetak-daftar-tilik/pdf/{registrasi_id}/{id}', 'OperasiController@cetakDaftarTilik');
+	Route::get('operasi/cetak-pra-anestesi/pdf/{registrasi_id}/{id}', 'OperasiController@cetakPraAnestesi');
 
 	//hapus daftar tilik
 	Route::get('operasi/delete-daftar-tilik/{daftar_id}', 'OperasiController@daftarTilikDelete');

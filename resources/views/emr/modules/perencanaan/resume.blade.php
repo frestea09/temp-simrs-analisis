@@ -120,7 +120,7 @@
                                     <td style="width:40%;">Ringkasan riwayat penyakit</td>
                                     <td style="padding: 5px;">
                                         <textarea rows="10" name="form[ringkasan_riwayat_penyakit]" class="form-control">{{ @$form['ringkasan_riwayat_penyakit'] ?? ('Riwayat Penyakit Sekarang : ' . (@$aswal['riwayat_penyakit_sekarang'] ?? '') . 
-'Riwayat Penyakit Dahulu : ' . (@$aswal['riwayatPenyakitDahulu'] ?? '')) }}</textarea>
+'Riwayat Penyakit Dahulu : ' . collect(@$aswal['riwayatPenyakitDahulu'] ?? [])->filter()->implode(', ')) }}</textarea>
                                     </td>
                                 </tr>
                                 <tr>

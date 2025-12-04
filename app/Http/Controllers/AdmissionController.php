@@ -238,13 +238,15 @@ class AdmissionController extends Controller {
 		$data['dokter'] = Pegawai::where('kategori_pegawai', 1)->select('nama', 'kode_bpjs')->get();
 		$data['reg'] = Registrasi::find($registrasi_id);
 		$data['surkon'] = RencanaKontrol::where('pasien_id',@$data['reg']->pasien_id)->orderBy('id','DESC')->limit(10)->get();
-		$data['poli_bpjs'] = Poli::find(@$data['reg']->poli_id)->bpjs;
+		$data['poli_bpjs'] = @Poli::find(@$data['reg']->poli_id)->bpjs;
 		$data['dokter_bpjs'] = Pegawai::find(@$data['reg']->dokter_id)->kode_bpjs;
 		$data['kd_ppk'] = FaskesLanjutan::all();
 		$data['noKartu'] = @$data['reg']->pasien->no_jkn;
 
 		if(isset($data['reg'])){
 			if($data['reg']->nomorantrian){
+				@updateTaskId(3,$data['reg']->nomorantrian);//RUN TASKID 3
+
 				if(status_consid(4)){
 					if($data['reg']->pasien->no_jkn){
 						@$no_surkons = @cekNoSurkon($data['reg']->pasien->no_jkn);

@@ -34,7 +34,7 @@ $end = '130000';
 <li><a href="{{ url('informasi-rawat-inap') }}"><img src="{{ asset('menu/sidebar/pasien.svg') }}" width="24"> <span>Informasi Rawat Inap</span></a></li>
 <li><a href="{{ url('bridgingsep') }}"><img src="{{ asset('menu/sidebar/sepsusulan.svg') }}" width="24"> <span>Integrasi SEP VClaim</span></a></li>
 <li><a href="{{ url('admission/sep-susulan/rawat-inap') }}"><img src="{{ asset('menu/sidebar/sepsusulan.svg') }}" width="24"> <span>SEP Susulan Ranap</span></a></li>
-<li><a href="{{ url('pasien/info-pasien') }}"><img src="{{ asset('menu/sidebar/pasien.svg') }}" width="24"> <span>Informasi Pasien</span></a></li>
+{{-- <li><a href="{{ url('pasien/info-pasien') }}"><img src="{{ asset('menu/sidebar/pasien.svg') }}" width="24"> <span>Informasi Pasien</span></a></li> --}}
 <li><a href="{{ url('/antrian-rawatinap') }}"><img src="{{ asset('menu/sidebar/layar.svg') }}" width="24"></i> <span>Antrian Ranap</span></a></li>
 <li class="treeview">
     <a href="#">
@@ -50,6 +50,7 @@ $end = '130000';
       <li><a href="{{ url('antrian-rawatinap/daftarantrian3') }}"><img src="{{ asset('menu/sidebar/pendaftaran.svg') }}" width="24"> <span>Loket C</span></a></li>
       <li><a href="{{ url('antrian-rawatinap/daftarantrian4') }}"><img src="{{ asset('menu/sidebar/pendaftaran.svg') }}" width="24"> <span>Loket D</span></a></li>
     </ul>
-  </li>
+</li>
+<li><a href="{{ url('frontoffice/merging-data') }}"><img src="{{ asset('menu/sidebar/supervisor.svg') }}" width="24"> <span>Merging Data Pasien</span></a></li>
 
   

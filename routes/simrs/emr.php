@@ -63,6 +63,7 @@ Route::group(['middleware' => ['web', 'auth']], function () {
 	Route::get('emr/soap_perawat/{unit}/{registrasi_id}/{id_soap_perawat?}/{edit?}', 'EmrController@soap_perawat')->name('soap_perawat');
 	Route::get('emr/soap-gizi/{unit}/{registrasi_id}', 'EmrController@soapGizi')->name('soap-gizi');
 	Route::get('emr/soap-gizi/{unit}/{registrasi_id}/{id_soap?}/{edit?}', 'EmrController@soapGizi')->name('soap-gizi');
+	Route::get('emr-soap-verif-dpjp/{id_soap}', 'EmrController@verifDPJP');
 	Route::get('emr/soap-gizi-delete/{id_soap}/delete', 'EmrController@soapGiziDelete')->name('soap-gizi-delete');
 	Route::get('emr/soap-farmasi/{unit}/{registrasi_id}', 'EmrController@soapFarmasi')->name('soap-farmasi');
 	Route::get('emr/soap-farmasi/{unit}/{registrasi_id}/{id_soap?}/{edit?}', 'EmrController@soapFarmasi')->name('soap-farmasi');
@@ -105,6 +106,8 @@ Route::group(['middleware' => ['web', 'auth']], function () {
 	Route::get('emr/pemeriksaan-penunjang/{unit}/{registrasi_id}', 'EmrController@pemeriksaanPenunjang')->name('pemeriksaan-penunjang');
 	Route::get('emr/pemeriksaan-lab/{unit}/{registrasi_id}', 'EmrController@pemeriksaanLab')->name('pemeriksaan-lab');
 	Route::get('emr/pemeriksaan-lab-pa/{unit}/{registrasi_id}', 'EmrController@pemeriksaanLabPA')->name('pemeriksaan-lab-pa');
+	Route::get('emr/pemeriksaan-laporan-operasi/{unit}/{registrasi_id}', 'EmrController@pemeriksaanLaporanOperasi')->name('pemeriksaan-laporan-operasi');
+	Route::get('emr/pemeriksaan-laporan-operasi/cetak/{unit}/{registrasi_id}/{id}', 'EmrController@cetakLaporanOperasi')->name('cetak-laporan-operasi');
 	Route::get('emr/resume/{unit}/{registrasi_id}', 'EmrController@resume')->name('emr-resume');
 	Route::get('emr/resume-gizi/{unit}/{registrasi_id}', 'EmrController@resumeGizi')->name('emr-resume-gizi');
 

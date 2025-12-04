@@ -72,7 +72,11 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     @include('emr.modules.addons.profile')
     <form method="POST" action="{{ url('emr-soap/pemeriksaan/upload-laporan-operasi/'.$unit.'/'.$reg->id) }}" class="form-horizontal" enctype="multipart/form-data">
       <div class="row">
-        @include('emr.modules.addons.tab-operasi')
+        @if ($source === 'emr')
+            @include('emr.modules.addons.tabs')
+        @else
+            @include('emr.modules.addons.tab-operasi')
+        @endif
         <div class="col-md-12">
           {{ csrf_field() }}
           {!! Form::hidden('registrasi_id', $reg->id) !!}

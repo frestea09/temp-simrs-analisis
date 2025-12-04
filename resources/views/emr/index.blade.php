@@ -218,6 +218,33 @@
 
     </div>
 </div>
+{{-- Modal Tarif IDRG --}}
+<div class="modal fade" id="modalTarifIDRG">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Set Tarif IDRG</h4>
+      </div>
+      <div class="modal-body">
+        <form class="form-horizontal" id="formTarifIDRG" method="POST">
+          {{ csrf_field() }}
+          <input type="hidden" name="registrasi_id">
+          <div class="form-group">
+            <label class="col-md-3 control-label">Tarif IDRG Sementara</label>
+            <div class="col-md-9">
+              <input type="number" name="tarif_idrg" class="form-control" placeholder="Masukkan tarif IDRG">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default btn-flat" data-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-primary btn-flat" onclick="saveIDRG()">Simpan</button>
+      </div>
+    </div>
+  </div>
+</div>
 @endsection
 
 @section('script')
@@ -691,5 +718,34 @@
                 });
             }
             });
+            
+            // Tarif IDRG Sementara
+            function tarifIDRG(registrasi_id, tarif_idrg) {
+                $('#modalTarifIDRG').modal('show');
+                $('input[name="registrasi_id"]').val(registrasi_id);
+                $('input[name="tarif_idrg"]').val(tarif_idrg);
+            }
+
+            function saveIDRG() {
+                var formData = new FormData($("#formTarifIDRG")[0]);
+
+                $.ajax({
+                    url: "{{ url('/registrasi/set-tarif-idrg') }}",
+                    type: "POST",
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        $('#modalTarifIDRG').modal('hide');
+                        alert('Tarif IDRG berhasil disimpan');
+                        location.reload();
+                    },
+                    error: function (xhr) {
+                        alert('Gagal menyimpan tarif IDRG');
+                        console.log(xhr.responseText);
+                    }
+                });
+            }
+
 </script>
 @endsection

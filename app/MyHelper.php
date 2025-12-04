@@ -826,6 +826,21 @@ if (!function_exists('baca_kamar')) {
 		}
 	}
 }
+if (!function_exists('baca_histori_ranap_kamar')) {
+	function baca_histori_ranap_kamar($id)
+	{	
+		if (!empty($id)) {
+			$kamar = DB::table('histori_rawatinap')->where('id', $id)->first();
+			if ($kamar) {
+				return baca_kamar($kamar->kamar_id);
+			} else {
+				return NULL;
+			}
+		} else {
+			return NULL;
+		}
+	}
+}
 
 if (!function_exists('count_resume')) {
 	function count_resume($reg_id)

@@ -461,85 +461,98 @@
               <tr>
                   <td style="font-weight: bold; width: 20%;">a. Bentuk makanan</td>
                   <td>
-                      <table style="width: 100%; border: 1px solid black; font-size:12px;" class="table table-striped table-hover table-condensed form-box">
-                          <tr style="border: 1px solid black;">
-                              <td style="border: 1px solid black; width: 10%;" class="text-center">
-                                  <div>
-                                      <input class="form-check-input"
-                                          name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan]"
-                                          {{ @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] == 'MC' ? 'checked' : '' }}
-                                          type="radio" value="MC">
-                                      <label class="form-check-label" style="font-weight: 400;">MC</label>
-                                  </div>
-                              </td>
-                              <td style="border: 1px solid black; width: 10%;" class="text-center">
-                                  <div>
-                                      <input class="form-check-input"
-                                          name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan]"
-                                          {{ @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] == 'BR' ? 'checked' : '' }}
-                                          type="radio" value="BR">
-                                      <label class="form-check-label" style="font-weight: 400;">BR</label>
-                                  </div>
-                              </td>
-                              <td style="border: 1px solid black; width: 10%;" class="text-center">
-                                  <div>
-                                      <input class="form-check-input"
-                                          name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan]"
-                                          {{ @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] == 'Sippy' ? 'checked' : '' }}
-                                          type="radio" value="Sippy">
-                                      <label class="form-check-label" style="font-weight: 400;">Sippy</label>
-                                  </div>
-                              </td>
-                              <td style="border: 1px solid black; width: 10%;" class="text-center">
-                                  <div style="display: flex; vertical-align:middle">
-                                      <input style="margin: 0" class="form-check-input"
-                                          name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan]"
-                                          {{ @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] == 'Lainnya' ? 'checked' : '' }}
-                                          type="radio" value="Lainnya">
-                                      <label class="form-check-label" style="font-weight: 400; margin: 0 1rem 0 0;">Lainnya</label>
-                                      {{@$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan_lain']}}
-                                  </div>
-                              </td>
-                          </tr>
-                          <tr style="border: 1px solid black;">
-                              <td style="border: 1px solid black; width: 10%;" class="text-center">
-                                  <div>
-                                      <input class="form-check-input"
-                                          name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan]"
-                                          {{ @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] == 'Makanan saring (TD I) ' ? 'checked' : '' }}
-                                          type="radio" value="Makanan saring (TD I) ">
-                                      <label class="form-check-label" style="font-weight: 400;">Makanan saring (TD I) </label>
-                                  </div>
-                              </td>
-                              <td style="border: 1px solid black; width: 10%;" class="text-center">
-                                  <div>
-                                      <input class="form-check-input"
-                                          name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan]"
-                                          {{ @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] == 'Makanan lunak (TD II)' ? 'checked' : '' }}
-                                          type="radio" value="Makanan lunak (TD II)">
-                                      <label class="form-check-label" style="font-weight: 400;">Makanan lunak (TD II)</label>
-                                  </div>
-                              </td>
-                              <td style="border: 1px solid black; width: 10%;" class="text-center">
-                                  <div>
-                                      <input class="form-check-input"
-                                          name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan]"
-                                          {{ @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] == 'Makanan lunak (TD III)' ? 'checked' : '' }}
-                                          type="radio" value="Makanan lunak (TD III)">
-                                      <label class="form-check-label" style="font-weight: 400;">Makanan lunak (TD III)</label>
-                                  </div>
-                              </td>
-                              <td style="border: 1px solid black; width: 10%;" class="text-center">
-                                  <div>
-                                      <input class="form-check-input"
-                                          name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan]"
-                                          {{ @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] == 'Makanan biasa (TD IV)  ' ? 'checked' : '' }}
-                                          type="radio" value="Makanan biasa (TD IV)  ">
-                                      <label class="form-check-label" style="font-weight: 400;">Makanan biasa (TD IV)  </label>
-                                  </div>
-                              </td>
-                          </tr>
-                      </table>
+                    @php
+                        $bentuk_makanan = @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] ?? [];
+                        if (!is_array($bentuk_makanan)) {
+                            $bentuk_makanan = [$bentuk_makanan];
+                        }
+                        $bentuk_makanan_lain = @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan_lain'] ?? '';
+                    @endphp
+
+                    <table style="width: 100%; border: 1px solid black; font-size:12px;" class="table table-striped table-hover table-condensed form-box">
+                        <tr style="border: 1px solid black;">
+                            <td style="border: 1px solid black; width: 10%;" class="text-center">
+                                <div>
+                                    <input class="form-check-input"
+                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan][]"
+                                        type="checkbox" value="MC"
+                                        {{ in_array('MC', $bentuk_makanan) ? 'checked' : '' }}>
+                                    <label class="form-check-label" style="font-weight: 400;">MC</label>
+                                </div>
+                            </td>
+                            <td style="border: 1px solid black; width: 10%;" class="text-center">
+                                <div>
+                                    <input class="form-check-input"
+                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan][]"
+                                        type="checkbox" value="BR"
+                                        {{ in_array('BR', $bentuk_makanan) ? 'checked' : '' }}>
+                                    <label class="form-check-label" style="font-weight: 400;">BR</label>
+                                </div>
+                            </td>
+                            <td style="border: 1px solid black; width: 10%;" class="text-center">
+                                <div>
+                                    <input class="form-check-input"
+                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan][]"
+                                        type="checkbox" value="Sippy"
+                                        {{ in_array('Sippy', $bentuk_makanan) ? 'checked' : '' }}>
+                                    <label class="form-check-label" style="font-weight: 400;">Sippy</label>
+                                </div>
+                            </td>
+                            <td style="border: 1px solid black; width: 10%;" class="text-center">
+                                <div style="vertical-align:middle">
+                                    <input style="margin: 0" class="form-check-input"
+                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan][]"
+                                        type="checkbox" value="Lainnya"
+                                        {{ in_array('Lainnya', $bentuk_makanan) ? 'checked' : '' }}>
+                                    <label class="form-check-label" style="font-weight: 400; margin: 0 1rem 0 0;">Lainnya</label>
+                                    <input type="text"
+                                        placeholder="Isi jika Lainnya"
+                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan_lain]"
+                                        class="form-control"
+                                        style="display:inline-block;"
+                                        value="{{ $bentuk_makanan_lain }}">
+                                </div>
+                            </td>
+                        </tr>
+                        <tr style="border: 1px solid black;">
+                            <td style="border: 1px solid black; width: 10%;" class="text-center">
+                                <div>
+                                    <input class="form-check-input"
+                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan][]"
+                                        type="checkbox" value="Makanan saring (TD I)"
+                                        {{ in_array('Makanan saring (TD I)', $bentuk_makanan) ? 'checked' : '' }}>
+                                    <label class="form-check-label" style="font-weight: 400;">Makanan saring (TD I)</label>
+                                </div>
+                            </td>
+                            <td style="border: 1px solid black; width: 10%;" class="text-center">
+                                <div>
+                                    <input class="form-check-input"
+                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan][]"
+                                        type="checkbox" value="Makanan lunak (TD II)"
+                                        {{ in_array('Makanan lunak (TD II)', $bentuk_makanan) ? 'checked' : '' }}>
+                                    <label class="form-check-label" style="font-weight: 400;">Makanan lunak (TD II)</label>
+                                </div>
+                            </td>
+                            <td style="border: 1px solid black; width: 10%;" class="text-center">
+                                <div>
+                                    <input class="form-check-input"
+                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan][]"
+                                        type="checkbox" value="Makanan lunak (TD III)"
+                                        {{ in_array('Makanan lunak (TD III)', $bentuk_makanan) ? 'checked' : '' }}>
+                                    <label class="form-check-label" style="font-weight: 400;">Makanan lunak (TD III)</label>
+                                </div>
+                            </td>
+                            <td style="border: 1px solid black; width: 10%;" class="text-center">
+                                <div>
+                                    <input class="form-check-input"
+                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan][]"
+                                        type="checkbox" value="Makanan biasa (TD IV)"
+                                        {{ in_array('Makanan biasa (TD IV)', $bentuk_makanan) ? 'checked' : '' }}>
+                                    <label class="form-check-label" style="font-weight: 400;">Makanan biasa (TD IV)</label>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
                   </td>
               </tr>
               <tr>

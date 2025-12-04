@@ -689,6 +689,7 @@ class EmrPerencanaanController extends Controller
 		$data['dokters'] 		   = Pegawai::where('kategori_pegawai', 1)->pluck('nama', 'id');
 		$data['tarifs'] 		   = Tarif::pluck('nama', 'id');
 		$data['riwayats'] 		   = EmrInapPerencanaan::where('registrasi_id', $data['reg']->id)->where('type', 'informed_consent')->orderBy('id', 'DESC')->get();
+		$data['source']            = $r->get('source');
 		
 		if ($r->filled('asessment_id')) {
 			$data['riwayat'] = EmrInapPerencanaan::find($r->asessment_id);

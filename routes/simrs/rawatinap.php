@@ -75,6 +75,7 @@ Route::group(['middleware' => ['web', 'auth', 'role:laboratorium|apotik|admissio
 	//IBS
 	Route::get('rawat-inap/ibs/{id}', 'RawatinapController@ibs');
 	Route::post('rawat-inap/save-ibs', 'RawatinapController@saveibs');
+	Route::post('rawat-inap/ibs/update-tanggal', 'RawatinapController@updateRencanaOperasi');
 
 	//PIP
 	Route::get('rawat-inap/ppi/{pasien_id}', 'RawatinapController@ppi');

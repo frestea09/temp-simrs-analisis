@@ -105,6 +105,21 @@
     text-decoration: none;
     cursor: pointer;
   }
+
+  .prb {
+    padding: 10px;
+    background-color: #ffecec;      
+    border: 1px solid #ff6b6b;     
+    border-radius: 6px;
+    width: fit-content;
+    margin: 20px auto 0 auto;
+  }
+
+  .prb h3 {
+    color: #c70000;                  
+    margin: 0;
+    font-weight: bold;
+  }
   
   /* 100% Image Width on Smaller Screens */
   @media only screen and (max-width: 700px){
@@ -145,6 +160,11 @@
         @include('emr.modules.addons.profile')
         <div class="row">
           @include('emr.modules.addons.tabs')
+          @if((($ketPRB ?? '') == 'ya')&&($unit == "jalan")) 
+            <div class="prb">  
+              <h3>Pasien Potensi PRB</h3>
+            </div>
+          @endif
           @if (in_array(@$reg->poli_id, ['3', '4', '34']))
             <div class="col-md-12">
               <table style="width: 100%" style="font-size:12px;">
@@ -198,7 +218,19 @@
                         @if ($unit == "jalan" && !empty(@$assesment_dokter))
                         <button onclick="openWindow('{{ url('cetak-eresume-medis/pdf/' . @$assesment_dokter->registrasi_id . '/' . @$assesment_dokter->id)  . '?source=asesmen&tipe=dokter' }}')" class="btn btn-flat btn-info btn-xs">Asesmen</button>
                         @endif
-                        <table style="width: 100%" style="font-size:12px;"> 
+                        <table style="width: 100%" style="font-size:12px;">
+                          @if ($unit == "inap")
+                          <tr>
+                              <td style="width:50px;"><b>Ruangan</b></td>
+                              <td style="padding: 5px;">
+                               <select id="histori_ranap_id" class="form-control select2">
+                                    @foreach ($histori_ranap as $item)
+                                        <option value="{{$item->id}}">{{baca_kamar($item->kamar_id)}}</option>
+                                    @endforeach
+                                </select>
+                              </td> 
+                          </tr>
+                          @endif
                           <tr>
                               <td style="width:50px;"><b>Subjective(S)</b></td>
                               <td style="padding: 5px;">
@@ -834,6 +866,10 @@
                                     <tr>
                                         <th>Kamar </th>
                                         <td>{{ baca_kamar(@$rawatinap->kamar_id) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Tarif IDRG Sementara</th>
+                                        <td>{{ number_format(@$reg->tarif_idrg) }}</td>
                                     </tr>
                                     <tr>
                                         <th>ICD 9</th>

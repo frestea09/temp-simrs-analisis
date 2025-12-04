@@ -68,6 +68,7 @@
 <li><a href="{{ url('bridgingsep') }}"><img src="{{ asset('menu/sidebar/sepsusulan.svg') }}" width="24"> <span>Integrasi SEP VClaim</span></a></li>
 <li><a href="{{ url('/pendaftaran/pendaftaran-online') }}"><img src="{{ asset('menu/sidebar/penatajasa.svg') }}" width="24"> <span>Pendaftaran Online</span></a>
 <li><a href="{{ url('bridgingsep/data-klaim') }}"><img src="{{ asset('menu/sidebar/laporan2.svg') }}" width="24"> <span>Laporan SEP VClaim</span></a></li>
+<li><a href="{{ url('frontoffice/merging-data') }}"><img src="{{ asset('menu/sidebar/supervisor.svg') }}" width="24"> <span>Merging Data Pasien</span></a></li>
 {{-- <li><a href="{{ url('biayapemeriksaan') }}"><img src="{{ asset('menu/sidebar/laporan.svg') }}" width="24"> <span>Konf. Biaya Pemeriksaan</span></a></li> --}}
 {{-- @if (Auth::user()->name == 'BADARIYAH BAHRUM, A.Md.RMIK')
  <li><a href="{{ url('rawat-inap/laporan') }}"><i class="fa fa-pie-chart"></i> <span>Laporan Rawat Inap</span></a></li>

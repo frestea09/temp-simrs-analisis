@@ -76,6 +76,7 @@
                                 <th class="text-center" style="vertical-align: middle;">Tanggal Input</th>
                                 <th class="text-center" style="vertical-align: middle;">User</th>
                                 <th class="text-center" style="vertical-align: middle;">Aksi</th>
+                                <th class="text-center" style="vertical-align: middle;">TTE</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -97,9 +98,22 @@
                                         style="text-align: center; {{ $riwayat->id == request()->asessment_id ? ' background-color:rgb(172, 247, 162)' : '' }}">
                                         <a href="{{ URL::current() . '?asessment_id=' . $riwayat->id }}"
                                             class="btn btn-info btn-sm"><i class="fa fa-pencil"></i></a>
+                                        <a href="{{ url("operasi/cetak-pra-anestesi/pdf/".@$riwayat->registrasi_id."/".@$riwayat->id) }}" target="_blank" class="btn btn-warning btn-sm">
+                                            <i class="fa fa-print"></i></a>
                                         {{-- <a href="{{ url("emr-soap-hapus-pemeriksaan/".$unit."/".@$riwayat->registrasi_id."/".@$riwayat->id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Yakin Akan Menghapus Data Ini ?')">
                                             <i class="fa fa-trash"></i>
                                         </a> --}}
+                                    </td>
+                                    <td
+                                          style="text-align: center; {{ $riwayat->id == request()->asessment_id ? ' background-color:rgb(172, 247, 162)' : '' }}">
+                                        <button type="button" class="btn btn-danger btn-sm btn-sm proses-tte-pra-anestesi" data-riwayat-id="{{@$riwayat->id}}">
+                                            <i class="fa fa-pencil"></i>
+                                        </button>
+                                        @if (!empty(json_decode(@$riwayat->tte)->base64_signed_file))
+                                            <a href="{{ url("operasi-print-tte-pra-anestesi/pdf/".@$riwayat->registrasi_id."/".@$riwayat->id) }}" class="btn btn-success btn-sm">
+                                                <i class="fa fa-print"></i>
+                                            </a>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
@@ -985,6 +999,52 @@
       </form>
     </div>
   </div>
+  <!-- Modal TTE Pra Anestesi-->
+  <div id="myModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+
+      <!-- Modal content-->
+      <form id="form-tte-pra-anestesi" action="{{ url('tte-pra-anestesi') }}" method="POST">
+      <input type="hidden" name="id">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">TTE Pra Anestesi</h4>
+        </div>
+        <div class="modal-body row" style="display: grid;">
+            {!! csrf_field() !!}
+            <input type="hidden" class="form-control" name="riwayat_id" id="riwayat_id" disabled>
+            <input type="hidden" class="form-control" name="nik" id="nik_hidden" value="{{@Auth::user()->pegawai->nik}}" disabled>
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="pwd">Nama:</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" name="dokter" id="dokter" value="{{@Auth::user()->pegawai->nama}}" disabled>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="pwd">NIK:</label>
+            <div class="col-sm-10">
+              <input type="text" class="form-control" id="nik" value="{{substr(Auth::user()->pegawai->nik, 0, -5) . '*****'}}" disabled>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="pwd">Passphrase:</label>
+            <div class="col-sm-10">
+              <input type="password" class="form-control" name="passphrase" id="passphrase">
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary" id="button-proses-tte-pra-anestesi">Proses TTE</button>
+        </div>
+      </div>
+      </form>
+
+    </div>
+  </div>
+  <!-- END Modal TTE Pra Anestesi-->
 @endsection
 
 @section('script')
@@ -1001,5 +1061,18 @@
           minViewMode: "months"
       });
       $("#date_dengan_tanggal").attr('', true);
+
+      // TTE Pra Anestesi
+        $('.proses-tte-pra-anestesi').click(function () {
+        // $('#registrasi_id_hidden3').val($(this).data("registrasi-id"));
+        $('#riwayat_id').val($(this).data("riwayat-id"));
+        $('#myModal').modal('show');
+        })
+
+        $('#form-tte-pra-anestesi').submit(function (e) {
+        e.preventDefault();
+        $('input').prop('disabled', false);
+        $('#form-tte-pra-anestesi')[0].submit();
+      })
   </script>
 @endsection

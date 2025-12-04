@@ -60,7 +60,11 @@
                 class="form-horizontal">
                 <div class="row">
                     <div class="col-md-12">
-                        @include('emr.modules.addons.tabs')
+                        @if ($source === 'operasi')
+                            @include('emr.modules.addons.tab-operasi')
+                        @else
+                            @include('emr.modules.addons.tabs')
+                        @endif
                         {{ csrf_field() }}
                         {!! Form::hidden('registrasi_id', $reg->id) !!}
                         {!! Form::hidden('pasien_id', $reg->pasien_id) !!}

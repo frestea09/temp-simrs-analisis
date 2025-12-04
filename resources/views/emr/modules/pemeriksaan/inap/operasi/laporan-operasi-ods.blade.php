@@ -60,7 +60,11 @@
             @include('emr.modules.addons.profile')
             <form method="POST" action="{{ url('emr-soap/pemeriksaan/laporan-operasi-ods/' . $unit . '/' . $reg->id) }}" class="form-horizontal">
                 <div class="row">
-                  @include('emr.modules.addons.tab-operasi')
+                  @if ($source === 'emr')
+                      @include('emr.modules.addons.tabs')
+                  @else
+                      @include('emr.modules.addons.tab-operasi')
+                  @endif
                     <div class="col-md-12">
                         {{ csrf_field() }}
                         {!! Form::hidden('registrasi_id', $reg->id) !!}
@@ -104,6 +108,7 @@
                                 </tbody>
                             </table>
                         </div>
+                      @if ($source !== 'emr')
                         <div class="col-md-12">
                           <h4 style="text-align: center;"><b>LAPORAN OPERASI MATA</b></h4>
                         </div>
@@ -996,12 +1001,14 @@
                         </div>
 
                         <br /><br />
+                      @endif
                     </div>
                 </div>
-
+              @if ($source !== 'emr')
                 <div class="col-md-12 text-right">
                     <button class="btn btn-success">Simpan</button>
                 </div>
+              @endif
             </form>
         </div>
     @endsection

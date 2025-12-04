@@ -180,9 +180,9 @@ class EmrPemeriksaanController extends Controller
         $data['registrasi_id'] = $registrasi_id;
         $data['unit'] = $unit;
         $data['reg'] = Registrasi::find($registrasi_id);
-        if ($data['reg']->nomorantrian) {
-            @updateTaskId(5, $data['reg']->nomorantrian);//RUN TASKID 5
-        }
+        // if ($data['reg']->nomorantrian) {
+        //     @updateTaskId(5, $data['reg']->nomorantrian);//RUN TASKID 5
+        // }
         $data['riwayats'] = EmrInapPemeriksaan::leftJoin('registrasis', 'registrasis.id', '=', 'emr_inap_pemeriksaans.registrasi_id')
             ->where('registrasis.poli_id', $data['reg']->poli_id)
             ->where('emr_inap_pemeriksaans.pasien_id', $data['reg']->pasien_id)
@@ -247,6 +247,13 @@ class EmrPemeriksaanController extends Controller
 
         if ($r->method() == 'POST') {
             LogUserController::log(Auth::user()->id, 'asesmen', @$r->registrasi_id);
+            $pegawai = Pegawai::where('user_id', Auth::user()->id)
+                        ->where('kategori_pegawai', 1)
+                        ->first();
+            if (($data['reg']->nomorantrian) && ($pegawai)) {
+                @updateTaskId(5, $data['reg']->nomorantrian);//RUN TASKID 5
+            }
+            
             $kategoriPegawai = Auth::user()->pegawai->kategori_pegawai;
             if ($kategoriPegawai == 1) {
                 $r->validate([
@@ -307,9 +314,9 @@ class EmrPemeriksaanController extends Controller
                     ));
 
                     $response_token = curl_exec($curl_token);
-                    $token = json_decode($response_token);
-                    $access_token = $token->access_token;
-                    // dd($access_token);
+                    // dd($response_token);
+                    @$token = json_decode($response_token);
+                    @$access_token = @$token->access_token;
                     curl_close($curl_token);
                     // END OF API TOKEN
                 }
@@ -1196,6 +1203,9 @@ class EmrPemeriksaanController extends Controller
         if ($r->method() == 'POST') {
             $kategoriPegawai = Auth::user()->pegawai->kategori_pegawai;
             if ($kategoriPegawai == 1) {
+                if (($data['reg']->nomorantrian)) {
+                    @updateTaskId(5, $data['reg']->nomorantrian);//RUN TASKID 5
+                }
                 $r->validate([
                     'fisik.anamnesa' => 'required',
                     'fisik.pemeriksaan_fisik' => 'required',
@@ -1372,6 +1382,12 @@ class EmrPemeriksaanController extends Controller
                 Flashy::success('Record berhasil diupdate');
                 return redirect()->back();
             } else {
+                $pegawai = Pegawai::where('user_id', Auth::user()->id)
+                        ->where('kategori_pegawai', 1)
+                        ->first();
+                if (($data['reg']->nomorantrian) && ($pegawai)) {
+                        @updateTaskId(5, $data['reg']->nomorantrian);//RUN TASKID 5
+                }
                 $asessment = new EmrInapPemeriksaan();
                 $asessment->pasien_id = $r->pasien_id;
                 $asessment->registrasi_id = $r->registrasi_id;
@@ -1466,7 +1482,10 @@ class EmrPemeriksaanController extends Controller
 
         $data['current_asessment'] = @$assesment;
         if ($r->method() == 'POST') {
-            if (Auth::user()->pegawai->kategori_pegawai == 1) {
+            if (Auth::user()->pegawai->kategori_pegawai == 1) {  
+                if (($data['reg']->nomorantrian)) {
+                    @updateTaskId(5, $data['reg']->nomorantrian);//RUN TASKID 5
+                }
                 $r->validate([
                     'fisik.anamnesa' => 'required',
                     'fisik.riwayatPenyakitDahulu' => 'required',
@@ -1659,6 +1678,12 @@ class EmrPemeriksaanController extends Controller
                 Flashy::success('Record berhasil diupdate');
                 return redirect()->back();
             } else {
+                $pegawai = Pegawai::where('user_id', Auth::user()->id)
+                        ->where('kategori_pegawai', 1)
+                        ->first();
+                if (($data['reg']->nomorantrian) && ($pegawai)) {
+                    @updateTaskId(5, $data['reg']->nomorantrian);//RUN TASKID 5
+                }
                 $asessment = new EmrInapPemeriksaan();
                 $asessment->pasien_id = $r->pasien_id;
                 $asessment->registrasi_id = $r->registrasi_id;
@@ -1747,6 +1772,12 @@ class EmrPemeriksaanController extends Controller
                 Flashy::success('Record berhasil diupdate');
                 return redirect()->back();
             } else {
+                $pegawai = Pegawai::where('user_id', Auth::user()->id)
+                        ->where('kategori_pegawai', 1)
+                        ->first();
+                if (($data['reg']->nomorantrian) && ($pegawai)) {
+                    @updateTaskId(5, $data['reg']->nomorantrian);//RUN TASKID 5
+                }
                 $asessment = new EmrInapPemeriksaan();
                 $asessment->pasien_id = $r->pasien_id;
                 $asessment->registrasi_id = $r->registrasi_id;
@@ -1819,6 +1850,9 @@ class EmrPemeriksaanController extends Controller
         if ($r->method() == 'POST') {
 
             if (Auth::user()->pegawai->kategori_pegawai == 1) {
+                if (($data['reg']->nomorantrian)) {
+                    @updateTaskId(5, $data['reg']->nomorantrian);//RUN TASKID 5
+                }
                 $r->validate([
                     'fisik.anamnesa' => 'required',
                     'fisik.pemeriksaan_fisik' => 'required',
@@ -2020,6 +2054,12 @@ class EmrPemeriksaanController extends Controller
                 Flashy::success('Record berhasil diupdate');
                 return redirect()->back()->withInput(['poli' => $data['reg']->poli_id, 'dpjp' => $data['reg']->dokter_id]);
             } else {
+                $pegawai = Pegawai::where('user_id', Auth::user()->id)
+                        ->where('kategori_pegawai', 1)
+                        ->first();
+                if (($data['reg']->nomorantrian) && ($pegawai)) {
+                        @updateTaskId(5, $data['reg']->nomorantrian);//RUN TASKID 5
+                }
                 $asessment = new EmrInapPemeriksaan();
                 $asessment->pasien_id = $r->pasien_id;
                 $asessment->registrasi_id = $r->registrasi_id;
@@ -2358,6 +2398,12 @@ class EmrPemeriksaanController extends Controller
                     Flashy::success('Record berhasil diupdate');
                     return redirect()->back();
                 } else {
+                    $pegawai = Pegawai::where('user_id', Auth::user()->id)
+                        ->where('kategori_pegawai', 1)
+                        ->first();
+                    if (($data['reg']->nomorantrian) && ($pegawai)) {
+                        @updateTaskId(5, $data['reg']->nomorantrian);//RUN TASKID 5
+                    }
                     $asessment = new EmrInapPemeriksaan();
                     $asessment->pasien_id = $r->pasien_id;
                     $asessment->registrasi_id = $r->registrasi_id;
@@ -7162,6 +7208,7 @@ class EmrPemeriksaanController extends Controller
         $data['registrasi_id'] = $registrasi_id;
         $data['unit'] = $unit;
         $data['reg'] = Registrasi::find($registrasi_id);
+        $data['source'] = $r->get('source');
         $data['riwayats'] = EmrInapPemeriksaan::where('pasien_id', $data['reg']->pasien_id)
             ->where('type', 'laporan-operasi')
             ->orderBy('id', 'DESC')
@@ -7224,6 +7271,7 @@ class EmrPemeriksaanController extends Controller
         $data['registrasi_id'] = $registrasi_id;
         $data['unit'] = $unit;
         $data['reg'] = Registrasi::find($registrasi_id);
+        $data['source'] = $r->get('source');
         $data['riwayats'] = EmrInapPemeriksaan::where('pasien_id', $data['reg']->pasien_id)
             ->where('type', 'laporan-operasi-ranap')
             ->orderBy('id', 'DESC')
@@ -7288,6 +7336,7 @@ class EmrPemeriksaanController extends Controller
         $data['reg'] = Registrasi::find($registrasi_id);
         $data['smf'] = smf();
         $data['pasien'] = Pasien::find($data['reg']->pasien_id);
+        $data['source'] = $r->get('source');
         $data['riwayats'] = EmrInapPemeriksaan::where('pasien_id', $data['reg']->pasien_id) // pastikan pasien_id benar
             ->leftJoin('pasiens', 'pasiens.no_rm', '=', 'emr_inap_pemeriksaans.pasien_id') // pastikan kolom yang di-join sesuai (di sini saya asumsikan pasien_id di tabel pasiens adalah 'id')
             ->where('type', 'laporan-operasi-ods') // pastikan type benar
@@ -7464,6 +7513,7 @@ class EmrPemeriksaanController extends Controller
         $data['registrasi_id'] = $registrasi_id;
         $data['unit'] = $unit;
         $data['reg'] = Registrasi::find($registrasi_id);
+        $data['cppt'] = Emr::where('registrasi_id', $registrasi_id)->ordeBy('id', 'DESC')->first();
         $data['riwayats'] = EmrInapPemeriksaan::where('pasien_id', $data['reg']->pasien_id)
             ->where('type', 'kartu-anestesi')
             ->orderBy('id', 'DESC')
@@ -7727,10 +7777,21 @@ class EmrPemeriksaanController extends Controller
         $data['hasillab'] = Hasillab::with('orderLab.folios')->where('registrasi_id', $registrasi_id)->whereNotNull('order_lab_id')->orderBy('id', 'DESC')->get();
         $dokter_user_id = Pegawai::where('kategori_pegawai', 1)->whereNotNull('user_id')->groupBy('user_id')->pluck('user_id')->toArray();
         $data['cppt_perawat'] = Emr::where('unit', '!=', 'sbar')->where('registrasi_id', $registrasi_id)->whereNotIn('user_id', $dokter_user_id)->first();
-        if(cek_status_reg($data['reg']) == 'I'){
-            $asessment = EmrInapPemeriksaan::where('registrasi_id', $registrasi_id)->where('type', 'asesmen-awal-perawat-maternitas')->first();
-        }else{
-            $asessment = EmrInapPemeriksaan::where('registrasi_id', $registrasi_id)->where('type', 'fisik_gizi')->first();
+        $data['riwayats'] = EmrInapPemeriksaan::where('pasien_id', $data['reg']->pasien_id)->where('type', 'fisik_gizi')->orderBy('id', 'DESC')->get();
+        $asessment_id = $request->get('asessment_id');
+
+        if ($asessment_id) {
+            $asessment = EmrInapPemeriksaan::find($asessment_id);
+        } else {
+            if (cek_status_reg($data['reg']) == 'I') {
+                $asessment = EmrInapPemeriksaan::where('registrasi_id', $registrasi_id)
+                    ->where('type', 'asesmen-awal-perawat-maternitas')
+                    ->first();
+            } else {
+                $asessment = EmrInapPemeriksaan::where('registrasi_id', $registrasi_id)
+                    ->where('type', 'fisik_gizi')
+                    ->first();
+            }
         }
         
         $data['assesment'] = json_decode(@$asessment->fisik, true);
@@ -8957,6 +9018,7 @@ class EmrPemeriksaanController extends Controller
 		$data['dokter'] = Pegawai::where('kategori_pegawai', 1)->pluck('nama', 'id');
 		$data['unit'] = $unit;
 		$data['registrasi_id']  = $registrasi_id;
+        $data['source'] = $request->get('source');
 
 		if ($request->method() == 'POST') {
 			$request->validate(['file' => 'required|file|mimes:pdf,doc,docx,png,jpg,jpeg']);

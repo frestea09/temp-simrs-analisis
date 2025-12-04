@@ -1265,6 +1265,21 @@ class RawatinapController extends Controller
 		return redirect('rawat-inap/admission');
 	}
 
+	public function updateRencanaOperasi(Request $req)
+	{
+		$ibs = Operasi::find($req->id);
+		if (!$ibs) {
+			return response()->json(['error' => 'Data tidak ditemukan'], 404);
+		}
+		$ibs->rencana_operasi = $req->rencana_operasi;
+		$ibs->save();
+
+		return response()->json([
+			'success' => true,
+			'tgl_indo' => tgl_indo($ibs->rencana_operasi)
+		]);
+	}
+
 	public function laboratorium($reg_id = '')
 	{
 		$data['folio'] = Folio::where(['registrasi_id' => $reg_id, 'poli_tipe' => 'L'])->get();

@@ -215,6 +215,7 @@
                                         <th class="text-center" width="7%">No</th>
                                         <th width="28%">Nama</th>
                                         <th class="text-center">Pelayanan</th>
+                                        <th class="text-center">Ruangan</th>
                                         <th class="text-center">Dokter</th>
                                         <th class="text-center">Tgl</th>
                                         {{-- <th class="text-center">Kapasitas</th>
@@ -237,6 +238,14 @@
                                         <td class="text-center">{{ $no++ }}</td>
                                         <td>{{ maskString(@$d->registrasi->pasien->nama) }}</td>
                                         <td>{!! $d->namapoli ? $d->namapoli: @$d->suspect!!}</td>
+                                        <td>
+                                            {{ baca_kamar(
+                                                (@$d->rawatinap->kamar_id)
+                                                ??
+                                                @optional($d->rawatinap_dari_registrasi_ranap)->kamar_id
+                                                ) 
+                                            }}
+                                        </td>
                                         <td>{{ @baca_dokter(@$d->registrasi->dokter_id) }}</td>
                                         <td>{{ date('d-m-Y',strtotime(@$d->rencana_operasi))}}</td>
                                         

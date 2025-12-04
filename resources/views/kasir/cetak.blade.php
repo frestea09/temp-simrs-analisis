@@ -61,7 +61,7 @@
                 @$bayar_obat = @App\Pembayaran::where('registrasi_id',$d->registrasi_id)->where('pembayaran','obat')->first();
                 @$bayar_tindakan = @App\Pembayaran::where('registrasi_id',$d->registrasi_id)->where('pembayaran','tindakan')->first();
               @endphp
-              @if (!empty($d->pasien_id))
+              @if (!empty($d->pasien))
               {{-- @php
                   $carabay = 
               @endphp --}}

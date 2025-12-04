@@ -158,6 +158,7 @@
           {{-- <th class="text-center" scope="col">Tgl. Reg</th> --}}
           <th class="text-center" scope="col">Waktu</th>
           <th class="text-center" scope="col">Proses</th>
+          {{-- <th class="text-center" scope="col">TTD</th> --}}
         </tr>
       </thead>
       <tbody>
@@ -222,6 +223,9 @@
                   {{-- <label for="" class="text-success">Diproses</label> --}}
               @endif
             </td>
+            {{-- <td>
+              <a class="btn btn-danger btn-xs" target="_blank" href="{{url('/signaturepad/pasien/'.@$item->registrasi->pasien->id)}}"><i class="fa fa-pencil"></i></a>
+            </td> --}}
           </tr> 
           @endforeach
       </tbody>

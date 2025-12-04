@@ -3166,7 +3166,7 @@ class FrontofficeController extends Controller
             $reg->update();
         });
 
-        return redirect('frontoffice/e-claim/bridging/' . $request['registrasi_id']);
+        return redirect('frontoffice/e-claim/bridging-idrg/' . $request['registrasi_id']);
         // return redirect('frontoffice/jkn-input-diagnosa-irj/' . $request['registrasi_id']);
     }
 
@@ -3237,7 +3237,7 @@ class FrontofficeController extends Controller
             $reg->update();
         });
 
-        return redirect('frontoffice/e-claim/bridging-irna/' . $request['registrasi_id']);
+        return redirect('frontoffice/e-claim/bridging-irna-idrg/' . $request['registrasi_id']);
         // return redirect('frontoffice/jkn-input-diagnosa-irj/' . $request['registrasi_id']);
     }
 
@@ -3308,7 +3308,7 @@ class FrontofficeController extends Controller
             $reg->update();
         });
 
-        return redirect('frontoffice/e-claim/bridging/' . $request['registrasi_id']);
+        return redirect('frontoffice/e-claim/bridging-idrg/' . $request['registrasi_id']);
         // return redirect('frontoffice/jkn-input-diagnosa-irj/' . $request['registrasi_id']);
     }
 
@@ -8330,7 +8330,7 @@ class FrontofficeController extends Controller
                 ->with('tarif')
                 ->where('cara_bayar_id', '!=', '2')
                 ->whereIn('jenis', ['TG', 'TI'])
-                ->whereIn('poli_tipe', ['G', 'Z', 'B'])
+                ->where('poli_tipe', 'G')
                 ->selectRaw('sum(total) AS total,poli_tipe,dokter_id,registrasi_id,namatarif,created_at,jenis,tarif_id')
                 ->orderBy('namatarif', 'ASC')
                 ->groupBy('tarif_id')
@@ -8609,16 +8609,19 @@ class FrontofficeController extends Controller
                 ->where('jenis', 'TG')
                 ->where('cara_bayar_id', '!=', '2')
                 ->where('poli_tipe', 'R')
+                ->where('namatarif', 'not like', '%CT. Scan%')
                 ->sum(\DB::raw('total'));
             $data['rad_inap'] = Folio::where('registrasi_id', $data['reg']->id)
                 ->where('jenis', 'TI')
                 ->where('cara_bayar_id', '!=', '2')
                 ->where('poli_tipe', 'R')
+                ->where('namatarif', 'not like', '%CT. Scan%')
                 ->sum(\DB::raw('total'));
             $data['rad_irj'] = Folio::where('registrasi_id', $data['reg']->id)
                 ->where('jenis', 'TA')
                 ->where('cara_bayar_id', '!=', '2')
                 ->where('poli_tipe', 'R')
+                ->where('namatarif', 'not like', '%CT. Scan%')
                 ->sum(\DB::raw('total'));
             $total_biaya = Folio::where('registrasi_id', $data['reg']->id)->where('cara_bayar_id', '!=', '2')->where('user_id', '!=', 610)->where('namatarif', 'not like', '%' . 'Retur penjualan' . '%')->sum(\DB::raw('total'));
             $jasa_racik = Folio::where('registrasi_id', $data['reg']->id)->where('cara_bayar_id', '!=', '2')->where('user_id', '!=', 610)->where('namatarif', 'not like', '%' . 'Retur penjualan' . '%')->sum(\DB::raw('jasa_racik'));
@@ -8649,7 +8652,7 @@ class FrontofficeController extends Controller
             $data['folio_igd'] = Folio::where('registrasi_id', $data['reg']->id)
                 ->with('tarif')
                 ->whereIn('jenis', ['TG', 'TI'])
-                ->whereIn('poli_tipe', ['G', 'Z', 'B'])
+                ->where('poli_tipe', 'G')
                 ->where('namatarif', 'not like', 'PO' . '%')
                 ->selectRaw('sum(total) AS total,poli_tipe,dokter_id,dokter_pelaksana,registrasi_id,namatarif,created_at,jenis,tarif_id')
                 ->orderBy('namatarif', 'ASC')
@@ -8991,6 +8994,17 @@ class FrontofficeController extends Controller
                 ->get();
             $data['apgarScore'] = EmrInapPemeriksaan::where('registrasi_id', $data['reg']->id)->where('type', 'apgar-score')->first();
         }
+
+        $data['ct_scan'] = Folio::where('registrasi_id', $data['reg']->id)
+                ->where('cara_bayar_id', '!=', '2')
+                ->where('poli_tipe', 'R')
+                ->where('namatarif', 'like', '%CT. Scan%')
+                ->get();
+        $data['total_ct_scan'] = Folio::where('registrasi_id', $data['reg']->id)
+                ->where('cara_bayar_id', '!=', '2')
+                ->where('poli_tipe', 'R')
+                ->where('namatarif', 'like', '%CT. Scan%')
+                ->sum(\DB::raw('total'));
 
         $pdf = PDF::loadView('frontoffice.cetak_all', $data);
         $pdf->setPaper('A4', 'portrait');

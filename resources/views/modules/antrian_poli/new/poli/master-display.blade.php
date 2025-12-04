@@ -438,42 +438,44 @@
                     let audios = [];
 
                     antrianDipanggil.forEach(antrian => {
-                        if(antrian != null){
+
+                        if (antrian != null) {
+
                             console.log("nomorantrian_jkn:", antrian.register_antrian.nomorantrian_jkn);
+
+                            // parse nomor antrian baru EVA-PAR1, EVA-PAR11, dst
+                            const parsed = parseNomorAntrian(antrian.register_antrian.nomorantrian_jkn);
+
+                            $('#nomorAntrian').html(antrian.register_antrian.nomorantrian_jkn);
+                            $('#namaAntrian').html(antrian.register_antrian?.pasien?.nama ?? '');
+
+                            $.get('/get-dokter/' + antrian.register_antrian.dokter_id, function(response) {
+                                $('#dokter').html(response.nama);
+                            });
+
                             if (bacaNomorAntrianBPJS(antrian.register_antrian.nomorantrian_jkn)) {
-                                $('#nomorAntrian').html(antrian.register_antrian.nomorantrian_jkn);
-                                $('#namaAntrian').html(antrian.register_antrian?.pasien?.nama ?? '');
-                                // $('#dokter').html('');
-                                $.get('/get-dokter/' + antrian.register_antrian.dokter_id, function(response) {
-                                    $('#dokter').html(response.nama);
-                                });
 
-                                audios.push(
-                                    // new Audio('/audio/in.mp3'),
-                                    // new Audio('/audio/nomorurut.mp3'),
-                                    ...bacaNomorAntrianBPJS(antrian.register_antrian.nomorantrian_jkn).substr(0, 3).split('').map(char => new Audio('/audio/' + char + ".mp3")),
-                                    new Audio('/audio/' + bacaNomorAntrianBPJS(antrian.register_antrian.nomorantrian_jkn).substr(3) + '.mp3'),
-                                    new Audio('/audio/ke_poli.mp3'),
-                                    new Audio('/audio/' + antrian.poli.audio + '.mp3')
-                                );
-                            } else {
-                                $('#nomorAntrian').html(antrian.register_antrian.nomorantrian_jkn);
-                                $('#namaAntrian').html(antrian.register_antrian?.pasien?.nama ?? '');
-                                // $('#dokter').html(baca_dokter(antrian.register_antrian.dokter_id));
-                                $.get('/get-dokter/' + antrian.register_antrian.dokter_id, function(response) {
-                                    $('#dokter').html(response.nama);
-                                });
+                                    const kode = bacaNomorAntrianBPJS(antrian.register_antrian.nomorantrian_jkn); // PAR11
 
+                                    audios.push(
+                                        ...kode.replace(/\d+/g, '').split('').map(char => new Audio('/audio/' + char + ".mp3")), // P A R
+                                        new Audio('/audio/' + kode.match(/\d+/)[0] + '.mp3'), // 11
+                                        new Audio('/audio/ke_poli.mp3'),
+                                        new Audio('/audio/' + antrian.poli.audio + '.mp3')
+                                    );
+                                } else {
+
+                                // fallback lama
                                 audios.push(
-                                    // new Audio('/audio/in.mp3'),
-                                    // new Audio('/audio/nomorurut.mp3'),
                                     ...antrian.kelompok.split('').map(char => new Audio('/audio/' + char + ".mp3")),
                                     new Audio('/audio/' + antrian.suara),
                                     new Audio('/audio/ke_poli.mp3'),
-                                    new Audio('/audio/' + antrian.poli.audio + '.mp3')
+                                    new Audio('/audio/' + antrian.poli.audio + ".mp3")
                                 );
+
                             }
                         }
+
                     });
                     // Play Audio
                     if(audios.length > 0){
@@ -519,6 +521,24 @@
             return {
                 kelompok: match[1] ?? '',
                 urutan: parseInt(match[2])
+            };
+        }
+        function parseNomorAntrian(nomor) {
+            if (!nomor) return false;
+
+            // ambil prefix & angka paling belakang
+            const match = nomor.match(/^(.*?)(\d+)$/);
+            if (!match) return false;
+
+            const prefix = match[1]; // EVA-PAR
+            const angka = match[2];  // 1 / 11 / 23 / dst
+
+            // buang simbol, sisakan huruf → EVA PAR → EVAPAR
+            const prefixHuruf = prefix.replace(/[^A-Za-z]/g, "");
+
+            return {
+                prefix: prefixHuruf,   // EVAPAR
+                angka: angka           // 1 / 11 / ...
             };
         }
         function ajaxAntrianBP() {
@@ -590,16 +610,15 @@
         }
 
         function bacaNomorAntrianBPJS(nomorAntrian) {
-            if (nomorAntrian === null || nomorAntrian.length <= 8) {
-                return false;
+            if (!nomorAntrian) return false;
+
+            // Jika format EVA-PAR11 → ambil PAR11
+            if (nomorAntrian.includes("-")) {
+                const bagian = nomorAntrian.split("-")[1]; // PAR11
+                return bagian || false;
             }
 
-            const antrian = nomorAntrian.substring(8);
-            if (!/[a-zA-Z]/.test(antrian)) {
-                return false;
-            }
-
-            return antrian;
+            return false;
         }
     </script>
 

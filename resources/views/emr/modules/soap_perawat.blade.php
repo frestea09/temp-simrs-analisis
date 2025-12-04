@@ -567,6 +567,18 @@
                     {{-- Soap Input --}}
                       <div class="col-md-6">  
                         <table style="width: 100%" style="font-size:12px;"> 
+                           @if ($unit == "inap")
+                          <tr>
+                              <td style="width:50px;"><b>Ruangan</b></td>
+                              <td style="padding: 5px;">
+                               <select id="histori_ranap_id" class="form-control select2">
+                                    @foreach ($histori_ranap as $item)
+                                        <option value="{{$item->id}}">{{baca_kamar($item->kamar_id)}}</option>
+                                    @endforeach
+                                </select>
+                              </td> 
+                          </tr>
+                          @endif
                           <tr>
                               <td style="width:50px;"><b>Subjective(S)</b></td>
                               <td style="padding: 5px;">

@@ -4,6 +4,26 @@
   <h1>One Day Care</h1>
 @endsection
 
+@section('css')
+<style>
+    .blink_red {
+        color: rgb(216, 45, 45);
+        font-weight: bold;
+        animation: blinker 2s linear infinite;
+    }
+
+    @keyframes blinker {
+        50% {
+            opacity: 0;
+        }
+    }
+
+    .text-red {
+        color: red;
+    }
+</style>
+@endsection
+
 @section('content')
   <div class="box box-primary">
     <div class="box-body">
@@ -21,6 +41,9 @@
         </div>
       {!! Form::close() !!}
       <hr>
+      <div class="mt-2 text-danger">
+          <marquee behavior="scroll" direction="left"><i>* Nama pasien berkedip berwarna merah jika pasien belum terbit SEP</i></marquee>
+      </div>
       <div class='table-responsive'>
         <table class='table table-striped table-bordered table-hover table-condensed' id="data">
           <thead>
@@ -28,6 +51,7 @@
               <th>No</th>
               <th>No. RM</th>
               <th>Nama</th>
+              <th>No. SEP</th>
               {{-- <th>Diagnosa</th> --}}
               <th>Tindakan</th>
               <th style="text-align: center">EMR</th>
@@ -44,7 +68,10 @@
                 <tr>
                   <td>{{ $no++ }}</td>
                   <td>{{ @$d->pasien->no_rm }}</td>
-                  <td>{{ @$d->pasien->nama }}</td>
+                  <td class="{{ empty($d->no_sep) ? 'blink_red' : '' }}">
+                    {{ @$d->pasien->nama }}
+                </td>
+                  <td>{{ @$d->no_sep }}</td>
                   {{-- <td>{!! $d->suspect !!}</td> --}}
                   <td>
                     @if (@$d->pasien)

@@ -8,6 +8,7 @@ Route::group(['middleware' => ['web', 'auth']], function () {
 	Route::view('frontoffice/rawat-jalan', 'frontoffice.rawat-jalan');
 	Route::view('frontoffice/supervisor', 'frontoffice.supervisor');
 	Route::view('frontoffice/rekammedis', 'frontoffice.rekammedis');
+	Route::view('frontoffice/merging-data', 'frontoffice.merging');
 	Route::view('frontoffice/rekammedis/laporan', 'frontoffice.laporanrekammedis');
 
 	//CETAK

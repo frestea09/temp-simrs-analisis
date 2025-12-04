@@ -6,6 +6,7 @@ use App\Operasi;
 use Illuminate\Http\Request;
 use MercurySeries\Flashy\Flashy;
 use App\Slideshow;
+use Carbon\Carbon;
 use Image;
 use File;
 use Auth;
@@ -86,8 +87,9 @@ class SlideshowController extends Controller
     }
 
     public function display_operasi(){
-      $date = date('Y-m-d', strtotime('-5 days'));
-      $data['jadwal_operasi'] = Operasi::whereBetween('rencana_operasi', [$date, date('Y-m-d')])->where('terlaksana','0')->orderBy('rencana_operasi','DESC')->orderBy('id','DESC')->get();
+      // $date = date('Y-m-d', strtotime('-5 days'));
+      $today = Carbon::today()->toDateString();
+      $data['jadwal_operasi'] = Operasi::whereDate('rencana_operasi', $today)->where('terlaksana','0')->orderBy('rencana_operasi','DESC')->orderBy('id','DESC')->get();
       // dd($data['jadwal_operasi']);
       return view('displaytempattidur.display_operasi', compact('data'));
     }

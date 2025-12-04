@@ -22,6 +22,7 @@ use App\Aturanetiket;
 use App\LicaResult;
 use App\Masterobat;
 use App\Emr;
+use App\PotensiPRB;
 use App\IntervensiKeperawatan;
 use App\ImplementasiKeperawatan;
 use App\EmrGizi;
@@ -85,6 +86,7 @@ use App\PaguPerawatan;
 use App\Inacbgs_sementara;
 use Modules\Kelas\Entities\Kelas;
 use App\FaskesRujukanRs;
+use App\HistoriRawatInap;
 use Illuminate\Support\Collection;
 
 class EmrController extends Controller
@@ -767,6 +769,14 @@ class EmrController extends Controller
 
 
 		LogUserController::log(Auth::user()->id, 'cppt',$request->registrasi_id);
+		$data['reg']            = Registrasi::find($request->registrasi_id);
+		$pegawai = Pegawai::where('user_id', Auth::user()->id)
+			->where('kategori_pegawai', 1)
+			->first();
+
+		if ($pegawai) {
+			@updateTaskId(5, $data['reg']->nomorantrian);
+		}
 
 		$create                 = new Emr();
 		$create->registrasi_id  = $request->registrasi_id;
@@ -777,6 +787,7 @@ class EmrController extends Controller
 		$create->hasil_echo     = $request->hasil_echo;
 		$create->hasil_ekg      = $request->hasil_ekg;
 		$create->hasil_eeg      = $request->hasil_eeg;
+		$create->histori_ranap_id      = @$request->histori_ranap_id;
 		$create->hasil_ctg      = $request->hasil_ctg;
 		$create->hasil_spirometri       = $request->hasil_spirometri;
 		$create->hasil_lainnya  = $request->hasil_lainnya;
@@ -959,6 +970,7 @@ class EmrController extends Controller
 			$create->pasien_id = $request->pasien_id;
 			$create->situation = @$situation;
 			$create->background = @$background;
+			$create->histori_ranap_id = @$request->histori_ranap_id;
 			$create->assesment = json_encode(@$assesment);
 			$create->recomendation = @$recomendation;
 			$create->ekstra = @json_encode(@$ekstra);
@@ -1051,6 +1063,7 @@ class EmrController extends Controller
 			$create->planning = $request->planning;
 			$create->is_sesuai         = @$request->sesuai;
 			$create->diagnosis = $request->diagnosis;
+			$create->histori_ranap_id = @$request->histori_ranap_id;
 			$create->keterangan = $request->keterangan;
 			$create->discharge = json_encode($request->fisik);
 			if ($request->created_at) {
@@ -1085,6 +1098,7 @@ class EmrController extends Controller
 		$create->tekanan_darah = $request->tekanan_darah;
 		$create->frekuensi_nafas = $request->frekuensi_nafas;
 		$create->kesadaran = $request->kesadaran;
+		$create->histori_ranap_id = @$request->histori_ranap_id;
 		$create->state = $request->state;
 		$create->suhu = $request->suhu;
 		$create->saturasi = $request->saturasi;
@@ -1148,6 +1162,7 @@ class EmrController extends Controller
 			$create->keterangan = $request->keterangan;
 			$create->nadi = $request->nadi;
 			$create->state = $request->state;
+			$create->histori_ranap_id = @$request->histori_ranap_id;
 			$create->tekanan_darah = $request->tekanan_darah;
 			$create->frekuensi_nafas = $request->frekuensi_nafas;
 			$create->suhu = $request->suhu;
@@ -1181,6 +1196,7 @@ class EmrController extends Controller
 			$create = new Emr();
 			$create->registrasi_id = @$reg_id;
 			$create->pasien_id = @$find->pasien_id;
+			$create->histori_ranap_id = @$find->histori_ranap_id;
 			$create->subject = @$find->subject;
 			$create->object = @$find->object;
 			$create->assesment = @$find->assesment;
@@ -1244,6 +1260,7 @@ class EmrController extends Controller
 			$create = new Emr();
 			$create->registrasi_id = $reg_id;
 			$create->pasien_id = @$find->pasien_id;
+			$create->histori_ranap_id = @$find->histori_ranap_id;
 			$create->subject = $find->subject;
 			$create->object = $find->object;
 			$create->assesment = $find->assesment;
@@ -1418,7 +1435,7 @@ class EmrController extends Controller
 		// dd($unit);
 		$data['reg']            = Registrasi::find($registrasi_id);
 		// @updateTaskId(4,$data['reg']->nomorantrian);
-		@updateTaskId(5,$data['reg']->nomorantrian);
+		// @updateTaskId(5,$data['reg']->nomorantrian);
 		$data['opt_poli'] = Poli::where('politype', 'J')->get();
 		session(['jenis' => 'TA']);
 		$data['perawats'] = Poli::where('politype', 'G')->pluck('perawat_id');
@@ -1508,6 +1525,16 @@ class EmrController extends Controller
 			$data['pelaksana']   = Pegawai::where('kategori_pegawai', '1')->get();
 			$data['perawat'] = Pegawai::where('kategori_pegawai', '2')->pluck('nama', 'id');
 			$data['no'] = 1;
+
+			if($unit == "jalan"){
+				$bayarjkn = $data['reg']->bayar;
+				$cekPRB = PotensiPRB::where('no_kartu', $data['reg']->no_jkn)
+                        ->where('poli_id', $data['reg']->poli_id)
+                        ->first();
+				if (($cekPRB)&& ($bayarjkn==1)) {
+					$data['ketPRB'] = 'ya';
+				}
+			}
 	
 			if ($unit == "inap") {
 				ini_set('max_execution_time', 0); //0=NOLIMIT
@@ -1517,6 +1544,7 @@ class EmrController extends Controller
 				$data['reg_id'] = $registrasi_id;
 				$data['tagihan'] = Folio::where(['registrasi_id' => $registrasi_id, 'lunas' => 'N'])->sum('total');
 				$data['rawatinap'] = Rawatinap::with('biaya_diagnosa_awal')->where('registrasi_id', $registrasi_id)->first();
+				$data['histori_ranap'] = HistoriRawatInap::where('registrasi_id', $registrasi_id)->orderBy('id','DESC')->get();
 				if ($data['rawatinap']) {
 					if (@$data['reg']->status_reg == NULL) {
 						if ($data['rawatinap']->tgl_keluar) {
@@ -1527,15 +1555,16 @@ class EmrController extends Controller
 						@$data['reg']->save();
 					}
 				}
+
 				$data['carabayar'] = Carabayar::pluck('carabayar', 'id');
 				$data['kamar'] = Kamar::pluck('nama', 'id');
 				$data['kelas'] = Kelas::pluck('nama', 'id');
-				$data['inacbgs'] = Inacbgs_sementara::where('registrasi_id', $registrasi_id)->first();
+				// $data['inacbgs'] = Inacbgs_sementara::where('registrasi_id', $registrasi_id)->first();
 				// $data['tarif'] = Tarif::leftJoin('kategoritarifs', 'kategoritarifs.id', '=', 'tarifs.kategoritarif_id')->where('tarifs.jenis', '=', 'TI')->select('tarifs.*', 'kategoritarifs.namatarif')->get();
 				$data['tarif'] = Tarif::select('nama', 'kode', 'total')->get();
 				$data['pagu'] = PaguPerawatan::all();
 				// inhealth mandiri
-				$data['inhealth'] = inhealthSjp::where('reg_id', $registrasi_id)->first();
+				// $data['inhealth'] = inhealthSjp::where('reg_id', $registrasi_id)->first();
 				if ($data['rawatinap']) {
 					session(['kelas' => $data['rawatinap']->kelas_id]);
 				}
@@ -1686,6 +1715,7 @@ class EmrController extends Controller
 			$data['reg_id'] = $registrasi_id;
 			$data['tagihan'] = Folio::where(['registrasi_id' => $registrasi_id, 'lunas' => 'N'])->sum('total');
 			$data['rawatinap'] = Rawatinap::with('biaya_diagnosa_awal')->where('registrasi_id', $registrasi_id)->first();
+			$data['histori_ranap'] = HistoriRawatInap::where('registrasi_id', $registrasi_id)->orderBy('id','DESC')->get();
 			if ($data['rawatinap']) {
 				if (@$data['reg']->status_reg == NULL) {
 					if ($data['rawatinap']->tgl_keluar) {
@@ -3461,6 +3491,33 @@ class EmrController extends Controller
 
 
 		return view('emr.modules.pemeriksaan_lab_pa', $data)->with('no', 1);
+	}
+
+	public function pemeriksaanLaporanOperasi($unit, $reg_id)
+	{
+		$data['registrasi_id'] = $reg_id;
+		$data['unit'] = $unit;
+		$data['reg'] = Registrasi::find($reg_id);
+		$pasien_id = $data['reg']->pasien_id;
+
+		$data['laporan'] = EmrInapPemeriksaan::where('pasien_id', $pasien_id)->where('type', 'laporan-operasi')->select(['id', 'registrasi_id', 'created_at'])->get();
+		$data['laporan_ranap'] = EmrInapPemeriksaan::where('pasien_id', $pasien_id)->where('type', 'laporan-operasi-ranap')->select(['id', 'registrasi_id', 'created_at'])->get();
+
+		return view('emr.modules.pemeriksaan_laporan_operasi', $data)->with('no', 1);
+	}
+
+	public function cetakLaporanOperasi($unit, $registrasi_id, $id)
+	{
+		$data['unit'] = $unit;
+		$data['smf'] = smf();
+		$data['reg'] = Registrasi::findOrFail($registrasi_id);
+		$data['pasien'] = Pasien::find($data['reg']->pasien_id);
+		$data['laporan'] = EmrInapPemeriksaan::findOrFail($id);
+		$data['asessment'] = json_decode($data['laporan']->fisik, true);
+
+		$pdf = Pdf::loadView('emr.modules.pemeriksaan.cetak_laporan_operasi', $data);
+
+		return $pdf->stream('laporan-operasi.pdf');
 	}
 
 	public function resume($unit, $reg_id)
@@ -5648,6 +5705,26 @@ class EmrController extends Controller
             Flashy::error('Gagal menghapus hasil pemeriksaan!');
         }
         return redirect()->back();
+	}
+
+	public function verifDPJP($id)
+	{
+		$soap = Emr::find($id);
+
+		if (!empty($soap)) {
+			$reg = Registrasi::find($soap->registrasi_id);
+			$dpjp = $reg->rawat_inap->dokter_id ?? $reg->dokter_id;
+			$dokter = Pegawai::find($dpjp);
+			if (Auth::user()->pegawai->id == $dokter->id) {
+				$soap->verifikasi_dpjp = now();
+				$soap->update();
+				Flashy::success('Berhasil memverifikasi DPJP');
+			} else {
+				Flashy::error('Hanya DPJP yang dapat memverifikasi');
+			}
+		}
+
+		return redirect()->back();
 	}
 
 	//SBAR

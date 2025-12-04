@@ -287,17 +287,22 @@
               <small class="text-danger">{{ $errors->first('tiket') }}</small>
             </div>
            
-            <div class="col-sm-3">
+            {{-- <div class="col-sm-3">
               <div class="input-group">
                 <span class="input-group-btn">
                   <button class="btn btn-default" type="button">BUD&nbsp;&nbsp; </button>
                 </span>
                 {!! Form::text('bud', null, ['class' => 'form-control']) !!}
                 <small class="text-danger">{{ $errors->first('bud') }}</small>
-                {{-- <span class="input-group-btn">
-                  <a href="{{ url('/penjualan/master-cara-minum') }}" class="btn btn-primary" type="button"><i class="fa fa-pencil"></i></a>
-                 
-                </span> --}}
+              </div>
+            </div> --}}
+            <div class="col-sm-3">
+              <div class="input-group">
+                <span class="input-group-btn">
+                  <button class="btn btn-default" type="button">BUD&nbsp;&nbsp; </button>
+                </span>
+                {!! Form::text('bud', null, ['class' => 'form-control', 'name' => 'bud']) !!}
+                <small class="text-danger">{{ $errors->first('bud') }}</small>
               </div>
             </div>
             <div class="col-sm-3">
@@ -683,6 +688,7 @@ idreg = "<?= $idreg ?>"
           $('select[name="masterobat_id"]').empty()
           // $('input[name="jumlah"]').empty()
           $("input[name='jumlah']").val('1')
+          $("input[name='bud']").val('')
           $('#viewDataOrder').load("/cartContent/"+idreg)
       }else{
           return alert(resp.data)

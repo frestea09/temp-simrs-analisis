@@ -186,6 +186,9 @@
         <li class="{{ $route == 'pemeriksaan-penunjang' ? 'active' : '' }}"><a
                 href="{{ url('emr/pemeriksaan-penunjang/' . $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}">Hasil
                 Penunjang</a></li>
+        <li class="{{ $route == 'pemeriksaan-laporan-operasi' ? 'active' : '' }}"><a
+                href="{{ url('emr/pemeriksaan-laporan-operasi/' . $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}">Hasil
+                Laporan Operasi</a></li>
         <li class="{{ $route == 'emr-resume' ? 'active' : '' }}"><a
                 href="{{ url('emr/resume/' . $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}">Histori</a>
         </li>
@@ -210,4 +213,21 @@
 </a>
 </li>
 <li><a href="{{ url('clinicalpathway') }}">Clinical Pathway</a></li>
+<li class="dropdown">
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Laporan Operasi<span class="caret"></span></a>
+        <ul class="dropdown-menu" role="menu">
+                <li>
+                        <a href="{{ url('emr-soap/pemeriksaan/laporan-operasi-ods/'. $unit .'/' . $reg->id . '?poli=' . $reg->poli_id . '&dpjp=' . $reg->dokter_id) }}">Laporan Operasi Mata</a>
+                </li>
+                <li>
+                        <a href="{{ url('emr-soap/pemeriksaan/laporan-operasi/'. $unit .'/' . $reg->id . '?poli=' . $reg->poli_id . '&dpjp=' . $reg->dokter_id) }}">Laporan Operasi ODS</a>
+                </li>
+                <li>
+                        <a href="{{ url('emr-soap/pemeriksaan/laporan-operasi-ranap/'. $unit .'/' . $reg->id . '?poli=' . $reg->poli_id . '&dpjp=' . $reg->dokter_id) }}">Laporan Operasi Rawat Inap</a>
+                </li>
+                <li>
+                        <a href="{{ url('emr-soap/pemeriksaan/upload-laporan-operasi/'. $unit .'/' . $reg->id . '?poli=' . $reg->poli_id . '&dpjp=' . $reg->dokter_id) }}">Upload Laporan Operasi</a>
+                </li>
+        </ul>
+</li>
 {{-- <li><a href="{{ url('emr/ris/' . $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}">RIS</a></li> --}}

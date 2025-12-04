@@ -15,4 +15,5 @@
     @endif
  
 <li><a href="{{ url('informasi-rawat-inap') }}"><img src="{{ asset('menu/sidebar/pasien.svg') }}" width="24"> <span>Informasi Rawat Inap</span></a></li>
-<li><a href="{{ url('pasien/info-pasien') }}"><img src="{{ asset('menu/sidebar/pasien.svg') }}" width="24"> <span>Informasi Pasien</span></a></li>
+<li><a href="{{ url('frontoffice/merging-data') }}"><img src="{{ asset('menu/sidebar/supervisor.svg') }}" width="24"> <span>Merging Data Pasien</span></a></li>
+{{-- <li><a href="{{ url('pasien/info-pasien') }}"><img src="{{ asset('menu/sidebar/pasien.svg') }}" width="24"> <span>Informasi Pasien</span></a></li> --}}

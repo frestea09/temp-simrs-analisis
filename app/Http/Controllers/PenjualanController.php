@@ -2806,6 +2806,7 @@ class PenjualanController extends Controller
 				$d->expired = $request['expired'];
 				$d->informasi1 = $request['informasi1'];
 				$d->hargajual_kronis = $hargaReal * $request['jml_kronis'];
+				$d->bud  = $request['bud'];
 				$d->cara_minum_id  = $request['cara_minum_id'];
 				$d->takaran	= $request['takaran'];
 				$d->etiket = $request['tiket'];
@@ -2893,6 +2894,7 @@ class PenjualanController extends Controller
 				$d->expired = $request['expired'];
 				$d->informasi1 = $request['informasi1'];
 				$d->hargajual_kronis = $hargaReal * $request['jml_kronis'];
+				$d->bud  = $request['bud'];
 				$d->cara_minum_id  = $request['cara_minum_id'];
 				$d->takaran	= $request['takaran'];
 				$d->etiket = $request['tiket'];
@@ -2923,6 +2925,7 @@ class PenjualanController extends Controller
 				$d->expired = $request['expired'];
 				$d->informasi1 = $request['informasi1'];
 				$d->hargajual_kronis = $hargaReal * $request['jml_kronis'];
+				$d->bud  = $request['bud'];
 				$d->cara_minum_id  = $request['cara_minum_id'];
 				$d->takaran	= $request['takaran'];
 				$d->etiket = $request['tiket'];
@@ -3326,10 +3329,12 @@ class PenjualanController extends Controller
 						$pd->hargajual_kronis = $d->price * $d->options->jml_kronis;
 						$pd->informasi1 = $d->options->informasi1;
 						$pd->informasi2 = $d->options->informasi2;
+						$pd->bud = $d->options->bud;
 						$pd->cara_minum_id = $d->options->cara_minum_id;
 						$pd->tipe_rawat = @$tipe_rawat;
 						$pd->cara_bayar_id = $d->options->cara_bayar_id;
 						$pd->expired = $d->options->expired;
+						$pd->bud = $d->options->bud;
 						$pd->etiket = $d->options->tiket;
 						$pd->takaran =  $d->options->takaran;
 						$pd->logistik_batch_id =  $d->options->logistik_batch_id;

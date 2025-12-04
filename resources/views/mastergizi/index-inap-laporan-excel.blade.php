@@ -39,10 +39,20 @@
                   <td>{{ hitung_umur(@$d->pasien->tgllahir) }}</td>
                   <td>{{ @$gizi['diagnosa_gizi'] }}</td>
                   <td>
-                      @if (@$gizi['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] == 'Lainnya')
-                          Lainnya: {{ @$gizi['intervensi_gizi']['preskripsi_diet']['bentuk_makanan_lain'] }}
+                      @php
+                          $bentukMakanan = @$gizi['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] ?? [];
+                          if (!is_array($bentukMakanan)) {
+                              $bentukMakanan = (array) $bentukMakanan;
+                          }
+                          $bentukMakananLain = @$gizi['intervensi_gizi']['preskripsi_diet']['bentuk_makanan_lain'] ?? null;
+                      @endphp
+                      @if (!empty($bentukMakanan))
+                          {{ implode(', ', $bentukMakanan) }}
+                          @if (in_array('Lainnya', $bentukMakanan) && $bentukMakananLain)
+                              : {{ $bentukMakananLain }}
+                          @endif
                       @else
-                          {{ @$gizi['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] }}
+                          -
                       @endif
                   </td>
                   <td>

@@ -49,7 +49,9 @@
               @foreach ($ibs as $key => $d)
                 <tr>
                   <td>{{ $no++ }}</td>
-                  <td>{{ tgl_indo($d->rencana_operasi) }}</td>
+                  <td class="editable" data-id="{{ $d->id }}" data-value="{{ $d->rencana_operasi }}">
+                      {{ tgl_indo($d->rencana_operasi) }}
+                  </td>
                   <td>{!! $d->suspect !!}</td>
                   <td><button class="btn btn-danger btn-sm" onclick="deleteIbs({{ @$d->id }})">Hapus</button></td>
                 </tr>
@@ -157,5 +159,58 @@
       
   }
 
+</script>
+<script>
+$(document).ready(function () {
+    $('.editable').dblclick(function () {
+        let td = $(this);
+        let awal = td.data('value');
+        let id = td.data('id');
+
+        if (td.find('input').length > 0) return;
+
+        let input = $('<input type="date" class="form-control form-control-sm">');
+        input.val(awal);
+        td.html(input);
+        input.focus();
+        input.blur(function () {
+            simpanPerubahan(td, input.val(), id);
+        });
+        input.keypress(function (e) {
+            if (e.which == 13) { 
+                simpanPerubahan(td, input.val(), id);
+            }
+        });
+
+    });
+
+    function simpanPerubahan(td, newValue, id) {
+
+        if (newValue == "" || newValue == null) {
+            alert("Tanggal tidak boleh kosong!");
+            td.html(td.data('value'));
+            return;
+        }
+
+        $.ajax({
+            url: "{{ url('rawat-inap/ibs/update-tanggal') }}",
+            type: "POST",
+            data: {
+                _token: "{{ csrf_token() }}",
+                id: id,
+                rencana_operasi: newValue
+            },
+            success: function (res) {
+                td.data('value', newValue);
+                td.html(res.tgl_indo);
+            },
+            error: function (xhr) {
+                alert("Gagal menyimpan perubahan!");
+                td.html(td.data('value'));
+            }
+        });
+    }
+
+});
 </script>
 @endsection

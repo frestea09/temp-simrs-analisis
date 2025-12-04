@@ -57,9 +57,13 @@
             <script src="{{ asset('vendor/unisharp/laravel-ckeditor/adapters/jquery.js') }}"></script>
 
             @include('emr.modules.addons.profile')
-            <form method="POST" action="{{ url('emr-soap/pemeriksaan/laporan-operasi/' . $unit . '/' . $reg->id) }}" class="form-horizontal">
+            <form method="POST" action="{{ url('emr-soap/pemeriksaan/laporan-operasi-ranap/' . $unit . '/' . $reg->id) }}" class="form-horizontal">
                 <div class="row">
-                  @include('emr.modules.addons.tab-operasi')
+                  @if ($source === 'emr')
+                      @include('emr.modules.addons.tabs')
+                  @else
+                      @include('emr.modules.addons.tab-operasi')
+                  @endif
                     <div class="col-md-12">
                         {{ csrf_field() }}
                         {!! Form::hidden('registrasi_id', $reg->id) !!}
@@ -101,6 +105,7 @@
                                 </tbody>
                             </table>
                         </div>
+                    @if ($source !== 'emr')
                         <div class="col-md-12">
                           <h4 style="text-align: center;"><b>LAPORAN OPERASI RAWAT INAP</b></h4>
                         </div>
@@ -209,10 +214,10 @@
                                   <td>
                                       <input type="text" class="form-control" name="fisik[jenisAnestesi]" value="{{ @$asessment['jenisAnestesi']}}" />
                                   </td>
-                                  <td style="width:20%; font-weight:bold;">Obat-obatan Anestesi</td>
+                                  {{-- <td style="width:20%; font-weight:bold;">Obat-obatan Anestesi</td>
                                   <td>
                                       <input type="text" class="form-control" name="fisik[obatAnestesi]" value="{{ @$asessment['obatAnestesi']}}" />
-                                  </td>
+                                  </td> --}}
                               </tr>
                               <tr>
                                   <td style="width:20%; font-weight:bold;">Diagnosa Pra Bedah</td>
@@ -307,12 +312,12 @@
                                   <textarea name="fisik[teknikOperasi]" class="form-control" style="resize: vertical;" rows="5">{{ @$asessment['teknikOperasi'] }}</textarea>
                                 </td>
                               </tr>
-                              <tr>
+                              {{-- <tr>
                                 <td style="width:20%; font-weight:bold;">Instruksi Anestesi</td>
                                 <td colspan="3">
                                   <textarea name="fisik[instruksiAnestesi]" class="form-control" style="resize: vertical;" rows="5">{{ @$asessment['instruksiAnestesi'] }}</textarea>
                                 </td>
-                              </tr>
+                              </tr> --}}
                               <tr>
                                 <td colspan="4" style="font-weight: bold;">Instruksi Pasca Bedah</td>
                               </tr>
@@ -361,13 +366,15 @@
                         </div>
 
                         <br /><br />
+                    @endif
                     </div>
                 </div>
 
+            @if ($source !== 'emr')
                 <div class="col-md-12 text-right">
-                 
                     <button class="btn btn-success">Simpan</button>
                 </div>
+            @endif
             </form>
         </div>
     @endsection

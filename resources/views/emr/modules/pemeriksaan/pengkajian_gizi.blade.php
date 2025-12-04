@@ -193,6 +193,49 @@
                 
                 <div class="row">
                     <div class="col-md-12">
+                        <table class='table table-striped table-bordered table-hover table-condensed' >
+                        <thead>
+                            <tr>
+                                <th colspan="3" class="text-center" style="vertical-align: middle;">History</th>
+                            </tr>
+                            <tr>
+                                <th class="text-center" style="vertical-align: middle;">Tanggal Registrasi</th>
+                                <th class="text-center" style="vertical-align: middle;">User</th>
+                                <th class="text-center" style="vertical-align: middle;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (count($riwayats) == 0)
+                                <tr>
+                                    <td colspan="3" class="text-center">Tidak Ada Riwayat Asessment</td>
+                                </tr>
+                            @endif
+                            @foreach ($riwayats as $riwayat)
+                                <tr>
+                                    <td style="text-align: center; {{ $riwayat->id == request()->asessment_id ? ' background-color:rgb(172, 247, 162)' : ''}}">
+                                        {{Carbon\Carbon::parse($riwayat->registrasi->created_at)->format('d-m-Y H:i')}}
+                                    </td>
+                                    <td style="text-align: center; {{ $riwayat->id == request()->asessment_id ? ' background-color:rgb(172, 247, 162)' : ''}}">
+                                        {{ @$riwayat->user->name }}
+                                    </td>
+                                    <td style="text-align: center; {{ $riwayat->id == request()->asessment_id ? ' background-color:rgb(172, 247, 162)' : ''}}">
+                                        <a href="{{ url("emr-soap-hapus-pemeriksaan/".$unit."/".@$riwayat->registrasi_id."/".@$riwayat->id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Yakin Akan Menghapus Data Ini ?')"><i class="fa fa-trash"></i></a>
+                                        <a href="{{ URL::current() . '?asessment_id='. $riwayat->id }}" class="btn btn-info btn-sm"><i class="fa fa-pencil"></i></a>
+                                        <a href="{{ url("cetak-pengkajian-gizi/pdf/".@$riwayat->registrasi_id."/".@$riwayat->id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}" target="_blank" class="btn btn-success btn-sm"><i class="fa fa-print"></i></a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" style="font-size: 8pt; {{ $riwayat->id == request()->asessment_id ? ' background-color:rgb(172, 247, 162)' : ''}}">
+                                        <i>Dibuat : {{ Carbon\Carbon::parse($riwayat->updated_at)->format('d-m-Y H:i') }}</i>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        
+                        </tbody>
+                        </table>
+                    </div>
+
+                    <div class="col-md-12">
                         <table style="width: 100%" class="table table-striped table-bordered table-hover table-condensed form-box" style="font-size:12px;">
                             <tr>
                                 <td style="width: 20%;">
@@ -782,10 +825,10 @@
                             </tr>
                             <tr>
                                 <td style="width: 20%;">
-                                    Pantangan makan
+                                    Kepercayaan Terhadap Makanan
                                 </td>
                                 <td>
-                                    <input type="text" placeholder="Pantangan makan" name="fisik[pengkajian][riwayat_diet][pantangan_makan]" style="display:inline-block;" class="form-control" value="{{@$assesment['pengkajian']['riwayat_diet']['pantangan_makan']}}">
+                                    <input type="text" placeholder="Kepercayaan Terhadap Makanan" name="fisik[pengkajian][riwayat_diet][pantangan_makan]" style="display:inline-block;" class="form-control" value="{{@$assesment['pengkajian']['riwayat_diet']['pantangan_makan']}}">
                                 </td>
                             </tr>
                             <tr>
@@ -1018,38 +1061,38 @@
                                             <td style="border: 1px solid black; width: 10%;" class="text-center">
                                                 <div>
                                                     <input class="form-check-input"
-                                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan]"
-                                                        {{ @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] == 'MC' ? 'checked' : '' }}
-                                                        type="radio" value="MC">
+                                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan][]"
+                                                        type="checkbox" value="MC"
+                                                        {{ in_array('MC', @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] ?? []) ? 'checked' : '' }}>
                                                     <label class="form-check-label" style="font-weight: 400;">MC</label>
                                                 </div>
                                             </td>
                                             <td style="border: 1px solid black; width: 10%;" class="text-center">
                                                 <div>
                                                     <input class="form-check-input"
-                                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan]"
-                                                        {{ @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] == 'BR' ? 'checked' : '' }}
-                                                        type="radio" value="BR">
+                                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan][]"
+                                                        type="checkbox" value="BR"
+                                                        {{ in_array('BR', @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] ?? []) ? 'checked' : '' }}>
                                                     <label class="form-check-label" style="font-weight: 400;">BR</label>
                                                 </div>
                                             </td>
                                             <td style="border: 1px solid black; width: 10%;" class="text-center">
                                                 <div>
                                                     <input class="form-check-input"
-                                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan]"
-                                                        {{ @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] == 'Sippy' ? 'checked' : '' }}
-                                                        type="radio" value="Sippy">
+                                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan][]"
+                                                        type="checkbox" value="Sippy"
+                                                        {{ in_array('Sippy', @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] ?? []) ? 'checked' : '' }}>
                                                     <label class="form-check-label" style="font-weight: 400;">Sippy</label>
                                                 </div>
                                             </td>
                                             <td style="border: 1px solid black; width: 10%;" class="text-center">
                                                 <div style="display: flex; align-items: center; vertical-align:middle">
                                                     <input style="margin: 0" class="form-check-input"
-                                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan]"
-                                                        {{ @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] == 'Lainnya' ? 'checked' : '' }}
-                                                        type="radio" value="Lainnya">
+                                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan][]"
+                                                        type="checkbox" value="Lainnya"
+                                                        {{ in_array('Lainnya', @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] ?? []) ? 'checked' : '' }}>
                                                     <label class="form-check-label" style="font-weight: 400; margin: 0 1rem 0 0;">Lainnya</label>
-                                                    <input type="text" placeholder="Isi jika Lainnya" name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan_lain]" style="display:inline-block;" class="form-control" value="{{@$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan_lain']}}">
+                                                    <input type="text" placeholder="Isi jika Lainnya" name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan_lain]" style="display:inline-block;" class="form-control" value="{{ @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan_lain'] }}">
                                                 </div>
                                             </td>
                                         </tr>
@@ -1057,37 +1100,37 @@
                                             <td style="border: 1px solid black; width: 10%;" class="text-center">
                                                 <div>
                                                     <input class="form-check-input"
-                                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan]"
-                                                        {{ @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] == 'Makanan saring (TD I) ' ? 'checked' : '' }}
-                                                        type="radio" value="Makanan saring (TD I) ">
-                                                    <label class="form-check-label" style="font-weight: 400;">Makanan saring (TD I) </label>
+                                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan][]"
+                                                        type="checkbox" value="Makanan saring (TD I)"
+                                                        {{ in_array('Makanan saring (TD I)', @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] ?? []) ? 'checked' : '' }}>
+                                                    <label class="form-check-label" style="font-weight: 400;">Makanan saring (TD I)</label>
                                                 </div>
                                             </td>
                                             <td style="border: 1px solid black; width: 10%;" class="text-center">
                                                 <div>
                                                     <input class="form-check-input"
-                                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan]"
-                                                        {{ @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] == 'Makanan lunak (TD II)' ? 'checked' : '' }}
-                                                        type="radio" value="Makanan lunak (TD II)">
+                                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan][]"
+                                                        type="checkbox" value="Makanan lunak (TD II)"
+                                                        {{ in_array('Makanan lunak (TD II)', @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] ?? []) ? 'checked' : '' }}>
                                                     <label class="form-check-label" style="font-weight: 400;">Makanan lunak (TD II)</label>
                                                 </div>
                                             </td>
                                             <td style="border: 1px solid black; width: 10%;" class="text-center">
                                                 <div>
                                                     <input class="form-check-input"
-                                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan]"
-                                                        {{ @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] == 'Makanan lunak (TD III)' ? 'checked' : '' }}
-                                                        type="radio" value="Makanan lunak (TD III)">
+                                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan][]"
+                                                        type="checkbox" value="Makanan lunak (TD III)"
+                                                        {{ in_array('Makanan lunak (TD III)', @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] ?? []) ? 'checked' : '' }}>
                                                     <label class="form-check-label" style="font-weight: 400;">Makanan lunak (TD III)</label>
                                                 </div>
                                             </td>
                                             <td style="border: 1px solid black; width: 10%;" class="text-center">
                                                 <div>
                                                     <input class="form-check-input"
-                                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan]"
-                                                        {{ @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] == 'Makanan biasa (TD IV)  ' ? 'checked' : '' }}
-                                                        type="radio" value="Makanan biasa (TD IV)  ">
-                                                    <label class="form-check-label" style="font-weight: 400;">Makanan biasa (TD IV)  </label>
+                                                        name="fisik[intervensi_gizi][preskripsi_diet][bentuk_makanan][]"
+                                                        type="checkbox" value="Makanan biasa (TD IV)"
+                                                        {{ in_array('Makanan biasa (TD IV)', @$assesment['intervensi_gizi']['preskripsi_diet']['bentuk_makanan'] ?? []) ? 'checked' : '' }}>
+                                                    <label class="form-check-label" style="font-weight: 400;">Makanan biasa (TD IV)</label>
                                                 </div>
                                             </td>
                                         </tr>

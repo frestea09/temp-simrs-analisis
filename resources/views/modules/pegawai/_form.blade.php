@@ -9,7 +9,7 @@
     <div class="form-group{{ $errors->has('kategori_pegawai') ? ' has-error' : '' }}">
         {!! Form::label('kelompok_pegawai', 'Kelompok Pegawai', ['class' => 'col-sm-4 control-label']) !!}
         <div class="col-sm-8">
-            {!! Form::select('kelompok_pegawai', [NULL => ' ', '1'=>'Pegawai Tetap','2'=>'Fungsional', '3'=>'Dokter', '4'=>'Perawat', '5'=>'BHL', '6'=>'Nutrisionis'], null, ['class' => 'form-control select2']) !!}
+            {!! Form::select('kelompok_pegawai', [NULL => ' ', '1'=>'Pegawai Tetap','2'=>'Fungsional', '3'=>'Dokter', '4'=>'Perawat', '5'=>'BHL', '6'=>'Nutrisionis', '7'=>'Dokter Anestesi', '8'=>'Penata Anestesi'], null, ['class' => 'form-control select2']) !!}
             <small class="text-danger">{{ $errors->first('kelompok_pegawai') }}</small>
         </div>
     </div>
