@@ -12,6 +12,7 @@ use App\Http\Controllers\SatuSehatController;
 use App\Posisiberkas;
 use App\masterCaraMinum;
 use App\HistorikunjunganIRJ;
+use App\EmrInapPerencanaan;
 use App\PerawatanIcd10;
 use App\PerawatanIcd9;
 use PDF;
@@ -5724,6 +5725,17 @@ class EmrController extends Controller
 			}
 		}
 
+		return redirect()->back();
+	}
+
+	public function verifPengalihan($id)
+	{
+		$emr = EmrInapPerencanaan::find($id);
+
+		$emr->verifikasi = now();
+		$emr->save();
+
+		Flashy::success('Berhasil diverifikasi');
 		return redirect()->back();
 	}
 

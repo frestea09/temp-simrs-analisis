@@ -473,9 +473,14 @@ class ApiController extends Controller
         if ($request->header('Authorization')) {
             $myToken = explode('Bearer ',$request->header('Authorization'));
             $user = RegistrasiDummy::where('api_token',$myToken[1])->first();
+            if(!$user){
+                @$user = Pasien::where('api_token',$myToken[1])->first();
+            }
             if( isset($user) ){
                 // dd($user);
-                $data = RegistrasiDummy::where('no_rm',$user->no_rm)->whereNotNull('nomorantrian')->with('poli','dokter','dokters')->orderBy('id','DESC')->limit(5)->get();
+                // $cek_dum = 
+                // $data = RegistrasiDummy::where('nik',$user->no_identitas)->whereNotNull('nomorantrian')->with('poli','dokter','dokters')->orderBy('id','DESC')->limit(5)->get();
+                $data = RegistrasiDummy::where('nik',$user->nik)->where('jenis_registrasi','antrian')->with('poli','dokter','dokters')->orderBy('id','DESC')->limit(5)->get();
                 return response()->json([
                     "status" => "success",
                     "data" => $data

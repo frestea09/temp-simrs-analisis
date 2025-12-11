@@ -200,19 +200,26 @@ class AuthApiController extends Controller
             $norm = $new_no_rm +1;
         }
 
-        $user = RegistrasiDummy::firstOrCreate([
-            'nik' => $request->nik,
-            'jenis_registrasi' => 'pasien_baru',
-        ], [
-            'tgllahir' => $request->tgllahir,
-            'no_rm' => $norm,
-            // 'nama' => @$request->nama,
-            // 'tmplahir' => @$request->tmplahir,
-            // 'kelamin' => @$request->kelamin,
-            // 'alamat' => @$request->alamat,
-            // 'no_hp' => @$request->no_hp,
-            // 'jkn' => @$request->jkn,
-        ]);
+        $cek = Pasien::where('nik',$request->nik)->where('tgllahir',$request->tgllahir)->first();
+
+        if(!$cek){
+            $user = RegistrasiDummy::firstOrCreate([
+                'nik' => $request->nik,
+                'jenis_registrasi' => 'pasien_baru',
+            ], [
+                'tgllahir' => $request->tgllahir,
+                'no_rm' => $norm,
+                // 'nama' => @$request->nama,
+                // 'tmplahir' => @$request->tmplahir,
+                // 'kelamin' => @$request->kelamin,
+                // 'alamat' => @$request->alamat,
+                // 'no_hp' => @$request->no_hp,
+                // 'jkn' => @$request->jkn,
+            ]);
+
+        }else{
+            $user = $cek;
+        }
 
         if( $user ){
             $token = Str::random(60);

@@ -4118,7 +4118,14 @@ class EmrPemeriksaanController extends Controller
         $data['registrasi_id'] = $registrasi_id;
         $data['unit'] = $unit;
         $data['reg'] = Registrasi::find($registrasi_id);
+        $data['ranap'] = Rawatinap::where('registrasi_id', $registrasi_id)->first();
 
+        // profesi
+        $data['dokter'] = Pegawai::where('kelompok_pegawai', 3)->get();
+        $data['perawat'] = Pegawai::where('kelompok_pegawai', 4)->get();
+        $data['nutrisionis'] = Pegawai::where('kelompok_pegawai', 6)->get();
+        $data['apotek'] = Pegawai::where('kelompok_pegawai', 9)->get();
+        
         $data['riwayats'] = EmrInapPemeriksaan::where('pasien_id', $data['reg']->pasien_id)->where('type', 'formulir-edukasi-inap')->orderBy('id', 'DESC')->get();
 
         if ($r->asessment_id !== null) {

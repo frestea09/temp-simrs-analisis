@@ -300,7 +300,18 @@ class RegistrasiController extends Controller {
 			// if (!isset($request['no_rm']) || empty($request['no_rm'])) {
 			// 	Nomorrm::create(['pasien_id' => $pasien->id, 'no_rm' => $no]);
 			// }
+			$dokters = Pegawai::find($request->dokter_id);
 			$id_ss_encounter =NULL;
+			@$cekantrian = hitungAntrolNew($request->dokter_id,$tgl,$poli->bpjs);
+			@$hitung =  $cekantrian;
+			
+			@$tanggalantri =  date("dmY", strtotime($tgl));
+			if($dokters->kode_antrian){
+				@$kodeantri = $dokters->kode_antrian;
+			}else{
+				@$kodeantri =$tanggalantri; 
+			}
+			@$nomorantri = $kodeantri.'-'.$poli->bpjs.''.$hitung;
             
 			// Save registrasi
 			$id = Registrasi::where('reg_id', 'LIKE', date('Ymd') . '%')->count();
@@ -338,6 +349,8 @@ class RegistrasiController extends Controller {
 			$reg->pengirim_rujukan = $request['pengirim_rujukan'];
 			$reg->puskesmas_id = $request['puskesmas_id'];
 			$reg->dokter_perujuk_id = $request['dokter_perujuk_id'];
+			$reg->nomorantrian_jkn = @$nomorantri;
+
 			if ($request['status_reg'] == 'G1') {
 				$reg->status_ugd = $request['status_ugd'];
 			}

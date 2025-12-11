@@ -47,6 +47,17 @@
 
     </thead>
     <tbody>
+      @php
+        @$registrasi = $registrasi->sortBy(function ($item) {
+            // Pisahkan prefix dan angka
+            preg_match('/^([A-Z\-]+)(\d+)$/', $item->nomorantrian_jkn, $matches);
+
+            $prefix = $matches[1] ?? '';
+            $number = isset($matches[2]) ? (int)$matches[2] : 0;
+
+            return [$prefix, $number];
+        });
+        @endphp
       @foreach ($registrasi as $key => $d)
           
           @if ($d->carabayar !== 'Umum')

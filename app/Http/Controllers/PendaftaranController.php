@@ -121,6 +121,7 @@ class PendaftaranController extends Controller
 		if($req->filled('keyword')){
 			// dd($req->keyword);
 			$d = RegistrasiDummy::where('jenis_registrasi','antrian')->where('status', 'pending')
+				->where('nomorantrian','!=','-')
 				// ->where('tglperiksa', date('Y-m-d'))
 				->where(function ($query) use($req){
 					$query->where('no_rm', $req->keyword)
@@ -135,6 +136,7 @@ class PendaftaranController extends Controller
 			// $d = Cache::get($keyCache);
 			// if(!$d){
 				$d = RegistrasiDummy::where('jenis_registrasi','antrian')->where('status', 'pending')
+				->where('nomorantrian','!=','-')
 				// ->where('tglperiksa', date('Y-m-d'))
 				->where(function ($query) use($req){
 					$query->where('tglperiksa', $req->tanggal);
@@ -153,6 +155,7 @@ class PendaftaranController extends Controller
 			
 		}elseif($req->filled('carabayar_id')){
 				$d = RegistrasiDummy::where('jenis_registrasi','antrian')->where('status', 'pending')
+				->where('nomorantrian','!=','-')
 				->where('kode_cara_bayar', $req->carabayar_id);
 
 				if($req->tanggal){
@@ -168,6 +171,7 @@ class PendaftaranController extends Controller
 			$d = Cache::get($keyCache);
 			if(!$d){
 				$d = RegistrasiDummy::where('jenis_registrasi','antrian')->where('status', 'pending')
+				->where('nomorantrian','!=','-')
 				->where('tglperiksa', date('Y-m-d'))->groupBy('nomorantrian')->get();
 				Cache::put($keyCache,$d,120); //BUAT CACHE 2 menit
 			}
@@ -180,6 +184,9 @@ class PendaftaranController extends Controller
 			})
 			->addColumn('no_rujukan', function ($d) {
 				return @$d->no_rujukan;
+			})
+			->addColumn('waktu_input', function ($d) {
+				return @date('d-m-Y H:i',strtotime($d->created_at));
 			})
 			->addColumn('no_rm', function ($d) {
 				if(strlen(@$d->no_rm) > 6){

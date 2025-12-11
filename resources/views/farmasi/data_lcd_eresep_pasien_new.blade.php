@@ -92,14 +92,14 @@
     
       <div class="row text-center">
         <div class="col-md-6 border">
-          <h4>NON RACIK</h4>
+          <h2><b>NON RACIK</b></h2>
           @if (!empty($sedang_dipanggil_bpjs))
             <h2 class="text-bold" style="font-size:200pt;" id="nomor_antrian">{{@$sedang_dipanggil_bpjs->nomor}}</h2>
             <h4 class="text-bold" style="font-size:50px;" id="nama_pasien">{{@$sedang_dipanggil_bpjs->pasien->nama}}</h4>
           @endif
         </div>
         <div class="col-md-6 border">
-          <h4>RACIK</h4>
+          <h2><b>RACIK</b></h2>
         </div>
       </div>
     

@@ -1993,6 +1993,9 @@ class EmrPerencanaanController extends Controller
 		$data['unit'] = $unit;
 		$data['pasien'] = Pasien::find($data['cetak']->pasien_id);
 		$data['reg'] = Registrasi::with('rawat_inap', 'icd10s')->find($data['cetak']->registrasi_id);
+		$data['dokter'] = Pegawai::find($data['reg']->dokter_id);
+		$data['ranap'] = Rawatinap::where('registrasi_id', $registrasi_id)->first();
+		$data['dpjp_inap'] = Pegawai::find($data['ranap']->dokter_id);
 		$pdf = PDF::loadView('emr.modules.perencanaan._cetak_surat_dpjp', $data);
 		return $pdf->stream();
 	}

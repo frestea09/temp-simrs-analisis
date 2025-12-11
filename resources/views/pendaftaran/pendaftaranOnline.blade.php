@@ -131,6 +131,7 @@
                 <th>Cara Bayar</th>
                 <th>Jenis</th>
                 <th>Tanggal Periksa</th>
+                <th>Waktu Input</th>
                 <th class="text-center">Proses</th>
               </tr>
             </thead>
@@ -189,7 +190,8 @@
         autoWidth: false,
         processing: true,
         serverSide: true,
-        ordering: false,
+        ordering: true,
+        order: [[1, 'asc']], // kolom nomorantrian
         ajax: {
           url: '/pendaftaran/data-pendaftaran-online',
           data:function(d){
@@ -201,7 +203,7 @@
         },
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-            {data: 'nomorantrian', orderable: false},
+            {data: 'nomorantrian', orderable: true},
             {data: 'no_rujukan', orderable: false},
             {data: 'no_rm', orderable: false},
             {data: 'nama', orderable: false},
@@ -211,6 +213,7 @@
             {data: 'cara_bayar', orderable: false},
             {data: 'jenis_daftar', orderable: false},
             {data: 'tglperiksa', orderable: false},
+            {data: 'waktu_input', orderable: false},
             {data: 'proses', orderable: false}
         ]
 

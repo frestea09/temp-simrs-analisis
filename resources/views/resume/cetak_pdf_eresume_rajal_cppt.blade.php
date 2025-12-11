@@ -277,7 +277,11 @@
             
               Dokter
           @else
-              Perawat
+              @if ($reg->poli_id ==20)
+                  Fisioterapis
+              @else
+                  Perawat
+              @endif
           @endif
         </td>
       </tr>

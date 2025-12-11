@@ -257,7 +257,15 @@
             {{ @$asessment['perencanaan_edukasi']['dokter_dpjp']['tanggal_waktu'] ?? '-' }}
           </td>
           <td>
-            Dokter Spesialis / DPJP
+            {{-- Dokter Spesialis / DPJP --}}
+            @if (isset($asessment['perencanaan_edukasi']['profesi']['dokter']))
+                @php
+                    $dokter = Modules\Pegawai\Entities\Pegawai::find(@$asessment['perencanaan_edukasi']['profesi']['dokter']);
+                    @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$dokter->nama . '|' . @$dokter->sip))
+                @endphp
+                <img src="data:image/png;base64, {!! $base64 !!}"><br>
+                {{ baca_dokter(@$asessment['perencanaan_edukasi']['profesi']['dokter']) }}
+            @endif
           </td>
           <td>
             <div>
@@ -362,7 +370,15 @@
             {{ @$asessment['perencanaan_edukasi']['perawat']['tanggal_waktu'] ? date('d-m-Y H:i', strtotime(@$asessment['perencanaan_edukasi']['perawat']['tanggal_waktu'])) : '-'}}
           </td>
           <td>
-            Perawat / Bidan
+            {{-- Perawat / Bidan --}}
+            @if (isset($asessment['perencanaan_edukasi']['profesi']['perawat']))
+                @php
+                    $perawat = Modules\Pegawai\Entities\Pegawai::find(@$asessment['perencanaan_edukasi']['profesi']['perawat']);
+                    @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$perawat->nama . '|' . @$perawat->sip))
+                @endphp
+                <img src="data:image/png;base64, {!! $base64 !!}"><br>
+                {{ baca_pegawai(@$asessment['perencanaan_edukasi']['profesi']['perawat']) }}
+            @endif
           </td>
           <td>
             <div>
@@ -467,7 +483,15 @@
             {{ @$asessment['perencanaan_edukasi']['farmasi']['tanggal_waktu'] ? date('d-m-Y H:i', strtotime(@$asessment['perencanaan_edukasi']['farmasi']['tanggal_waktu'])) : '-' }}
           </td>
           <td>
-            Farmasi
+            {{-- Farmasi --}}
+            @if (isset($asessment['perencanaan_edukasi']['profesi']['farmasi']))
+                @php
+                    $farmasi = Modules\Pegawai\Entities\Pegawai::find(@$asessment['perencanaan_edukasi']['profesi']['farmasi']);
+                    @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$farmasi->nama . '|' . @$farmasi->sip))
+                @endphp
+                <img src="data:image/png;base64, {!! $base64 !!}"><br>
+                {{ baca_pegawai(@$asessment['perencanaan_edukasi']['profesi']['farmasi']) }}
+            @endif
           </td>
           <td>
             <div>
@@ -579,7 +603,15 @@
               {{ @$asessment['perencanaan_edukasi']['nutrisionis']['tanggal_waktu'] ? date('d-m-Y H:i', strtotime(@$asessment['perencanaan_edukasi']['nutrisionis']['tanggal_waktu'])) : '-'}}
           </td>
           <td style="" class="text-center">
-              Nutrisionis
+              {{-- Nutrisionis --}}
+            @if (isset($asessment['perencanaan_edukasi']['profesi']['farmasi']))
+                @php
+                    $nutrisionis = Modules\Pegawai\Entities\Pegawai::find(@$asessment['perencanaan_edukasi']['profesi']['nutrisionis']);
+                    @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$nutrisionis->nama . '|' . @$nutrisionis->sip))
+                @endphp
+                <img src="data:image/png;base64, {!! $base64 !!}"><br>
+                {{ baca_pegawai(@$asessment['perencanaan_edukasi']['profesi']['nutrisionis']) }}
+            @endif
           </td>
           <td style="">
                   <div>
@@ -787,7 +819,7 @@
 
     <br>
 
-    <table>
+    <table style="font-size: 13px;">
       <thead>
         <tr>
           <th style="text-align: left;" colspan="7">
@@ -927,7 +959,14 @@
             {{@$asessment['pelaksanaan_edukasi']['dokter_dpjp']['tgl_rencana'] ?? '-'}}
           </td>
           <td>
-            {{@$asessment['pelaksanaan_edukasi']['dokter_dpjp']['pemberi_edukasi'] ?? '-'}}
+            @if (isset($asessment['pelaksanaan_edukasi']['dokter_dpjp']['pemberi_edukasi']))
+                @php
+                    $dokter = Modules\Pegawai\Entities\Pegawai::find(@$asessment['pelaksanaan_edukasi']['dokter_dpjp']['pemberi_edukasi']);
+                    @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$dokter->nama . '|' . @$dokter->sip))
+                @endphp
+                <img src="data:image/png;base64, {!! $base64 !!}"><br>
+                {{baca_dokter(@$asessment['pelaksanaan_edukasi']['dokter_dpjp']['pemberi_edukasi']) ?? '-'}}
+            @endif
           </td>
           <td>
             {{@$asessment['pelaksanaan_edukasi']['dokter_dpjp']['pasien_keluarga'] ?? '-'}}
@@ -1076,7 +1115,14 @@
             {{ @$asessment['pelaksanaan_edukasi']['perawat']['tgl_rencana'] ? date('d-m-Y', strtotime(@$asessment['pelaksanaan_edukasi']['perawat']['tgl_rencana'])) : '-'}}
           </td>
           <td>
-            {{@$asessment['pelaksanaan_edukasi']['perawat']['pemberi_edukasi'] ?? '-' }}
+            @if (isset($asessment['pelaksanaan_edukasi']['perawat']['pemberi_edukasi']))
+                @php
+                    $perawat = Modules\Pegawai\Entities\Pegawai::find(@$asessment['pelaksanaan_edukasi']['perawat']['pemberi_edukasi']);
+                    @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$perawat->nama . '|' . @$perawat->sip))
+                @endphp
+                <img src="data:image/png;base64, {!! $base64 !!}"><br>
+                {{baca_pegawai(@$asessment['pelaksanaan_edukasi']['perawat']['pemberi_edukasi']) ?? '-' }}
+            @endif
           </td>
           <td>
             {{@$asessment['pelaksanaan_edukasi']['perawat']['pasien_keluarga'] ?? '-' }}
@@ -1197,7 +1243,13 @@
             {{ @$asessment['pelaksanaan_edukasi']['farmasi']['tgl_rencana'] ? date('d-m-Y', strtotime(@$asessment['pelaksanaan_edukasi']['farmasi']['tgl_rencana'])) : '-' }}
           </td>
           <td>
-            {{@$asessment['pelaksanaan_edukasi']['farmasi']['pemberi_edukasi'] ?? '-'}}
+            @if (isset($asessment['pelaksanaan_edukasi']['farmasi']['pemberi_edukasi']))
+                @php
+                    @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$asessment['pelaksanaan_edukasi']['farmasi']['pemberi_edukasi']))
+                @endphp
+                <img src="data:image/png;base64, {!! $base64 !!}"><br>
+                {{@$asessment['pelaksanaan_edukasi']['farmasi']['pemberi_edukasi'] ?? '-'}}
+            @endif
           </td>
           <td>
             {{@$asessment['pelaksanaan_edukasi']['farmasi']['pasien_keluarga'] ?? '-'}}
@@ -1325,7 +1377,13 @@
             {{ @$asessment['pelaksanaan_edukasi']['diet_dan_nutrisi']['tgl_rencana'] ? date('d-m-Y', strtotime(@$asessment['pelaksanaan_edukasi']['diet_dan_nutrisi']['tgl_rencana'])) : '-' }}
           </td>
           <td>
-            {{@$asessment['pelaksanaan_edukasi']['diet_dan_nutrisi']['pemberi_edukasi'] ?? '-' }}
+            @if (isset($asessment['pelaksanaan_edukasi']['diet_dan_nutrisi']['pemberi_edukasi']))
+                @php
+                    @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$asessment['pelaksanaan_edukasi']['diet_dan_nutrisi']['pemberi_edukasi']))
+                @endphp
+                <img src="data:image/png;base64, {!! $base64 !!}"><br>
+                {{@$asessment['pelaksanaan_edukasi']['diet_dan_nutrisi']['pemberi_edukasi'] ?? '-' }}
+            @endif
           </td>
           <td>
             {{@$asessment['pelaksanaan_edukasi']['diet_dan_nutrisi']['pasien_keluarga'] ?? '-' }}
@@ -1453,7 +1511,13 @@
             {{@$asessment['pelaksanaan_edukasi']['rehab_medik']['tgl_rencana'] ? date('d-m-Y', strtotime(@$asessment['pelaksanaan_edukasi']['rehab_medik']['tgl_rencana'])) : '-' }}
           </td>
           <td>
-            {{@$asessment['pelaksanaan_edukasi']['rehab_medik']['pemberi_edukasi'] ?? '-'}}
+            @if (isset($asessment['pelaksanaan_edukasi']['rehab_medik']['pemberi_edukasi']))
+                @php
+                    @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$asessment['pelaksanaan_edukasi']['rehab_medik']['pemberi_edukasi']))
+                @endphp
+                <img src="data:image/png;base64, {!! $base64 !!}"><br>
+                {{@$asessment['pelaksanaan_edukasi']['rehab_medik']['pemberi_edukasi'] ?? '-'}}
+            @endif
           </td>
           <td>
             {{@$asessment['pelaksanaan_edukasi']['rehab_medik']['pasien_keluarga'] ?? '-'}}
@@ -1609,7 +1673,13 @@
             {{ @$asesment['pelaksanaan_edukasi']['alat_medis']['tgl_rencana'] ? date('d-m-Y', strtotime(@$asesment['pelaksanaan_edukasi']['alat_medis']['tgl_rencana'])) : '-' }}
           </td>
           <td>
-            {{ @$asesment['pelaksanaan_edukasi']['alat_medis']['pemberi_edukasi'] ?? '-' }}
+            @if (isset($asessment['pelaksanaan_edukasi']['alat_medis']['pemberi_edukasi']))
+                @php
+                    @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$asessment['pelaksanaan_edukasi']['alat_medis']['pemberi_edukasi']))
+                @endphp
+                <img src="data:image/png;base64, {!! $base64 !!}"><br>
+                {{ @$asesment['pelaksanaan_edukasi']['alat_medis']['pemberi_edukasi'] ?? '-' }}
+            @endif
           </td>
           <td>
             {{ @$asesment['pelaksanaan_edukasi']['alat_medis']['pasien_keluarga'] ?? '-' }}
@@ -1702,7 +1772,13 @@
             {{@$asessment['pelaksanaan_edukasi']['rohaniawan']['tgl_rencana'] ? date('d-m-Y', strtotime(@$asessment['pelaksanaan_edukasi']['rohaniawan']['tgl_rencana'])) : '-'}}
           </td>
           <td>
-            {{@$asessment['pelaksanaan_edukasi']['rohaniawan']['pemberi_edukasi'] ?? '-'}}
+            @if (isset($asessment['pelaksanaan_edukasi']['rohaniawan']['pemberi_edukasi']))
+                @php
+                    @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$asessment['pelaksanaan_edukasi']['rohaniawan']['pemberi_edukasi']))
+                @endphp
+                <img src="data:image/png;base64, {!! $base64 !!}"><br>
+                {{@$asessment['pelaksanaan_edukasi']['rohaniawan']['pemberi_edukasi'] ?? '-'}}
+            @endif
           </td>
           <td>
             {{@$asessment['pelaksanaan_edukasi']['rohaniawan']['pasien_keluarga'] ?? '-'}}
@@ -1802,7 +1878,13 @@
             {{ @$asessment['pelaksanaan_edukasi']['manajemen_nyeri']['tgl_rencana'] ? date('d-m-Y', strtotime(@$asessment['pelaksanaan_edukasi']['manajemen_nyeri']['tgl_rencana'])) : '-'}}
           </td>
           <td>
-            {{@$asessment['pelaksanaan_edukasi']['manajemen_nyeri']['pemberi_edukasi'] ?? '-' }}
+            @if (isset($asessment['pelaksanaan_edukasi']['manajemen_nyeri']['pemberi_edukasi']))
+                @php
+                    @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$asessment['pelaksanaan_edukasi']['manajemen_nyeri']['pemberi_edukasi']))
+                @endphp
+                <img src="data:image/png;base64, {!! $base64 !!}"><br>
+                {{@$asessment['pelaksanaan_edukasi']['manajemen_nyeri']['pemberi_edukasi'] ?? '-' }}
+            @endif
           </td>
           <td>
             {{@$asessment['pelaksanaan_edukasi']['manajemen_nyeri']['pasien_keluarga'] ?? '-' }}
@@ -1895,7 +1977,13 @@
             {{@$asessment['pelaksanaan_edukasi']['informasi_bagi_pasien']['tgl_rencana'] ? date('d-m-Y', strtotime(@$asessment['pelaksanaan_edukasi']['informasi_bagi_pasien']['tgl_rencana'])) : '-'}}
           </td>
           <td>
-            {{@$asessment['pelaksanaan_edukasi']['informasi_bagi_pasien']['pemberi_edukasi'] ?? '-'}}
+            @if (isset($asessment['pelaksanaan_edukasi']['informasi_bagi_pasien']['pemberi_edukasi']))
+                @php
+                    @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$asessment['pelaksanaan_edukasi']['informasi_bagi_pasien']['pemberi_edukasi']))
+                @endphp
+                <img src="data:image/png;base64, {!! $base64 !!}"><br>
+                {{@$asessment['pelaksanaan_edukasi']['informasi_bagi_pasien']['pemberi_edukasi'] ?? '-'}}
+            @endif
           </td>
           <td>
             {{@$asessment['pelaksanaan_edukasi']['informasi_bagi_pasien']['pasien_keluarga'] ?? '-'}}
@@ -1906,11 +1994,15 @@
     <table class="no-border" style="width:100%">
         <tr>
             <td style="text-align:center;"></td>
-            <td style="text-align:center;">Soreang, {{tanggalkuitansi(date('d-m-Y'))}}<br><br></td>
+            <td style="text-align:center;">
+                {{-- Soreang, {{tanggalkuitansi(date('d-m-Y'))}}<br><br> --}}
+            </td>
         </tr>
         <tr>
             <td style="width:50%;text-align:center;">Pasien</td>
-            <td style="width:50%;text-align:center;">Dokter</td>
+            <td style="width:50%;text-align:center;">
+                {{-- Dokter --}}
+            </td>
         </tr>
         <tr>
             <td style="width:50%;text-align:center;">
@@ -1919,18 +2011,18 @@
                 @endif
             </td>
             <td style="width:50%;text-align:center;">
-                @php
+                {{-- @php
                     $dokter = Modules\Pegawai\Entities\Pegawai::find($reg->dokter_id);
                     @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate($dokter->nama . '|' . $dokter->sip))
                 @endphp
-                <img src="data:image/png;base64, {!! $base64 !!}">
+                <img src="data:image/png;base64, {!! $base64 !!}"> --}}
             </td>
         </tr>
         <tr>
             <td style="width:50%;text-align:center;">{{$reg->pasien->nama}}</td>
             <td style="width:50%;text-align:center;">
-                {{@$dokter->nama}}<br>
-                SIP.{{@$dokter->sip}}
+                {{-- {{@$dokter->nama}}<br>
+                SIP.{{@$dokter->sip}} --}}
             </td>
         </tr>
     </table>

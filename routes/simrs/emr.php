@@ -64,6 +64,7 @@ Route::group(['middleware' => ['web', 'auth']], function () {
 	Route::get('emr/soap-gizi/{unit}/{registrasi_id}', 'EmrController@soapGizi')->name('soap-gizi');
 	Route::get('emr/soap-gizi/{unit}/{registrasi_id}/{id_soap?}/{edit?}', 'EmrController@soapGizi')->name('soap-gizi');
 	Route::get('emr-soap-verif-dpjp/{id_soap}', 'EmrController@verifDPJP');
+	Route::get('emr-soap-verif-pengalihan/{id}', 'EmrController@verifPengalihan');
 	Route::get('emr/soap-gizi-delete/{id_soap}/delete', 'EmrController@soapGiziDelete')->name('soap-gizi-delete');
 	Route::get('emr/soap-farmasi/{unit}/{registrasi_id}', 'EmrController@soapFarmasi')->name('soap-farmasi');
 	Route::get('emr/soap-farmasi/{unit}/{registrasi_id}/{id_soap?}/{edit?}', 'EmrController@soapFarmasi')->name('soap-farmasi');

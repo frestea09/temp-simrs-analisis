@@ -576,7 +576,12 @@
                                     <input type="datetime-local" name="fisik[perencanaan_edukasi][dokter_dpjp][tanggal_waktu]" placeholder="Lainnya" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['perencanaan_edukasi']['dokter_dpjp']['tanggal_waktu']}}">
                                 </td>
                                 <td style="border: 1px solid black; width: 10%; vertical-align: middle;" class="text-center">
-                                    Dokter Spesialis / DPJP
+                                    <select name="fisik[perencanaan_edukasi][profesi][dokter]" class="form-control select2" style="width: 100%">
+                                        <option value="">-- Pilih Dokter --</option>
+                                        @foreach ($dokter as $d)
+                                            <option value="{{ $d->id }}" {{ $d->id == @$ranap->dokter_id ? 'selected' : ''}}>{{ $d->nama }}</option>
+                                        @endforeach
+                                    </select>
                                 </td>
                                 <td style="border: 1px solid black; width: 10%; vertical-align: middle;">
                                     <div>
@@ -687,7 +692,12 @@
                                     <input type="datetime-local" name="fisik[perencanaan_edukasi][perawat][tanggal_waktu]" placeholder="Lainnya" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['perencanaan_edukasi']['perawat']['tanggal_waktu']}}">
                                 </td>
                                 <td style="border: 1px solid black; width: 10%; vertical-align: middle;" class="text-center">
-                                    Perawat / Bidan
+                                    <select name="fisik[perencanaan_edukasi][profesi][perawat]" class="form-control select2" style="width: 100%">
+                                        <option value="">-- Pilih Perawat --</option>
+                                        @foreach ($perawat as $p)
+                                            <option value="{{ $p->id }}" {{ $p->id == @$assesment['perencanaan_edukasi']['profesi']['perawat'] ? 'selected' : ''}}>{{ $p->nama }}</option>
+                                        @endforeach
+                                    </select>
                                 </td>
                                 <td style="border: 1px solid black; width: 10%; vertical-align: middle;">
                                     <div>
@@ -798,7 +808,12 @@
                                     <input type="datetime-local" name="fisik[perencanaan_edukasi][farmasi][tanggal_waktu]" placeholder="Lainnya" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['perencanaan_edukasi']['farmasi']['tanggal_waktu']}}">
                                 </td>
                                 <td style="border: 1px solid black; width: 10%; vertical-align: middle;" class="text-center">
-                                    Farmasi
+                                    <select name="fisik[perencanaan_edukasi][profesi][farmasi]" class="form-control select2" style="width: 100%">
+                                        <option value="">-- Pilih Farmasi --</option>
+                                        @foreach ($apotek as $a)
+                                            <option value="{{ $a->id }}" {{ $a->id == @$assesment['perencanaan_edukasi']['profesi']['farmasi'] ? 'selected' : ''}}>{{ $a->nama }}</option>
+                                        @endforeach
+                                    </select>
                                 </td>
                                 <td style="border: 1px solid black; width: 10%; vertical-align: middle;">
                                     <div>
@@ -916,7 +931,12 @@
                                     <input type="datetime-local" name="fisik[perencanaan_edukasi][nutrisionis][tanggal_waktu]" placeholder="Lainnya" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['perencanaan_edukasi']['nutrisionis']['tanggal_waktu']}}">
                                 </td>
                                 <td style="border: 1px solid black; width: 10%; vertical-align: middle;" class="text-center">
-                                    Nutrisionis
+                                    <select name="fisik[perencanaan_edukasi][profesi][perawat]" class="form-control select2" style="width: 100%">
+                                        <option value="">-- Pilih Nutrisionis --</option>
+                                        @foreach ($nutrisionis as $n)
+                                            <option value="{{ $n->id }}" {{ $n->id == @$nutrisionis_filter ? 'selected' : ''}}>{{ $n->nama }}</option>
+                                        @endforeach
+                                    </select>
                                 </td>
                                 <td style="border: 1px solid black; width: 10%; vertical-align: middle;">
                                     <div>
@@ -1287,7 +1307,13 @@
                                     <input type="date" name="fisik[pelaksanaan_edukasi][dokter_dpjp][tgl_rencana]" placeholder="Tanggal Rencana" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['dokter_dpjp']['tgl_rencana']}}">
                                 </td>
                                 <td style="border: 1px solid black; width: 10%; vertical-align: middle;">
-                                    <input type="text" name="fisik[pelaksanaan_edukasi][dokter_dpjp][pemberi_edukasi]" placeholder="Pemberi Edukasi" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['dokter_dpjp']['pemberi_edukasi']}}">
+                                    {{-- <input type="text" name="fisik[pelaksanaan_edukasi][dokter_dpjp][pemberi_edukasi]" placeholder="Pemberi Edukasi" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['dokter_dpjp']['pemberi_edukasi']}}"> --}}
+                                    <select name="fisik[pelaksanaan_edukasi][dokter_dpjp][pemberi_edukasi]" class="form-control select2" style="width: 100%">
+                                        <option value="">-- Pilih Dokter --</option>
+                                        @foreach ($dokter as $d)
+                                            <option value="{{ $d->id }}" {{ $d->id == @$ranap->dokter_id ? 'selected' : ''}}>{{ $d->nama }}</option>
+                                        @endforeach
+                                    </select>
                                 </td>
                                 <td style="border: 1px solid black; width: 10%; vertical-align: middle;">
                                     <input type="text" name="fisik[pelaksanaan_edukasi][dokter_dpjp][pasien_keluarga]" placeholder="Pasien / Keluarga" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['dokter_dpjp']['pasien_keluarga']}}">
@@ -1439,7 +1465,14 @@
                                     <input type="date" name="fisik[pelaksanaan_edukasi][perawat][tgl_rencana]" placeholder="Tanggal Rencana" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['perawat']['tgl_rencana']}}">
                                 </td>
                                 <td style="border: 1px solid black; width: 10%; vertical-align: middle;">
-                                    <input type="text" name="fisik[pelaksanaan_edukasi][perawat][pemberi_edukasi]" placeholder="Pemberi Edukasi" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['perawat']['pemberi_edukasi']}}">
+                                    {{-- <input type="text" name="fisik[pelaksanaan_edukasi][perawat][pemberi_edukasi]" placeholder="Pemberi Edukasi" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['perawat']['pemberi_edukasi']}}"> --}}
+                                    <select name="fisik[pelaksanaan_edukasi][perawat][pemberi_edukasi]" class="form-control select2" style="width: 100%">
+                                        <option value="">-- Pilih Perawat --</option>
+                                        @foreach ($perawat as $p)
+                                            <option value="{{ $p->id }}" {{ $p->id == @$assesment['pelaksanaan_edukasi']['perawat']['pemberi_edukasi'] ? 'selected' : ''}}>{{ $p->nama }}</option>
+                                        @endforeach
+                                    </select>
+                                </td>
                                 </td>
                                 <td style="border: 1px solid black; width: 10%; vertical-align: middle;">
                                     <input type="text" name="fisik[pelaksanaan_edukasi][perawat][pasien_keluarga]" placeholder="Pasien / Keluarga" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['perawat']['pasien_keluarga']}}">

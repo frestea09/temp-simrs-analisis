@@ -29,12 +29,29 @@ function hitungAntrol($dokter,$tglperiksa,$kodepoli){
 	$noantri = Registrasi::where('dokter_id',$dokter)->where('poli_id',baca_id_poli($kodepoli))->where('created_at','like',$tglperiksa . '%')->count();
 	return $cekantrian+$noantri+1;
 }
-function hitungAntrolNew($dokter,$tglperiksa,$kodepoli){
-	$poli = Poli::where('bpjs',$kodepoli)->first();
-	$cekantrian = RegistrasiDummy::where('dokter_id',$dokter)->where('tglperiksa',$tglperiksa)->where('kode_poli', $kodepoli)->count();
-	$cekantrian_reg = Registrasi::where('dokter_id',$dokter)->where('created_at','like',$tglperiksa.'%')->where('input_from', 'not like', 'KIOSK%')->count();
-	// $antrian_terdata = AntrianPoli::where('tanggal', '=', $tglperiksa)->where('kelompok', $poli->kelompok)->count();
-	return $cekantrian+$cekantrian_reg+1;
+// function hitungAntrolNew($dokter,$tglperiksa,$kodepoli){
+// 	$poli = Poli::where('bpjs',$kodepoli)->first();
+// 	$cekantrian = RegistrasiDummy::where('dokter_id',$dokter)->where('tglperiksa',$tglperiksa)->where('kode_poli', $kodepoli)->count();
+// 	$cekantrian_reg = Registrasi::where('dokter_id',$dokter)->where('created_at','like',$tglperiksa.'%')->where('input_from', 'not like', 'KIOSK%')->count();
+// 	// $antrian_terdata = AntrianPoli::where('tanggal', '=', $tglperiksa)->where('kelompok', $poli->kelompok)->count();
+// 	return $cekantrian+$cekantrian_reg+1;
+// }
+function hitungAntrolNew($dokter, $tglperiksa, $kodepoli) {
+
+    $cekantrian = RegistrasiDummy::where('dokter_id', $dokter)
+        ->where('tglperiksa', $tglperiksa)
+        ->where('kode_poli', $kodepoli)
+        // ->lockForUpdate()
+        ->count();
+
+    $cekantrian_reg = Registrasi::where('dokter_id', $dokter)
+        ->where('created_at', 'like', $tglperiksa.'%')
+        ->where('input_from', 'not like', 'KIOSK%')
+		// ->where('input_from', 'not like', 'APM')
+        // ->lockForUpdate()
+        ->count();
+
+    return $cekantrian + $cekantrian_reg + 1;
 }
 function hitungAntrolNew2($kelompok_poli,$kode_poli){
 	$count = AntrianPoli::where('tanggal', '=', date('Y-m-d'))->where('kelompok', $kelompok_poli)->count();

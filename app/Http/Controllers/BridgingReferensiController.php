@@ -1690,7 +1690,8 @@ class BridgingReferensiController extends Controller {
 		if($req->ajax()){
 			 $log = BpjsLog::whereBetween('created_at', [date('Y-m-d', strtotime($req->tgl_awal)) . ' 00:00:00', date('Y-m-d', strtotime($req->tgl_akhir)) . ' 23:59:59']);
 			 if(!empty($req->status)){
-				if($req->status == '200'||$req->status =='208'){
+				// if($req->status == '200'||$req->status =='208'){
+				if($req->status == '200'){
 					$log = $log->whereIn('status',[200,208]);
 				}else{
 					$log = $log->where('status',$req->status);
@@ -1708,9 +1709,12 @@ class BridgingReferensiController extends Controller {
 	}
 
 	function logAntrianPDF(Request $req) {
+		ini_set('max_execution_time', 0); //0=NOLIMIT
+		ini_set('memory_limit', '8000M');
 		$log = BpjsLog::whereBetween('created_at', [date('Y-m-d', strtotime($req->tgl_awal)) . ' 00:00:00', date('Y-m-d', strtotime($req->tgl_akhir)) . ' 23:59:59']);
 		if(!empty($req->status)){
-		if($req->status == '200'||$req->status =='208'){
+		// if($req->status == '200'||$req->status =='208'){
+		if($req->status == '200'){
 			$log = $log->whereIn('status',[200,208]);
 		}else{
 			$log = $log->where('status',$req->status);

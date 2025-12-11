@@ -812,40 +812,66 @@ class ApiController extends Controller
     }
     if ($request->header('x-token') == $signature && $request->header('x-username') == config('app.username_ws')) {
       
+      $buka_poli = Poli::where('bpjs', $request->kodepoli)->first();
+      $tgldaftar_pasien = $request->tanggalperiksa.' '.$buka_poli->buka;
+
+      $cekDokter = Pegawai::where('kode_bpjs',$request->kodedokter)->first();
+      $nowHour = now()->format('H'); // ambil jam saat ini 00-23
+
       DB::beginTransaction();
+     
       try {
-          // Kunci data terakhir di tabel RegistrasiDummy untuk tanggal & poli yang sama
-          $last = RegistrasiDummy::where('tglperiksa', $request->tanggalperiksa)
-              ->where('kode_poli', $request->kodepoli)
-              ->lockForUpdate()
-              ->orderByDesc('id')
-              ->first();
 
-          $cekantrianBooking = RegistrasiDummy::where('tglperiksa',$request->tanggalperiksa)->where('kode_poli', $request->kodepoli)->count();
-          $cekantrian_reg = Registrasi::where('dokter_id',$dokter->id)->where('created_at','like',$request->tanggalperiksa.'%')->where('input_from', 'not like', 'KIOSK%')->count();
-          $cekantrianBooking = $cekantrianBooking+$cekantrian_reg+1;
+            // dd("A");
+            // Kunci tabel RegistrasiDummy supaya ada blocking untuk request simultan
+            // DB::statement('LOCK TABLES registrasi_dummy WRITE');
 
+            // Hitung antrian booking + antrian registrasi lama
+            $queryDummy = RegistrasiDummy::where('tglperiksa', $request->tanggalperiksa)
+                ->where('dokter_id', $dokter->id)
+                ->where('kode_poli', $request->kodepoli);
+                // ->lockForUpdate()
+                // ->count();
 
-          $cekantrian = hitungAntrolNew($dokter->id,$request->tanggalperiksa,$request->kodepoli);
-          $hitung =  $cekantrian;
-          $tanggalantri =  date("dmY", strtotime($request->tanggalperiksa));
-          if($dokter->kode_antrian){
-            $kodeantri = $dokter->kode_antrian;
-          }else{
-            $kodeantri =$tanggalantri; 
-          }
-          $kodebooking = $tanggalantri.''.$request->kodepoli.''.$cekantrianBooking;
-          $nomorantri = $kodeantri.'-'.$request->kodepoli.''.$hitung;
+            $queryReg = Registrasi::where('dokter_id', $dokter->id)
+                ->where('created_at', 'like', $request->tanggalperiksa.'%')
+                ->where('input_from', 'not like', 'KIOSK%');
+                // ->where('input_from', 'not like', 'APM');
+                // ->lockForUpdate()
+                // ->count();
+            // aktifkan lock hanya antara jam 00–02
+            if ((int)$nowHour >= 0 && (int)$nowHour <= 2) {
+                $queryDummy->lockForUpdate();
+                $queryReg->lockForUpdate();
+            }
+
+            $cekantrianDummy = $queryDummy->count();
+            $cekantrianReg   = $queryReg->count();
+
+            // Nomor antrian fix (hanya 1 patokan)
+            $noAntrian = $cekantrianDummy + $cekantrianReg + 1;
+            // dd($noAntrian);
+            $hitung = $noAntrian;
+            $tanggalantri = date("dmY", strtotime($request->tanggalperiksa));
+            $kodeantri = $dokter->kode_antrian ? $dokter->kode_antrian : $tanggalantri;
+
+            // kodebooking JANGAN pakai variable perhitungan berbeda
+            $kodebooking = $tanggalantri.$kodeantri.$request->kodepoli.$noAntrian;
+            $nomorantri = $kodeantri.'-'.$request->kodepoli.$noAntrian;
           // dd($nomorantri);
           @$this->saveLog($request->all(),$nomorantri);
           
-          $buka_poli = Poli::where('bpjs', $request->kodepoli)->first();
-          $tgldaftar_pasien = $request->tanggalperiksa.' '.$buka_poli->buka;
+          
+           if($cekDokter){
+              $dokter = $cekDokter->id;
+            }else{
+              $dokter = '';
+            }
 
           $spm = 4; // menit per pasien
 
           // hitung nomor antrian pasien di dokter ini
-          $no_antrian_dokter = $cekantrian;
+          $no_antrian_dokter = $noAntrian;
 
           // pasien pertama = 0 menit tunggu
           $menit_antri = $spm * ($no_antrian_dokter - 1);
@@ -856,12 +882,7 @@ class ApiController extends Controller
           // dd($convertestimasi);
           
           // cek kode dokter
-          $cekDokter = Pegawai::where('kode_bpjs',$request->kodedokter)->first();
-          if($cekDokter){
-            $dokter = $cekDokter->id;
-          }else{
-            $dokter = '';
-          }
+         
 
           if(is_numeric(substr($nomorantri,-2))){
             $angka = substr($nomorantri,-2);
@@ -913,6 +934,8 @@ class ApiController extends Controller
         $fkrtl->estimasidilayani = $convertestimasi;
         // return $fkrtl;die;
         $fkrtl->save();
+
+        // DB::statement('UNLOCK TABLES');
         DB::commit();
 
       } catch (\Exception $e) {

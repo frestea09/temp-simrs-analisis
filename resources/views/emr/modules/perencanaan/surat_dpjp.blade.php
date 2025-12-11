@@ -143,6 +143,25 @@
                                                     <input type="text" name="form[pengalihan_dpjp][alasan]" value="{{@$form['pengalihan_dpjp']['alasan']}}" class="form-control" />
                                                 </td>
                                             </tr>
+                                            @if(!empty($riwayat))
+                                                @if($riwayat->verifikasi)
+                                                    <tr>
+                                                        <td style="width:40%;"><b>Verifikasi</b></td>
+                                                        <td style="padding: 5px;">
+                                                            <button type="button" class="btn btn-xs btn-flat btn-info">Sudah diverifikasi {{@$form['pengalihan_dpjp']['nama']}} pada {{date('d-m-Y H:i:s', strtotime($riwayat->verifikasi))}}</button>
+                                                        </td>
+                                                    </tr>
+                                                @elseif(Auth::user()->name == @$form['pengalihan_dpjp']['nama'])
+                                                    <tr>
+                                                        <td style="width:40%;"><b></b></td>
+                                                        <td style="padding: 5px;">
+                                                            <a href="{{url("emr-soap-verif-pengalihan/".$riwayat->id)}}" class="btn btn-xs btn-flat btn-success">
+                                                                Verifikasi
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                @endif
+                                            @endif
                                         </table>
                                     </div>
                                   </div>

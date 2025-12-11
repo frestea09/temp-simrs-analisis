@@ -227,6 +227,9 @@
               <td style="width: 58%">{{@$surat['pengalihan_dpjp']['alasan']}}</td>
             </tr>
             <tr>
+              <td colspan="3" style="width: 100%;"><span>Sudah diverifikasi {{@$surat['pengalihan_dpjp']['nama']}} pada {{date('d-m-Y H:i:s', strtotime($cetak->verifikasi))}}</span></td>
+            </tr>
+            <tr>
               <td colspan="3">
                 <br/><br/>
                 Demikian surat penyataan ini dibuat untuk digunakan sebagaimana mestinya dengan penuh tanggung jawab.
@@ -259,7 +262,8 @@
                 <td style="width:80px;text-align:center;">
                   @if (!empty($surat['pengalihan_dpjp']['nama']))
                     @php
-                      @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$surat['pengalihan_dpjp']['nama']))
+                      // @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$surat['pengalihan_dpjp']['nama']))
+                      @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$dpjp_inap->nama ?? @$dokter->nama))
                     @endphp
                     <img src="data:image/png;base64, {!! $base64 !!}">
                   @endif
@@ -271,7 +275,8 @@
                 <td style="width:80px;text-align:center;"></td>
                 <td style="width:140px;text-align:center;"></td>
                 <td style="width:80px;text-align:center;"></td>
-                <td style="width:80px;text-align:center;">({{@$surat['pengalihan_dpjp']['nama']}})</td>
+                {{-- <td style="width:80px;text-align:center;">({{@$surat['pengalihan_dpjp']['nama']}})</td> --}}
+                <td style="width:80px;text-align:center;">({{@$dpjp_inap->nama ?? @$dokter->nama}})</td>
             </tr>
             <tr>
                 <td colspan="4" scope="row" style="width:270px;font-size: 8px;"></td>
@@ -315,7 +320,7 @@
           <br/>
           <table>
             <tr>
-              <td colspan="3">Yang bertandatangan di bawah ini, dengan ini mengalihkan pasien kepada :</td>
+              <td colspan="3">Yang bertandatangan di bawah ini, dengan ini melakukan rawat bersama pasien kepada :</td>
             </tr>
             <tr>
               <td style="width:40%;"><span>Nama</span></td>
@@ -370,7 +375,8 @@
                 <td style="width:80px;text-align:center;">
                   @if (!empty($surat['rawat_bersama']['nama']))
                     @php
-                      @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$surat['rawat_bersama']['nama']))
+                      // @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$surat['rawat_bersama']['nama']))
+                      @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$dpjp_inap->nama ?? @$dokter->nama))
                     @endphp
                     <img src="data:image/png;base64, {!! $base64 !!}">
                   @endif
@@ -382,7 +388,8 @@
                 <td style="width:80px;text-align:center;"></td>
                 <td style="width:140px;text-align:center;"></td>
                 <td style="width:80px;text-align:center;"></td>
-                <td style="width:80px;text-align:center;">({{@$surat['rawat_bersama']['nama']}})</td>
+                {{-- <td style="width:80px;text-align:center;">({{@$surat['rawat_bersama']['nama']}})</td> --}}
+                <td style="width:80px;text-align:center;">({{@$dpjp_inap->nama ?? @$dokter->nama}})</td>
             </tr>
             <tr>
                 <td colspan="4" scope="row" style="width:270px;font-size: 8px;"></td>
