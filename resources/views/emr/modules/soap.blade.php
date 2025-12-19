@@ -432,6 +432,7 @@
                                         <option value="RS TASIKMALAYA" {{@$assesments['dischargePlanning']['dirujuk']['diRujukKe'] == 'RS TASIKMALAYA' ? 'selected' : ''}}>RS TASIKMALAYA</option>
                                         <option value="RS BEKASI" {{@$assesments['dischargePlanning']['dirujuk']['diRujukKe'] == 'RS BEKASI' ? 'selected' : ''}}>RS BEKASI</option>
                                         <option value="RS Provinsi" {{@$assesments['dischargePlanning']['dirujuk']['diRujukKe'] == 'RS Provinsi' ? 'selected' : ''}}>RS Provinsi</option>
+                                        <option value="RS KOTA CIMAHI" {{@$assesments['dischargePlanning']['dirujuk']['diRujukKe'] == 'RS KOTA CIMAHI' ? 'selected' : ''}}>RS KOTA CIMAHI</option>
                                     </select>
                                 </td>
                             </tr>
@@ -550,6 +551,7 @@
                                         <option value="RS TASIKMALAYA" {{@$assesments['dischargePlanning']['dirujuk']['diRujukKe'] == 'RS TASIKMALAYA' ? 'selected' : ''}}>RS TASIKMALAYA</option>
                                         <option value="RS BEKASI" {{@$assesments['dischargePlanning']['dirujuk']['diRujukKe'] == 'RS BEKASI' ? 'selected' : ''}}>RS BEKASI</option>
                                         <option value="RS Provinsi" {{@$assesments['dischargePlanning']['dirujuk']['diRujukKe'] == 'RS Provinsi' ? 'selected' : ''}}>RS Provinsi</option>
+                                        <option value="RS KOTA CIMAHI" {{@$assesments['dischargePlanning']['dirujuk']['diRujukKe'] == 'RS KOTA CIMAHI' ? 'selected' : ''}}>RS KOTA CIMAHI</option>
                                     </select>
                                 </td>
                             </tr>

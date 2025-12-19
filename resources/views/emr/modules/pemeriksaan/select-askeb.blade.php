@@ -42,6 +42,20 @@
     </td>
   </tr>
 </table>
+<h5><b>Tindakan</b></h5>
+<table style="width: 100%" class="table table-striped table-bordered table-hover table-condensed form-box" style="font-size:12px;">
+  <tr>
+    <td style="padding: 5px; width: auto;">
+      <input type="text" name="keterangan[]" style="width: 85%; display: inline-block;" class="form-control">
+      <button type="button" class="btn btn-success btn-flat btn-sm" style="" onclick="cloneKeterangan()">Tambah</button>
+    </td>
+  </tr>
+  <tr id="template-keterangan" style="display: none;">
+    <td style="padding: 5px; width: auto;">
+      <input type="text" name="keterangan[]" style="width: 85%; display: inline-block;" class="form-control new-keterangan" disabled>
+    </td>
+  </tr>
+</table>
 
 <h5><b>Diagnosa</b></h5>
 <table style="width: 100%" class="table table-striped table-bordered table-hover table-condensed form-box" style="font-size:12px;">
@@ -188,5 +202,18 @@
           })
       }
       })
+      
   };
+
+
+  function cloneKeterangan() {
+        let templateElement = $('#template-keterangan');
+        let clonedElement = templateElement.clone();
+        clonedElement.removeAttr('id');
+        clonedElement.show();
+
+        clonedElement.find('.new-keterangan').attr('disabled', false);
+
+        clonedElement.insertBefore(templateElement);
+    }
 </script>

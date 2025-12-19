@@ -117,8 +117,8 @@ class RisController extends Controller
       CURLOPT_CUSTOMREQUEST => 'POST',
       CURLOPT_POSTFIELDS => json_encode($json, JSON_PRETTY_PRINT),
       CURLOPT_HTTPHEADER => array(
-        'Content-Type: application/json',
-        'Authorization:' . $token
+        'Content-Type: application/json'
+        // 'Authorization:' . $token
       ),
     ));
     $response_observasi = curl_exec($curl_observation);
@@ -195,8 +195,8 @@ class RisController extends Controller
       CURLOPT_CUSTOMREQUEST => 'POST',
       CURLOPT_POSTFIELDS => json_encode($json, JSON_PRETTY_PRINT),
       CURLOPT_HTTPHEADER => array(
-        'Content-Type: application/json',
-        'Authorization:' . $token
+        'Content-Type: application/json'
+        // 'Authorization:' . $token
       ),
     ));
     $response_observasi = curl_exec($curl_observation);
@@ -226,8 +226,8 @@ class RisController extends Controller
       CURLOPT_CUSTOMREQUEST => 'POST',
       CURLOPT_POSTFIELDS => json_encode($json, JSON_PRETTY_PRINT),
       CURLOPT_HTTPHEADER => array(
-        'Content-Type: application/json',
-        'Authorization:' . $token
+        'Content-Type: application/json'
+        // 'Authorization:' . $token
       ),
     ));
     $response_observasi = curl_exec($curl_observation);
@@ -257,8 +257,8 @@ class RisController extends Controller
       CURLOPT_CUSTOMREQUEST => 'POST',
       CURLOPT_POSTFIELDS => json_encode($json, JSON_PRETTY_PRINT),
       CURLOPT_HTTPHEADER => array(
-        'Content-Type: application/json',
-        'Authorization:' . $token
+        'Content-Type: application/json'
+        // 'Authorization:' . $token
       ),
     ));
     $response_observasi = curl_exec($curl_observation);
@@ -290,7 +290,8 @@ class RisController extends Controller
   {
     // dd($request->all());
     $reg = Registrasi::find($request->reg_id);
-    $token = $this->token();
+    // $token = $this->token();
+    $token = '';
     // $token = '1';
     // dd($token);
     $this->registerpatient($token, $reg,$request->poli_id,$request);
@@ -302,6 +303,8 @@ class RisController extends Controller
   // generate token RIS
   public function token()
   {
+
+    return "";
     $curl_observation = curl_init();
     $json = [
       "Username" => config('app.username_ris'),
@@ -379,7 +382,8 @@ class RisController extends Controller
           "examtypename" => $exam->nama,
           "examdate" => date('Y-m-d H:i:s'),
           "examroom" => baca_poli($poli_id),
-          "referrerphysician" => $reg->dokter_id,
+          "referrerphysician" => baca_dokter($reg->dokter_id),
+          "requestingphysician" => $request['dokter_radiologi'] ? baca_dokter($request['dokter_radiologi']) :baca_dokter($reg->dokter_id),
           "departmentorder" => baca_poli($poli_id)
         ];
 
@@ -401,8 +405,8 @@ class RisController extends Controller
       CURLOPT_CUSTOMREQUEST => 'POST',
       CURLOPT_POSTFIELDS => json_encode($json, JSON_PRETTY_PRINT),
       CURLOPT_HTTPHEADER => array(
-        'Content-Type: application/json',
-        'Authorization:' . $token
+        'Content-Type: application/json'
+        // 'Authorization:' . $token
       ),
     ));
     $response_observasi = curl_exec($curl_observation);

@@ -13,7 +13,7 @@ Route::group(['middleware' => ['web', 'auth']], function () {
 	Route::post('radiologi/saveRadiologiLangsung/{id_pasien}', 'RadiologiController@simpanTransaksiLangsungLama');
 
 	//Insert Kunjungan
-	Route::get('radiologi/insert-kunjungan/{registrasi_id}/{pasien_id}', 'RadiologiController@insertKunjungan');
+	Route::get('radiologi/insert-kunjungan/{registrasi_id}/{pasien_id?}', 'RadiologiController@insertKunjungan');
 
 	//Insert Expertise
 	Route::get('radiologi/entry-expertise-irj/{registrasi_id}/{id}/{tarif_id}', 'RadiologiController@entryExpertiseIRJ');

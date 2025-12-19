@@ -1055,6 +1055,9 @@
     <li class=""><a
         href="{{ url('emr/icu/' . $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}">ICU</a>
     </li>
+    <li><a
+        href="{{ url('emr-soap/pemeriksaan/penelusuran-obat-igd/'. $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}">Rekonsiliasi Obat</a>
+    </li>
 @endif
 @if ($unit == 'igd')
 <li class="dropdown">

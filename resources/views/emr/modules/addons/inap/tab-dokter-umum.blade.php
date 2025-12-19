@@ -338,9 +338,6 @@
                     href="{{ url('emr-soap/perencanaan/inap/pulang-pasien/' . $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}">Perencanaan Pulang Pasien</a>
             </li>
             <li><a
-                    href="{{ url('emr-soap/pemeriksaan/formulir-edukasi/' . $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}">
-                    Formulir Edukasi Pasien dan Keluarga</a></li>
-            <li><a
                     href="{{ url('emr-soap/perencanaan/menolak-rujuk/' . $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}">Menolak 
                     Rujuk</a></li>
             <li><a
@@ -369,6 +366,10 @@
             </li>
 
         </ul>
+</li>
+
+<li>
+        <a href="{{ url('emr-soap/pemeriksaan/formulir-edukasi/' . $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}">Formulir Edukasi Pasien dan Keluarga</a>
 </li>
 
 <li class="dropdown">
@@ -403,6 +404,9 @@
                 <a href="{{url("emr/form-kriteria-keluar-icu/". $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp)}}">Keluar ICU</a>
             </li>
         </ul>
+    </li>
+    <li><a
+        href="{{ url('emr-soap/pemeriksaan/penelusuran-obat-igd/'. $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}">Rekonsiliasi Obat</a>
     </li>
 @endif
 <li class="dropdown">

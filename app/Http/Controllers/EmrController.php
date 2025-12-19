@@ -1424,8 +1424,19 @@ class EmrController extends Controller
 			$item->unit = 'gizi';
 			return $item;
 		});
-		$data['all_resume'] 	= $data['all_resume_gizi']->merge($data['all_resume_emr'])->sortByDesc(function ($item) {
-			return strtotime($item->created_at);
+		$data['all_resume_farmasi'] = EmrFarmasi::where('pasien_id', @$data['reg']->pasien->id)
+		->orderBy('id', 'DESC')
+		->get()
+		->map(function($item) {
+			$item->unit = 'farmasi';
+			return $item;
+		});
+		$data['all_resume'] = collect()
+			->merge($data['all_resume_emr'])
+			->merge($data['all_resume_gizi'])
+			->merge($data['all_resume_farmasi'])
+			->sortByDesc(function ($item) {
+				return strtotime($item->created_at);
 			})
 			->values();
 		

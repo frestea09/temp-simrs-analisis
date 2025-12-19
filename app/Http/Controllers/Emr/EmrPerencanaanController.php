@@ -1557,15 +1557,17 @@ class EmrPerencanaanController extends Controller
 		$data['reg']               = Registrasi::find($registrasi_id);
 		$data['riwayat']		   = EmrInapPerencanaan::where('registrasi_id',$registrasi_id)->where('type','resume')->orderBy('id','DESC')->first();
 		$data['form']			   = @json_decode(@$data['riwayat']->keterangan, true);
-		$data['aswal_ranap']       = EmrInapPemeriksaan::where('registrasi_id', $registrasi_id)
-			->where(function ($query) {
-				$query->whereIn('type', asesmen_ranap_dokter())
-					->orWhere(function ($q) {
-						$q->where('type', 'like', 'fisik_%')
-							->where('type', '!=', 'fisik_gizi');
-					});
-			})
+		$data['aswal_ranap'] = EmrInapPemeriksaan::where('registrasi_id', $registrasi_id)
+			->whereIn('type', asesmen_ranap_dokter())
+			->orderBy('id','DESC')
 			->first();
+		if (!$data['aswal_ranap']) {
+			$data['aswal_ranap'] = EmrInapPemeriksaan::where('registrasi_id', $registrasi_id)
+				->where('type', 'like', 'fisik_%')
+				->where('type', '!=', 'fisik_gizi')
+				->orderBy('id','DESC')
+				->first();
+		}
 		$data['aswal_igd']	   		= EmrInapPemeriksaan::where('registrasi_id', $registrasi_id)->where('type', 'assesment-awal-medis-igd')->first();
 		$data['aswal_ponek']	   	= EmrInapPemeriksaan::where('registrasi_id', $registrasi_id)->where('type', 'assesment-awal-medis-igd-ponek')->first();
 		$data['laboratorium'] = Folio::where('registrasi_id', $registrasi_id)->where('poli_tipe', 'L')->select('namatarif')->get();

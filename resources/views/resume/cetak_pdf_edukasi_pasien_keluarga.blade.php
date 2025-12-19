@@ -604,7 +604,7 @@
           </td>
           <td style="" class="text-center">
               {{-- Nutrisionis --}}
-            @if (isset($asessment['perencanaan_edukasi']['profesi']['farmasi']))
+            @if (isset($asessment['perencanaan_edukasi']['profesi']['nutrisionis']))
                 @php
                     $nutrisionis = Modules\Pegawai\Entities\Pegawai::find(@$asessment['perencanaan_edukasi']['profesi']['nutrisionis']);
                     @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$nutrisionis->nama . '|' . @$nutrisionis->sip))
@@ -1245,10 +1245,11 @@
           <td>
             @if (isset($asessment['pelaksanaan_edukasi']['farmasi']['pemberi_edukasi']))
                 @php
-                    @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$asessment['pelaksanaan_edukasi']['farmasi']['pemberi_edukasi']))
+                    $farmasi = Modules\Pegawai\Entities\Pegawai::find(@$asessment['pelaksanaan_edukasi']['farmasi']['pemberi_edukasi']);
+                    @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$farmasi->nama))
                 @endphp
                 <img src="data:image/png;base64, {!! $base64 !!}"><br>
-                {{@$asessment['pelaksanaan_edukasi']['farmasi']['pemberi_edukasi'] ?? '-'}}
+                {{baca_pegawai(@$asessment['pelaksanaan_edukasi']['farmasi']['pemberi_edukasi']) ?? '-'}}
             @endif
           </td>
           <td>
@@ -1379,10 +1380,11 @@
           <td>
             @if (isset($asessment['pelaksanaan_edukasi']['diet_dan_nutrisi']['pemberi_edukasi']))
                 @php
-                    @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$asessment['pelaksanaan_edukasi']['diet_dan_nutrisi']['pemberi_edukasi']))
+                    $gizi = Modules\Pegawai\Entities\Pegawai::find(@$asessment['pelaksanaan_edukasi']['diet_dan_nutrisi']['pemberi_edukasi']);
+                    @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$gizi->nama))
                 @endphp
                 <img src="data:image/png;base64, {!! $base64 !!}"><br>
-                {{@$asessment['pelaksanaan_edukasi']['diet_dan_nutrisi']['pemberi_edukasi'] ?? '-' }}
+                {{baca_pegawai(@$asessment['pelaksanaan_edukasi']['diet_dan_nutrisi']['pemberi_edukasi']) ?? '-' }}
             @endif
           </td>
           <td>
@@ -1513,10 +1515,11 @@
           <td>
             @if (isset($asessment['pelaksanaan_edukasi']['rehab_medik']['pemberi_edukasi']))
                 @php
-                    @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$asessment['pelaksanaan_edukasi']['rehab_medik']['pemberi_edukasi']))
+                    $rehab = Modules\Pegawai\Entities\Pegawai::find(@$asessment['pelaksanaan_edukasi']['rehab_medik']['pemberi_edukasi']);
+                    @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$rehab->nama))
                 @endphp
                 <img src="data:image/png;base64, {!! $base64 !!}"><br>
-                {{@$asessment['pelaksanaan_edukasi']['rehab_medik']['pemberi_edukasi'] ?? '-'}}
+                {{baca_pegawai(@$asessment['pelaksanaan_edukasi']['rehab_medik']['pemberi_edukasi']) ?? '-'}}
             @endif
           </td>
           <td>

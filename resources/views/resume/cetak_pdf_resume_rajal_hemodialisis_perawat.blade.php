@@ -722,46 +722,25 @@
             </div>
             <div>
               <input class="form-check-input"
-                  name="fisik[penyulit_selama_hd][pilihan10]"
-                  {{ @json_decode(@$soap->fisik, true)['penyulit_selama_hd']['pilihan10'] == 'Hipotensi' ? 'checked' : '' }}
+                  name="fisik[penyulit_selama_hd][pilihan13]"
+                  {{ @json_decode(@$soap->fisik, true)['penyulit_selama_hd']['pilihan13'] == 'Hipotensi' ? 'checked' : '' }}
                   type="checkbox" value="Hipotensi">
               <label class="form-check-label" style="font-weight: 400;">Hipotensi</label>
             </div>
             <div>
                 <input class="form-check-input"
-                    name="fisik[penyulit_selama_hd][pilihan11]"
-                    {{ @json_decode(@$soap->fisik, true)['penyulit_selama_hd']['pilihan11'] == 'Hipertensi' ? 'checked' : '' }}
+                    name="fisik[penyulit_selama_hd][pilihan14]"
+                    {{ @json_decode(@$soap->fisik, true)['penyulit_selama_hd']['pilihan14'] == 'Hipertensi' ? 'checked' : '' }}
                     type="checkbox" value="Hipertensi">
                 <label class="form-check-label" style="font-weight: 400;">Hipertensi</label>
             </div>
             <div>
                 <input class="form-check-input"
-                    name="fisik[penyulit_selama_hd][pilihan12]"
-                    {{ @json_decode(@$soap->fisik, true)['penyulit_selama_hd']['pilihan12'] == 'Lain-lain' ? 'checked' : '' }}
+                    name="fisik[penyulit_selama_hd][pilihan15]"
+                    {{ @json_decode(@$soap->fisik, true)['penyulit_selama_hd']['pilihan15'] == 'Lain-lain' ? 'checked' : '' }}
                     type="checkbox" value="Lain-lain">
-                    {{ @json_decode(@$soap->fisik, true)['penyulit_selama_hd']['pilihan12_detail'] }}
+                    {{ @json_decode(@$soap->fisik, true)['penyulit_selama_hd']['pilihan15_detail'] }}
             </div>
-          </td>
-        </tr>
-        <tr>
-          <td style="border: 1px solid;">
-              <b>EVALUASI PERAWATAN</b>
-          </td>
-          <td colspan="5" style="border: 1px solid; white-space: pre-line;">
-              {{ @json_decode(@$soap->fisik, true)['evaluasi_perawatan']['detail'] }} <br><br>
-          </td>
-        </tr>
-        <tr>
-          <td style="border: 1px solid;">
-              <b>DISCHARGE PLANNING</b>
-          </td>
-          <td colspan="5" style="border: 1px solid;">
-            <b>Rencana Lama Rawat Inap : </b> <br>
-            - Dapat ditetapkan : 
-            {{ @json_decode(@$soap->fisik, true)['rencanaRanap']['dapatDitetapkan']['hari'] ?? '-' }} Hari, Tanggal pulang : {{ @json_decode(@$soap->fisik, true)['rencanaRanap']['dapatDitetapkan']['tanggal'] ?? '-' }}<br><br>
-            - Tidak dapat ditetapkan, karena {{ @json_decode(@$soap->fisik, true)['rencanaRanap']['tidakDapatDitetapkan']['alasan'] ?? '-' }} <br><br>
-            <b>Ketika pulang masih memerlukan perawatan lanjutan : </b> <br>
-            - {{ @json_decode(@$soap->fisik, true)['rencanaRanap']['perawatan_lanjutan'] == 'Ya' ? '' : @json_decode(@$soap->fisik, true)['rencanaRanap']['perawatan_lanjutan'] }} {{ @json_decode(@$soap->fisik, true)['rencanaRanap']['perawatan_lanjutan_ya'] ?? '' }}  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br><br>
           </td>
         </tr>
 
@@ -892,6 +871,48 @@
             <td style="vertical-align: middle; font-size: 12px; border: 1px solid black;">&nbsp;</td>
           </tr>
         </tbody>
+      </table><br>
+      <table style="width: 100%; border-collapse: collapse; table-layout: fixed;" border="1" cellspacing="0" cellpadding="3">
+        <tr>
+            <td style="border: 1px solid;">
+                <b>EVALUASI PERAWATAN</b>
+            </td>
+            <td colspan="5" style="border: 1px solid; white-space: pre-line;">
+                {{ @json_decode(@$soap->fisik, true)['evaluasi_perawatan']['detail'] }} <br><br>
+            </td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid;">
+                <b>DISCHARGE PLANNING</b>
+            </td>
+            <td colspan="5" style="border: 1px solid;">
+              {{-- <b>Rencana Lama Rawat Inap : </b> <br>
+              - Dapat ditetapkan : 
+              {{ @json_decode(@$soap->fisik, true)['rencanaRanap']['dapatDitetapkan']['hari'] ?? '-' }} Hari, Tanggal pulang : {{ @json_decode(@$soap->fisik, true)['rencanaRanap']['dapatDitetapkan']['tanggal'] ?? '-' }}<br><br>
+              - Tidak dapat ditetapkan, karena {{ @json_decode(@$soap->fisik, true)['rencanaRanap']['tidakDapatDitetapkan']['alasan'] ?? '-' }} <br><br>
+              <b>Ketika pulang masih memerlukan perawatan lanjutan : </b> <br>
+              - {{ @json_decode(@$soap->fisik, true)['rencanaRanap']['perawatan_lanjutan'] == 'Ya' ? '' : @json_decode(@$soap->fisik, true)['rencanaRanap']['perawatan_lanjutan'] }} {{ @json_decode(@$soap->fisik, true)['rencanaRanap']['perawatan_lanjutan_ya'] ?? '' }}  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br><br> --}}
+              @php
+                $dischargePlanning = null;
+                if (@json_decode(@$soap->fisik, true)['dischargePlanning']['kontrol']['dipilih']) {
+                  $dischargePlanning = @json_decode(@$soap->fisik, true)['dischargePlanning']['kontrol']['dipilih'] . ', ' . @json_decode(@$soap->fisik, true)['dischargePlanning']['kontrol']['waktu'];
+                } elseif (@json_decode(@$soap->fisik, true)['dischargePlanning']['kontrolPRB']['dipilih']) {
+                  $dischargePlanning = @json_decode(@$soap->fisik, true)['dischargePlanning']['kontrolPRB']['dipilih'] . ', ' . @json_decode(@$soap->fisik, true)['dischargePlanning']['kontrolPRB']['waktu'];
+                } elseif (@json_decode(@$soap->fisik, true)['dischargePlanning']['dirawat']['dipilih']) {
+                  $dischargePlanning = @json_decode(@$soap->fisik, true)['dischargePlanning']['dirawat']['dipilih'] . ', ' . @json_decode(@$soap->fisik, true)['dischargePlanning']['dirawat']['waktu'];
+                } elseif (@json_decode(@$soap->fisik, true)['dischargePlanning']['dirujuk']['dipilih']) {
+                  $dischargePlanning = @json_decode(@$soap->fisik, true)['dischargePlanning']['dirujuk']['dipilih'] . ', ' . @json_decode(@$soap->fisik, true)['dischargePlanning']['dirujuk']['waktu'];
+                } elseif (@json_decode(@$soap->fisik, true)['dischargePlanning']['Konsultasi']['dipilih']) {
+                  $dischargePlanning = @json_decode(@$soap->fisik, true)['dischargePlanning']['Konsultasi']['dipilih'] . ', ' . @json_decode(@$soap->fisik, true)['dischargePlanning']['Konsultasi']['waktu'];
+                } elseif (@json_decode(@$soap->fisik, true)['dischargePlanning']['pulpak']['dipilih']) {
+                  $dischargePlanning = @json_decode(@$soap->fisik, true)['dischargePlanning']['pulpak']['dipilih'] . ', ' . @json_decode(@$soap->fisik, true)['dischargePlanning']['pulpak']['waktu'];
+                } elseif (@json_decode(@$soap->fisik, true)['dischargePlanning']['meninggal']['dipilih']) {
+                  $dischargePlanning = @json_decode(@$soap->fisik, true)['dischargePlanning']['meninggal']['dipilih'] . ', ' . @json_decode(@$soap->fisik, true)['dischargePlanning']['meninggal']['waktu'];
+                }
+              @endphp
+              {{ $dischargePlanning }}
+            </td>
+          </tr>
       </table>
     <table style="border: 0px;">
       <tr style="border: 0px;">

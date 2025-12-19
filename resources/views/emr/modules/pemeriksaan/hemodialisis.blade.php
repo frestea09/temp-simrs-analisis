@@ -3923,24 +3923,24 @@
                 <td>
                   <div>
                     <input class="form-check-input"
-                        name="fisik[penyulit_selama_hd][pilihan10]"
-                        {{ @$assesment['penyulit_selama_hd']['pilihan10'] == 'Hipotensi' ? 'checked' : '' }}
+                        name="fisik[penyulit_selama_hd][pilihan13]"
+                        {{ @$assesment['penyulit_selama_hd']['pilihan13'] == 'Hipotensi' ? 'checked' : '' }}
                         type="checkbox" value="Hipotensi">
                     <label class="form-check-label" style="font-weight: 400;">Hipotensi</label>
                   </div>
                   <div>
                       <input class="form-check-input"
-                          name="fisik[penyulit_selama_hd][pilihan11]"
-                          {{ @$assesment['penyulit_selama_hd']['pilihan11'] == 'Hipertensi' ? 'checked' : '' }}
+                          name="fisik[penyulit_selama_hd][pilihan14]"
+                          {{ @$assesment['penyulit_selama_hd']['pilihan14'] == 'Hipertensi' ? 'checked' : '' }}
                           type="checkbox" value="Hipertensi">
                       <label class="form-check-label" style="font-weight: 400;">Hipertensi</label>
                   </div>
                   <div>
                       <input class="form-check-input"
-                          name="fisik[penyulit_selama_hd][pilihan12]"
-                          {{ @$assesment['penyulit_selama_hd']['pilihan12'] == 'Lain-lain' ? 'checked' : '' }}
+                          name="fisik[penyulit_selama_hd][pilihan15]"
+                          {{ @$assesment['penyulit_selama_hd']['pilihan15'] == 'Lain-lain' ? 'checked' : '' }}
                           type="checkbox" value="Lain-lain">
-                          <input type="text" class="form-control" name="fisik[penyulit_selama_hd][pilihan12_detail]" placeholder="Lainnya" value="{{ @$assesment['penyulit_selama_hd']['pilihan12_detail'] }}">
+                          <input type="text" class="form-control" name="fisik[penyulit_selama_hd][pilihan15_detail]" placeholder="Lainnya" value="{{ @$assesment['penyulit_selama_hd']['pilihan15_detail'] }}">
                   </div>
                 </td>
               </tr>

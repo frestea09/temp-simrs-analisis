@@ -503,6 +503,9 @@
                 <li>
                         <a href="{{ url('emr-soap/pemeriksaan/perinatologi/' . $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}">Perinatologi</a>
                 </li>                
+                <li>
+                        <a href="{{ url('emr-soap/pemeriksaan/penelusuran-obat-igd/'. $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}">Rekonsiliasi Obat</a>
+                </li>
         </ul>
     </li>
 

@@ -958,10 +958,18 @@ class EmrPemeriksaanController extends Controller
             } else {
                 $jam_tindakan = $r->jam_tindakan ? date('Y-m-d H:i:s', (strtotime($r->jam_tindakan))) : null;
             }
+            if (is_array($r->keterangan)) {
+                foreach ($r->keterangan as $ket) {
+                    $keterangan[] = $ket;
+                }
+            } else {
+                $keterangan = $r->keterangan ?? null;
+            }
 
             $asessment = new EmrInapPemeriksaan();
             $asessment->pasien_id = $r->pasien_id;
             $asessment->registrasi_id = $r->registrasi_id;
+            $asessment->keterangan = is_array($keterangan) ? json_encode($keterangan) : $keterangan;
             $asessment->user_id = Auth::user()->id;
             $asessment->fisik = is_array($jam_tindakan) ? json_encode($jam_tindakan) : $jam_tindakan;
             $asessment->fungsional = json_encode($r->fungsional);
@@ -2347,19 +2355,19 @@ class EmrPemeriksaanController extends Controller
         if (Auth::user()->pegawai->kategori_pegawai == 1) {
             $asessmentExists = EmrInapPemeriksaan::where('registrasi_id', $registrasi_id)->where('type', 'fisik_hemodialisis')->exists();
             if ($r->asessment_id !== null) {
-                $assesment = EmrInapPemeriksaan::where('pasien_id', $data['reg']->pasien_id)->where('id', $r->asessment_id)->where('type', 'fisik_hemodialisis')->first();
+                $assesment = EmrInapPemeriksaan::where('pasien_id', $data['reg']->pasien_id)->where('id', $r->asessment_id)->where('type', 'fisik_hemodialisis')->orderBy('id', 'DESC')->first();
                 $data['assesment'] = json_decode($assesment->fisik, true);
             } else {
-                $assesment = EmrInapPemeriksaan::where('registrasi_id', $registrasi_id)->where('type', 'fisik_hemodialisis')->first();
+                $assesment = EmrInapPemeriksaan::where('registrasi_id', $registrasi_id)->where('type', 'fisik_hemodialisis')->orderBy('id', 'DESC')->first();
                 $data['assesment'] = json_decode(@$assesment->fisik, true);
             }
         } else {
             $asessmentExists = EmrInapPemeriksaan::where('registrasi_id', $registrasi_id)->where('type', 'fisik_hemodialisis_perawat')->exists();
             if ($r->asessment_id !== null) {
-                $assesment = EmrInapPemeriksaan::where('pasien_id', $data['reg']->pasien_id)->where('id', $r->asessment_id)->where('type', 'fisik_hemodialisis_perawat')->first();
+                $assesment = EmrInapPemeriksaan::where('pasien_id', $data['reg']->pasien_id)->where('id', $r->asessment_id)->where('type', 'fisik_hemodialisis_perawat')->orderBy('id', 'DESC')->first();
                 $data['assesment'] = json_decode($assesment->fisik, true);
             } else {
-                $assesment = EmrInapPemeriksaan::where('registrasi_id', $registrasi_id)->where('type', 'fisik_hemodialisis_perawat')->first();
+                $assesment = EmrInapPemeriksaan::where('registrasi_id', $registrasi_id)->where('type', 'fisik_hemodialisis_perawat')->orderBy('id', 'DESC')->first();
                 $data['assesment'] = json_decode(@$assesment->fisik, true);
             }
         }
@@ -3303,6 +3311,10 @@ class EmrPemeriksaanController extends Controller
         // Rekonsiliasi Obat
         $data['rekonsiliasi'] = @$data['asessment']['rekonsiliasi'];
         $data['obatAlergi'] = @$data['asessment']['obatAlergi'];
+        $data['riwayats'] = EmrInapPemeriksaan::where('pasien_id', $data['reg']->pasien_id)
+            ->where('type', 'assesment-awal-medis-igd')
+            ->orderBy('id', 'DESC')
+            ->get();
 
         $asessmentExists = EmrInapPemeriksaan::where('registrasi_id', $registrasi_id)->where('type', 'assesment-awal-medis-igd')->exists();
 
@@ -4125,6 +4137,7 @@ class EmrPemeriksaanController extends Controller
         $data['perawat'] = Pegawai::where('kelompok_pegawai', 4)->get();
         $data['nutrisionis'] = Pegawai::where('kelompok_pegawai', 6)->get();
         $data['apotek'] = Pegawai::where('kelompok_pegawai', 9)->get();
+        $data['rehab'] = Pegawai::where('kelompok_pegawai', 10)->get();
         
         $data['riwayats'] = EmrInapPemeriksaan::where('pasien_id', $data['reg']->pasien_id)->where('type', 'formulir-edukasi-inap')->orderBy('id', 'DESC')->get();
 

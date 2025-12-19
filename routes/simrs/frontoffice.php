@@ -62,6 +62,10 @@ Route::group(['middleware' => ['web', 'auth']], function () {
 	Route::get('frontoffice/laporan/rujukan', 'FrontofficeController@laporanRujukan');
 	Route::post('frontoffice/laporan/rujukan', 'FrontofficeController@filterLaporanRujukan');
 
+	// LAPORAN PRB
+	Route::get('frontoffice/laporan/data-prb', 'FrontofficeController@laporanPRB');
+	Route::post('frontoffice/laporan/data-prb', 'FrontofficeController@filterLaporanPRB');
+
 	//LAPORAN
 	Route::get('frontoffice/laporan/laporan-resume-pasien', 'FrontofficeController@lapResumePasien');
 	Route::post('frontoffice/laporan/laporan-resume-pasien', 'FrontofficeController@filterLapResumePasien');

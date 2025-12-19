@@ -5810,7 +5810,7 @@ class FrontofficeController extends Controller
                   ->whereYear('rawatinaps.tgl_keluar', $tahun);
         }                      
 
-        $data['irna'] = $query->get();
+        $data['irna'] = $query->groupBy('histori_pengunjung.registrasi_id')->get();
 
         // return $data['visite'];die;
         if ($req->submit == 'TAMPILKAN') {
@@ -6509,6 +6509,121 @@ class FrontofficeController extends Controller
                             $d->assesment ?? '-',
                             $d->diRujukKe,
                             $d->rsRujukan,
+                        ]);
+                    }
+                });
+            })->export('xlsx');
+        }
+    }
+
+    public function laporanPRB()
+    {
+        $data['tga']        = "";
+        $data['tgb']        = "";
+        $now                = now()->day;
+
+        $data['prb'] = [];
+
+        return view('frontoffice.laporan-prb', $data)->with('no', 1);
+    }
+
+    public function filterLaporanPRB(Request $req)
+    {
+        request()->validate([
+            'tga' => 'required',
+            'tgb' => 'required'
+        ]);
+
+        $tga = valid_date($req->tga) . ' 00:00:00';
+        $tgb = valid_date($req->tgb) . ' 23:59:59';
+
+        $data['tga'] = $req->tga;
+        $data['tgb'] = $req->tgb;
+
+        $data['rujukan'] = EMR::whereBetween('emr.created_at', [$tga, $tgb])
+            ->leftJoin('registrasis', 'registrasis.id', '=', 'emr.registrasi_id')
+            ->leftJoin('pasiens', 'pasiens.id', '=', 'emr.pasien_id')
+            ->leftJoin('polis', 'polis.id', '=', 'emr.poli_id')
+            ->leftJoin('pegawais', 'pegawais.id', '=', 'registrasis.dokter_id')
+            ->whereRaw("LEFT(registrasis.status_reg, 1) = 'J'")
+            ->where('registrasis.bayar', 1)
+            ->whereRaw("
+                JSON_UNQUOTE(
+                    JSON_EXTRACT(emr.discharge, '$.dischargePlanning.kontrolPRB.dipilih')
+                ) = 'Kontrol PRB'
+            ")
+
+            ->select(
+                'pasiens.id as pasien_id',
+                'registrasis.id as registrasi_id',
+                'registrasis.dokter_id',
+                'pasiens.no_rm',
+                'pasiens.nama',
+                'pegawais.nama as nama_dokter',
+                'polis.nama as nama_poli',
+                'emr.id as emr_id',
+                'emr.unit',
+                'emr.assesment',
+                'emr.discharge',
+                'emr.created_at as tanggal_kunjungan',
+                'registrasis.created_at as tanggal_registrasi'
+            )
+            ->orderBy('emr.created_at', 'ASC')
+            ->get()
+            ->map(function ($item) {
+
+                $discharge = json_decode($item->discharge, true);
+
+                if (!isset($discharge['dischargePlanning']['kontrolPRB'])) {
+                    return null;
+                }
+
+                $kontrolPRB = $discharge['dischargePlanning']['kontrolPRB'];
+
+                $item->jenis_rujukan = 'PRB';
+                $item->waktu_prb = $kontrolPRB['waktu'] ?? '-';
+
+                return $item;
+            })
+            ->filter()
+            ->values();
+
+        if ($req->submit == 'TAMPILKAN') {
+            return view('frontoffice.laporan-prb', $data)->with('no', 1);
+        }
+
+        if ($req->submit == 'EXCEL') {
+            Excel::create('Laporan_PRB_Rawat_Jalan', function ($excel) use ($data) {
+
+                $excel->setTitle('Laporan PRB Rawat Jalan');
+
+                $excel->sheet('PRB', function ($sheet) use ($data) {
+                    $row = 1;
+                    $no = 1;
+
+                    $sheet->row($row, [
+                        'No',
+                        'No RM',
+                        'Nama Pasien',
+                        'Tanggal Registrasi',
+                        'Tanggal Kunjungan',
+                        'Dokter',
+                        'Poliklinik',
+                        'Diagnosa',
+                        'Jenis'
+                    ]);
+
+                    foreach ($data['rujukan'] as $d) {
+                        $sheet->row(++$row, [
+                            $no++,
+                            $d->no_rm,
+                            $d->nama,
+                            \Carbon\Carbon::parse($d->tanggal_registrasi)->format('d-m-Y'),
+                            \Carbon\Carbon::parse($d->tanggal_kunjungan)->format('d-m-Y'),
+                            $d->nama_dokter,
+                            $d->nama_poli,
+                            $d->assesment ?? '-',
+                            'PRB'
                         ]);
                     }
                 });

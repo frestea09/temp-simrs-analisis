@@ -41,6 +41,49 @@
 
                 {{-- Rekonsiliasi Obat --}}
                 <div class="col-md-12" style="margin-top: 20px">
+                    <table class='table table-striped table-bordered table-hover table-condensed' >
+                        <thead>
+                            <tr>
+                                <th colspan="3" class="text-center" style="vertical-align: middle;">History</th>
+                            </tr>
+                            <tr>
+                                <th class="text-center" style="vertical-align: middle;">Tanggal Registrasi</th>
+                                <th class="text-center" style="vertical-align: middle;">Tanggal Dibuat</th>
+                                <th class="text-center" style="vertical-align: middle;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        
+                        @if (count($riwayats) == 0)
+                            <tr>
+                                <td colspan="3" class="text-center">Tidak Ada Riwayat Asessment</td>
+                            </tr>
+                        @endif
+                        @foreach ($riwayats as $riwayat)
+                            <tr>
+                                <td style="text-align: center; {{ $riwayat->id == request()->asessment_id ? ' background-color:rgb(172, 247, 162)' : ''}}">
+                                    {{Carbon\Carbon::parse($riwayat->registrasi->created_at)->format('d-m-Y H:i')}}
+                                </td>
+                                <td style="text-align: center; {{ $riwayat->id == request()->asessment_id ? ' background-color:rgb(172, 247, 162)' : ''}}">
+                                    {{Carbon\Carbon::parse($riwayat->created_at)->format('d-m-Y')}}
+                                </td>
+                                <td style="text-align: center; {{ $riwayat->id == request()->asessment_id ? ' background-color:rgb(172, 247, 162)' : ''}}">
+                                    <a href="{{ url("emr-soap-print/cetak-rekonsiliasi-obat/".$unit."/".@$riwayat->registrasi_id."/".@$riwayat->id) }}" class="btn btn-warning btn-sm" target="_blank">
+                                        <i class="fa fa-print"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" style="font-size: 8pt; {{ $riwayat->id == request()->asessment_id ? ' background-color:rgb(172, 247, 162)' : ''}}">
+                                <i>Dibuat : {{ Carbon\Carbon::parse($riwayat->updated_at)->format('d-m-Y H:i') }}</i>
+                                </td>
+                            </tr>
+                        @endforeach
+                        
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-12" style="margin-top: 20px">
                     @if (@$current_asessment->id == request()->asessment_id || request()->asessment_id == null)
                         {{-- Muncul hanya jika user membuka asesment hari ini aja/registrasi --}}
                         <div class="box box-info">
@@ -286,6 +329,7 @@
                                                 <div class="col-sm-9">
                                                     <select name="obatAlergi[tingkat_alergi]"
                                                         class="form-control select2" style="width: 100%">
+                                                        <option value="TIDAK ADA">TIDAK ADA</option>
                                                         <option value="RINGAN">RINGAN</option>
                                                         <option value="SEDANG">SEDANG</option>
                                                         <option value="BERAT">BERAT</option>

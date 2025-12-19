@@ -4303,6 +4303,11 @@
                                     <td class="text-center" style="padding-right:50px;">{{ $lab->nilai_normal }}</td>
                                     <td class="text-center" style="padding-right:50px;">{{ $lab->flag }}</td>
                                 </tr>
+                                 @if (@$lab->report_critical)
+                                    <tr>
+                                      <td colspan="4">{{@$lab->report_critical}}</td>
+                                    </tr>
+                                @endif
                             @endforeach
                         @endforeach
                     @endforeach

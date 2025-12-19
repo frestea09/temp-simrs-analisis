@@ -134,10 +134,6 @@
                 href="{{ url('emr-soap/perencanaan/menolak-rujuk/' . $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}">Menolak Rujuk</a>
         </li>
         <li><a
-                href="{{ url('emr-soap/pemeriksaan/formulir-edukasi/' . $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}">
-                Formulir Edukasi Pasien dan Keluarga</a>
-        </li>
-        <li><a
                 href="{{ url('emr-soap/perencanaan/surat/' . $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}">Surat
                 Sakit</a>
         </li>
@@ -156,6 +152,10 @@
                 <a href="{{ url('emr-soap/perencanaan/informedConsent/' . $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}">Informed 
                 Consent</a></li>
     </ul>
+</li>
+
+<li>
+        <a href="{{ url('emr-soap/pemeriksaan/formulir-edukasi/' . $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}">Formulir Edukasi Pasien dan Keluarga</a>
 </li>
 
 <li>
@@ -204,6 +204,20 @@
         </a>
 </li>
 <li><a href="{{ url('clinicalpathway') }}">Clinical Pathway</a></li>
+@if ($unit == 'inap')
+    <li class="dropdown">
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Kriteria Masuk & Keluar Intensif<span class="caret"></span></a>
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                <a href="{{url("emr/form-kriteria-masuk-icu/". $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp)}}">Masuk ICU</a>
+                <a href="{{url("emr/form-kriteria-keluar-icu/". $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp)}}">Keluar ICU</a>
+            </li>
+        </ul>
+    </li>
+    <li><a
+        href="{{ url('emr-soap/pemeriksaan/penelusuran-obat-igd/'. $unit . '/' . $registrasi_id . '?poli=' . $poli . '&dpjp=' . $dpjp) }}">Rekonsiliasi Obat</a>
+    </li>
+@endif
 <li class="dropdown">
         <a href="#" class="dropdown-toggle" data-toggle="dropdown">Laporan Operasi<span class="caret"></span></a>
         <ul class="dropdown-menu" role="menu">

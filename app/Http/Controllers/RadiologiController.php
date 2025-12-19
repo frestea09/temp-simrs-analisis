@@ -339,8 +339,11 @@ class RadiologiController extends Controller {
 		return view('radiologi.pencarianPasien', $data)->with('no', 1);
 	}
 
-	public function insertKunjungan($registrasi_id, $pasien_id) {
+	public function insertKunjungan($registrasi_id, $pasien_id=NULL) {
 		$reg = Registrasi::find($registrasi_id);
+		if(!$pasien_id){
+			$pasien_id = $reg->pasien_id;
+		}
 		$hk = new HistorikunjunganRAD();
 		$hk->registrasi_id = $registrasi_id;
 		$hk->pasien_id = $pasien_id;

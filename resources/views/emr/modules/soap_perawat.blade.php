@@ -850,6 +850,7 @@
                                         <option value="RS Kab. Bandung" {{@$assesment['dischargePlanning']['dirujuk']['diRujukKe'] == 'RS Kab. Bandung' ? 'selected' : ''}}>RS Kab. Bandung</option>
                                         <option value="RS Kota Bandung" {{@$assesment['dischargePlanning']['dirujuk']['diRujukKe'] == 'RS Kota Bandung' ? 'selected' : ''}}>RS Kota Bandung</option>
                                         <option value="RS Provinsi" {{@$assesment['dischargePlanning']['dirujuk']['diRujukKe'] == 'RS Provinsi' ? 'selected' : ''}}>RS Provinsi</option>
+                                        <option value="RS KOTA CIMAHI" {{@$assesments['dischargePlanning']['dirujuk']['diRujukKe'] == 'RS KOTA CIMAHI' ? 'selected' : ''}}>RS KOTA CIMAHI</option>
                                     </select>
                                 </td>
                             </tr>

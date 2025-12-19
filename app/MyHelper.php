@@ -1647,6 +1647,16 @@ if (!function_exists('baca_user')) {
 		}
 	}
 }
+if (!function_exists('baca_datauser')) {
+    function baca_datauser($user_id)
+    {
+        return DB::table('users')
+            ->leftJoin('pegawais', 'pegawais.user_id', '=', 'users.id')
+            ->where('users.id', $user_id)
+            ->select('pegawais.kelompok_pegawai')
+            ->first();
+    }
+}
 
 if (!function_exists('baca_tarif')) {
 	function baca_tarif($id = '')

@@ -96,7 +96,7 @@ return [
 	'antrean_url_web_service' => 'https://new-apijkn.bpjs-kesehatan.go.id/antreanrs/',
 
 
-	'url_ris' => 'http://172.168.8.31:8282/api',
+	'url_ris' => 'http://172.168.8.248',
 	'username_ris' => 'his_soreang',
 	'password_ris' => 'usKuG7@rTSB^',
 

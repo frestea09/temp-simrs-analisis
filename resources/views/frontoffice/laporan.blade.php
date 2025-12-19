@@ -44,6 +44,13 @@
                 </a>
                 <h5>Laporan Rujukan</h5>
             </div>
+            <div class="col-md-2 col-sm-3 col-xs-6 iconModule text-center">
+                <a href="{{ url('frontoffice/laporan/data-prb') }}"><img
+                        src="{{ asset('menu/fixed/laporan_pengunjung_igd.png') }}" width="50px" heigth="50px"
+                        width="50px" heigth="50px" class="img-responsive" alt="" />
+                </a>
+                <h5>Laporan PRB</h5>
+            </div>
 
             {{-- <div class="col-md-2 col-sm-3 col-xs-6 text-center">
         <a href="{{ url('frontoffice/laporan/no-rm-terbit') }}" ><img src="{{ asset('menu/laporan.png') }}" width="50px" heigth="50px"  width="50px" heigth="50px" class="img-responsive img-circle img-thumbnail" alt="" style="50%"/>

@@ -273,11 +273,15 @@
 
         </td>
         <td colspan="3" style="text-align: center; border: 0px;">
+          @php
+              $user = baca_datauser($soap->user_id);
+          @endphp
+
           @if (str_contains(baca_user($soap->user_id),'dr.'))
             
               Dokter
           @else
-              @if ($reg->poli_id ==20)
+              @if ($reg->poli_id ==20 || ($user && $user->kelompok_pegawai == 10))
                   Fisioterapis
               @else
                   Perawat
