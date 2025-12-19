@@ -13,6 +13,7 @@ Route::group(['middleware' => ['web', 'auth']], function () {
 	Route::get('ris/getexam-response/{rm}', 'RisController@getexamResp');
 	Route::get('ris/getexamonassessment/{rm}/{assid}', 'RisController@getexamonassessment');
 	Route::get('ris/getexamwaitingreport/{rm}/{assid}', 'RisController@getexamwaitingreport');
+	Route::get('ris/getpdfreport/{rm}/{assid}', 'RisController@getpdfreport');
 	Route::get('ris/test-ris/{rm}/{assid}', 'RisController@getexamonassessment');
 
 });

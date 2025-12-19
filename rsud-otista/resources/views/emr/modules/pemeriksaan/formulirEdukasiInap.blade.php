@@ -2021,7 +2021,13 @@
                                     <input type="date" name="fisik[pelaksanaan_edukasi][alat_medis][tgl_rencana]" placeholder="Tanggal Rencana" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['alat_medis']['tgl_rencana']}}">
                                 </td>
                                 <td style="border: 1px solid black; width: 10%; vertical-align: middle;">
-                                    <input type="text" name="fisik[pelaksanaan_edukasi][alat_medis][pemberi_edukasi]" placeholder="Pemberi Edukasi" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['alat_medis']['pemberi_edukasi']}}">
+                                    {{-- <input type="text" name="fisik[pelaksanaan_edukasi][alat_medis][pemberi_edukasi]" placeholder="Pemberi Edukasi" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['alat_medis']['pemberi_edukasi']}}"> --}}
+                                    <select name="fisik[pelaksanaan_edukasi][alat_medis][pemberi_edukasi]" class="form-control select2" style="width: 100%">
+                                        <option value="">-- Pilih --</option>
+                                        @foreach ($perawat as $p)
+                                            <option value="{{ $p->id }}" {{ $p->id == @$assesment['pelaksanaan_edukasi']['alat_medis']['pemberi_edukasi'] ? 'selected' : ''}}>{{ $p->nama }}</option>
+                                        @endforeach
+                                    </select>
                                 </td>
                                 <td style="border: 1px solid black; width: 10%; vertical-align: middle;">
                                     <input type="text" name="fisik[pelaksanaan_edukasi][alat_medis][pasien_keluarga]" placeholder="Pasien / Keluarga" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['alat_medis']['pasien_keluarga']}}">
@@ -2117,7 +2123,13 @@
                                     <input type="date" name="fisik[pelaksanaan_edukasi][rohaniawan][tgl_rencana]" placeholder="Tanggal Rencana" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['rohaniawan']['tgl_rencana']}}">
                                 </td>
                                 <td style="border: 1px solid black; width: 10%; vertical-align: middle;">
-                                    <input type="text" name="fisik[pelaksanaan_edukasi][rohaniawan][pemberi_edukasi]" placeholder="Pemberi Edukasi" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['rohaniawan']['pemberi_edukasi']}}">
+                                    {{-- <input type="text" name="fisik[pelaksanaan_edukasi][rohaniawan][pemberi_edukasi]" placeholder="Pemberi Edukasi" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['rohaniawan']['pemberi_edukasi']}}"> --}}
+                                    <select name="fisik[pelaksanaan_edukasi][rohaniawan][pemberi_edukasi]" class="form-control select2" style="width: 100%">
+                                        <option value="">-- Pilih --</option>
+                                        @foreach ($rohaniawan as $r)
+                                            <option value="{{ $r->id }}" {{ $r->id == @$assesment['pelaksanaan_edukasi']['rohaniawan']['pemberi_edukasi'] ? 'selected' : ''}}>{{ $r->nama }}</option>
+                                        @endforeach
+                                    </select>
                                 </td>
                                 <td style="border: 1px solid black; width: 10%; vertical-align: middle;">
                                     <input type="text" name="fisik[pelaksanaan_edukasi][rohaniawan][pasien_keluarga]" placeholder="Pasien / Keluarga" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['rohaniawan']['pasien_keluarga']}}">
@@ -2220,7 +2232,13 @@
                                     <input type="date" name="fisik[pelaksanaan_edukasi][manajemen_nyeri][tgl_rencana]" placeholder="Tanggal Rencana" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['manajemen_nyeri']['tgl_rencana']}}">
                                 </td>
                                 <td style="border: 1px solid black; width: 10%; vertical-align: middle;">
-                                    <input type="text" name="fisik[pelaksanaan_edukasi][manajemen_nyeri][pemberi_edukasi]" placeholder="Pemberi Edukasi" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['manajemen_nyeri']['pemberi_edukasi']}}">
+                                    {{-- <input type="text" name="fisik[pelaksanaan_edukasi][manajemen_nyeri][pemberi_edukasi]" placeholder="Pemberi Edukasi" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['manajemen_nyeri']['pemberi_edukasi']}}"> --}}
+                                    <select name="fisik[pelaksanaan_edukasi][manajemen_nyeri][pemberi_edukasi]" class="form-control select2" style="width: 100%">
+                                        <option value="">-- Pilih --</option>
+                                        @foreach ($perawat as $p)
+                                            <option value="{{ $p->id }}" {{ $p->id == @$assesment['pelaksanaan_edukasi']['manajemen_nyeri']['pemberi_edukasi'] ? 'selected' : ''}}>{{ $p->nama }}</option>
+                                        @endforeach
+                                    </select>
                                 </td>
                                 <td style="border: 1px solid black; width: 10%; vertical-align: middle;">
                                     <input type="text" name="fisik[pelaksanaan_edukasi][manajemen_nyeri][pasien_keluarga]" placeholder="Pasien / Keluarga" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['manajemen_nyeri']['pasien_keluarga']}}">
@@ -2316,7 +2334,13 @@
                                     <input type="date" name="fisik[pelaksanaan_edukasi][informasi_bagi_pasien][tgl_rencana]" placeholder="Tanggal Rencana" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['informasi_bagi_pasien']['tgl_rencana']}}">
                                 </td>
                                 <td style="border: 1px solid black; width: 10%; vertical-align: middle;">
-                                    <input type="text" name="fisik[pelaksanaan_edukasi][informasi_bagi_pasien][pemberi_edukasi]" placeholder="Pemberi Edukasi" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['informasi_bagi_pasien']['pemberi_edukasi']}}">
+                                    {{-- <input type="text" name="fisik[pelaksanaan_edukasi][informasi_bagi_pasien][pemberi_edukasi]" placeholder="Pemberi Edukasi" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['informasi_bagi_pasien']['pemberi_edukasi']}}"> --}}
+                                    <select name="fisik[pelaksanaan_edukasi][informasi_bagi_pasien][pemberi_edukasi]" class="form-control select2" style="width: 100%">
+                                        <option value="">-- Pilih --</option>
+                                        @foreach ($tppri as $t)
+                                            <option value="{{ $t->id }}" {{ $t->id == @$assesment['pelaksanaan_edukasi']['informasi_bagi_pasien']['pemberi_edukasi'] ? 'selected' : ''}}>{{ $t->nama }}</option>
+                                        @endforeach
+                                    </select>
                                 </td>
                                 <td style="border: 1px solid black; width: 10%; vertical-align: middle;">
                                     <input type="text" name="fisik[pelaksanaan_edukasi][informasi_bagi_pasien][pasien_keluarga]" placeholder="Pasien / Keluarga" style="display:inline-block;" class="form-control" id="" value="{{@$assesment['pelaksanaan_edukasi']['informasi_bagi_pasien']['pasien_keluarga']}}">

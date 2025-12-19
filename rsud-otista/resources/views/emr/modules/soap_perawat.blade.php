@@ -255,7 +255,33 @@
                                         {!! nl2br($val_a->evaluasi) !!}
                                       </td>
                                   </tr>
-                                @elseif (@$val_a->unit == 'farmasi' || @$val_a->user->Pegawai->kategori_pegawai == 1)
+                                @elseif (@$val_a->unit == 'farmasi')
+                                  <tr style="background-color: {{$background}}">
+                                    <td colspan="2"><b>S:</b><br>
+                                      {!! nl2br($val_a->subjective) !!}
+                                    </td>
+                                  </tr>
+                                  <tr style="background-color: {{$background}}">
+                                    <td colspan="2"><b>O:</b><br>
+                                      {!! nl2br($val_a->objective) !!}
+                                    </td>
+                                  </tr>
+                                  <tr style="background-color: {{$background}}">
+                                    <td colspan="2"><b>A:</b><br>
+                                      {!! nl2br($val_a->asesmen) !!}
+                                    </td>
+                                  </tr>
+                                  <tr style="background-color: {{$background}}">
+                                    <td colspan="2"><b>P:</b><br>
+                                      {!! nl2br($val_a->planning) !!}
+                                    </td>
+                                  </tr>
+                                  <tr style="background-color: {{$background}}">
+                                    <td colspan="2"><b>E:</b><br>
+                                      {!! nl2br($val_a->edukasi) !!}
+                                    </td>
+                                  </tr>
+                                @elseif (@$val_a->user->Pegawai->kategori_pegawai == 1)
                                   <tr style="background-color: {{$background}}">
                                     <td colspan="2"><b>S:</b><br>
                                       {!! nl2br($val_a->subject) !!}

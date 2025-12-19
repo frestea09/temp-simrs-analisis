@@ -48,6 +48,7 @@
               {{--<th class="text-center">Barcode</th>--}}
               <th class="text-center">General Consent</th>
               <th class="text-center">TTE General Consent</th>
+              <th class="text-center">Edukasi Pasien</th>
               <th class="text-center">Barcode 2</th>
               <th class="text-center">Barcode Inap</th>
               <th class="text-center">RM01</th>
@@ -93,6 +94,7 @@
                                 class="fa fa-print"></i> </a>
                     @endif
                   </td>
+                  <td> <a href="{{ url('emr-soap/pemeriksaan/formulir-edukasi/inap/'.$d->id) }}" target="_blank" class="btn btn-success btn-sm btn-flat"><i class="fa fa-file text-center"></i> </a> </td>
                   {{--<td> <a href="{{ url('frontoffice/cetak_barcode/'.$d->pasien_id.'/'.$d->id) }}" class="btn btn-info btn-sm btn-flat"><i class="fa fa-print text-center"></i> </a> </td>--}}
                   <td> <a href="{{ url('frontoffice/cetak_barcode2/'.$d->pasien_id.'/'.$d->id) }}" class="btn btn-info btn-sm btn-flat"><i class="fa fa-print text-center"></i> </a> </td>
                   <td> <a href="{{ url('frontoffice/cetak_barcoderi/'.$d->pasien_id.'/'.$d->id) }}" class="btn btn-info btn-sm btn-flat"><i class="fa fa-print text-center"></i> </a> </td>

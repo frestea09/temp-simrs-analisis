@@ -4138,6 +4138,8 @@ class EmrPemeriksaanController extends Controller
         $data['nutrisionis'] = Pegawai::where('kelompok_pegawai', 6)->get();
         $data['apotek'] = Pegawai::where('kelompok_pegawai', 9)->get();
         $data['rehab'] = Pegawai::where('kelompok_pegawai', 10)->get();
+        $data['rohaniawan'] = Pegawai::where('kelompok_pegawai', 11)->get();
+        $data['tppri'] = Pegawai::where('kelompok_pegawai', 12)->get();
         
         $data['riwayats'] = EmrInapPemeriksaan::where('pasien_id', $data['reg']->pasien_id)->where('type', 'formulir-edukasi-inap')->orderBy('id', 'DESC')->get();
 

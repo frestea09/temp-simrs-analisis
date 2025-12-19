@@ -275,12 +275,59 @@ class RisController extends Controller
     // dd($result);
     if($result['metaData']['code'] == 200){
       if(!$result['response']['imageurl']){
-        Flashy::error('Data RIS '.@$assid.' tidak tersedia');
+        Flashy::error('Data '.@$assid.' tidak tersedia');
         return redirect()->back();  
       }
       return redirect()->away($result['response']['imageurl']);
     }else{
-      Flashy::error('Gagal melihat gambar RIS, hubungi SIMRS');
+      Flashy::error('Gagal melihat gambar IRA, hubungi SIMRS');
+      return redirect()->back();
+    }
+  }
+
+  public function getpdfreport($rm, $assid)
+  {
+    $token = $this->token();
+    $json = [
+      "mrid" => $rm,
+      "assessementid" => $assid
+    ];
+    $curl_observation = curl_init();
+    curl_setopt_array($curl_observation, array(
+      CURLOPT_URL => config('app.url_ris') . '/trans/getpdfreport',
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_ENCODING => '',
+      CURLOPT_MAXREDIRS => 10,
+      CURLOPT_TIMEOUT => 0,
+      CURLOPT_FOLLOWLOCATION => true,
+      CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+      CURLOPT_CUSTOMREQUEST => 'POST',
+      CURLOPT_POSTFIELDS => json_encode($json, JSON_PRETTY_PRINT),
+      CURLOPT_HTTPHEADER => array(
+        'Content-Type: application/json'
+        // 'Authorization:' . $token
+      ),
+    ));
+    $response_observasi = curl_exec($curl_observation);
+    // dd(json_decode($response_observasi));
+    $result = json_decode($response_observasi,true);
+    $log = RisLog::where('assid',$assid)->first();
+    if(!$log){
+      $log = new RisLog();
+    }
+    $log->no_rm = @$rm;
+    $log->assid = @$assid;
+    $log->response = @$response_observasi;
+    $log->save();
+    // dd($result);
+    if($result['metaData']['code'] == 200){
+      if(!$result['response']['pdfurl']){
+        Flashy::error($result['response']['message']);
+        return redirect()->back();  
+      }
+      return redirect()->away($result['response']['pdfurl']);
+    }else{
+      Flashy::error('Gagal melihat ekspertise IRA, hubungi SIMRS');
       return redirect()->back();
     }
   }

@@ -338,30 +338,30 @@
             <div>
                 <input class="form-check-input"
                     name="fisik[perencanaan_edukasi][dokter_dpjp][media][audio_visual]"
-                    {{ @$assesment['perencanaan_edukasi']['dokter_dpjp']['media']['audio_visual'] == 'Audio Visual' ? 'checked' : '' }}
+                    {{ @$asessment['perencanaan_edukasi']['dokter_dpjp']['media']['audio_visual'] == 'Audio Visual' ? 'checked' : '' }}
                     type="checkbox" value="Audio Visual">
                 <label class="form-check-label" style="font-weight: 400;">Audio Visual</label>
             </div>
             <div>
                 <input class="form-check-input"
                     name="fisik[perencanaan_edukasi][dokter_dpjp][media][lembar_balik]"
-                    {{ @$assesment['perencanaan_edukasi']['dokter_dpjp']['media']['lembar_balik'] == 'Lembar balik' ? 'checked' : '' }}
+                    {{ @$asessment['perencanaan_edukasi']['dokter_dpjp']['media']['lembar_balik'] == 'Lembar balik' ? 'checked' : '' }}
                     type="checkbox" value="Lembar balik">
                 <label class="form-check-label" style="font-weight: 400;">Lembar balik</label>
             </div>
             <div>
                 <input class="form-check-input"
                     name="fisik[perencanaan_edukasi][dokter_dpjp][media][alat_peraga]"
-                    {{ @$assesment['perencanaan_edukasi']['dokter_dpjp']['media']['alat_peraga'] == 'Alat peraga' ? 'checked' : '' }}
+                    {{ @$asessment['perencanaan_edukasi']['dokter_dpjp']['media']['alat_peraga'] == 'Alat peraga' ? 'checked' : '' }}
                     type="checkbox" value="Alat peraga">
                 <label class="form-check-label" style="font-weight: 400;">Alat peraga</label>
             </div>
             <div>
                 <input class="form-check-input"
                     name="fisik[perencanaan_edukasi][dokter_dpjp][media][lain]"
-                    {{ @$assesment['perencanaan_edukasi']['dokter_dpjp']['media']['lain'] == 'Lain' ? 'checked' : '' }}
+                    {{ @$asessment['perencanaan_edukasi']['dokter_dpjp']['media']['lain'] == 'Lain' ? 'checked' : '' }}
                     type="checkbox" value="Lain">
-                  {{ @$assesment['perencanaan_edukasi']['dokter_dpjp']['media']['lain_detail'] ?? 'Lainnya' }}
+                  {{ @$asessment['perencanaan_edukasi']['dokter_dpjp']['media']['lain_detail'] ?? 'Lainnya' }}
             </div>
           </td>
         </tr>
@@ -1294,14 +1294,14 @@
             <div>
                 <input class="form-check-input"
                     name="fisik[pelaksanaan_edukasi][diet_dan_nutrisi][materi][penyimpanan_makanan]"
-                    {{ @$assesment['pelaksanaan_edukasi']['diet_dan_nutrisi']['materi']['penyimpanan_makanan'] == 'Penyimpanan makanan yang dibawa dari luar rumah sakit' ? 'checked' : '' }}
+                    {{ @$asessment['pelaksanaan_edukasi']['diet_dan_nutrisi']['materi']['penyimpanan_makanan'] == 'Penyimpanan makanan yang dibawa dari luar rumah sakit' ? 'checked' : '' }}
                     type="checkbox" value="Penyimpanan makanan yang dibawa dari luar rumah sakit">
                 <label class="form-check-label" style="font-weight: 400;">Penyimpanan makanan yang dibawa dari luar rumah sakit</label>
             </div>
             <div>
                 <input class="form-check-input"
                     name="fisik[pelaksanaan_edukasi][diet_dan_nutrisi][materi][jenis_jenis_makanan]"
-                    {{ @$assesment['pelaksanaan_edukasi']['diet_dan_nutrisi']['materi']['jenis_jenis_makanan'] == 'Jenis-jenis makanan yang dapat dipilih selama perawatan' ? 'checked' : '' }}
+                    {{ @$asessment['pelaksanaan_edukasi']['diet_dan_nutrisi']['materi']['jenis_jenis_makanan'] == 'Jenis-jenis makanan yang dapat dipilih selama perawatan' ? 'checked' : '' }}
                     type="checkbox" value="Jenis-jenis makanan yang dapat dipilih selama perawatan">
                 <label class="form-check-label" style="font-weight: 400;">Jenis-jenis makanan yang dapat dipilih selama perawatan</label>
             </div>
@@ -1678,10 +1678,11 @@
           <td>
             @if (isset($asessment['pelaksanaan_edukasi']['alat_medis']['pemberi_edukasi']))
                 @php
+                    $perawat = Modules\Pegawai\Entities\Pegawai::find(@$asessment['pelaksanaan_edukasi']['alat_medis']['pemberi_edukasi']);
                     @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$asessment['pelaksanaan_edukasi']['alat_medis']['pemberi_edukasi']))
                 @endphp
                 <img src="data:image/png;base64, {!! $base64 !!}"><br>
-                {{ @$asesment['pelaksanaan_edukasi']['alat_medis']['pemberi_edukasi'] ?? '-' }}
+                {{ baca_pegawai(@$asesment['pelaksanaan_edukasi']['alat_medis']['pemberi_edukasi']) ?? '-' }}
             @endif
           </td>
           <td>
@@ -1777,10 +1778,11 @@
           <td>
             @if (isset($asessment['pelaksanaan_edukasi']['rohaniawan']['pemberi_edukasi']))
                 @php
+                    $rohaniawan = Modules\Pegawai\Entities\Pegawai::find(@$asessment['pelaksanaan_edukasi']['rohaniawan']['pemberi_edukasi']);
                     @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$asessment['pelaksanaan_edukasi']['rohaniawan']['pemberi_edukasi']))
                 @endphp
                 <img src="data:image/png;base64, {!! $base64 !!}"><br>
-                {{@$asessment['pelaksanaan_edukasi']['rohaniawan']['pemberi_edukasi'] ?? '-'}}
+                {{baca_pegawai(@$asessment['pelaksanaan_edukasi']['rohaniawan']['pemberi_edukasi']) ?? '-'}}
             @endif
           </td>
           <td>
@@ -1838,7 +1840,7 @@
             </div>
           </td>
           <td>
-            {{ @$assesment['pelaksanaan_edukasi']['manajemen_nyeri']['durasi'] ?? '-' }}
+            {{ @$asessment['pelaksanaan_edukasi']['manajemen_nyeri']['durasi'] ?? '-' }}
           </td>
           <td>
             <div>
@@ -1883,10 +1885,11 @@
           <td>
             @if (isset($asessment['pelaksanaan_edukasi']['manajemen_nyeri']['pemberi_edukasi']))
                 @php
+                    $perawat = Modules\Pegawai\Entities\Pegawai::find(@$asessment['pelaksanaan_edukasi']['manajemen_nyeri']['pemberi_edukasi']);
                     @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$asessment['pelaksanaan_edukasi']['manajemen_nyeri']['pemberi_edukasi']))
                 @endphp
                 <img src="data:image/png;base64, {!! $base64 !!}"><br>
-                {{@$asessment['pelaksanaan_edukasi']['manajemen_nyeri']['pemberi_edukasi'] ?? '-' }}
+                {{baca_pegawai(@$asessment['pelaksanaan_edukasi']['manajemen_nyeri']['pemberi_edukasi']) ?? '-' }}
             @endif
           </td>
           <td>
@@ -1982,10 +1985,11 @@
           <td>
             @if (isset($asessment['pelaksanaan_edukasi']['informasi_bagi_pasien']['pemberi_edukasi']))
                 @php
+                    $tppri = Modules\Pegawai\Entities\Pegawai::find(@$asessment['pelaksanaan_edukasi']['informasi_bagi_pasien']['pemberi_edukasi']);
                     @$base64 = base64_encode(\QrCode::format('png')->size(75)->merge('/public/images/' . configrs()->logo, .3)->errorCorrection('H')->generate(@$asessment['pelaksanaan_edukasi']['informasi_bagi_pasien']['pemberi_edukasi']))
                 @endphp
                 <img src="data:image/png;base64, {!! $base64 !!}"><br>
-                {{@$asessment['pelaksanaan_edukasi']['informasi_bagi_pasien']['pemberi_edukasi'] ?? '-'}}
+                {{baca_pegawai(@$asessment['pelaksanaan_edukasi']['informasi_bagi_pasien']['pemberi_edukasi']) ?? '-'}}
             @endif
           </td>
           <td>

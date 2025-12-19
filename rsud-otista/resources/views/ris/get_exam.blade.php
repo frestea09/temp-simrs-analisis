@@ -10,7 +10,7 @@
                 <td>Tanggal</td>
                 {{-- <td>attendingdoctorid</td> --}}
                 <td>Image</td>
-                {{-- <td>Ekspertise</td> --}}
+                <td>Ekspertise</td>
             </tr>
             @foreach (@$result as $key=>$item)
             @php
@@ -28,6 +28,7 @@
                         {{-- <td><a target="_blank" href="{{@$items['imageurl']}}">Lihat Image</a></td> --}}
                         {{-- <td><a target="_blank" href="{{@base64_decode($item->expertisefile)}}">Lihat Ekspertise</a></td> --}}
                         {{-- <td><a target="_blank" href="{{url('ris/getPdf/'.@$items['mrid']).'/'.@$items['assessementid']}}">Lihat Ekspertise</a></td> --}}
+                        <td><a target="_blank" href="{{url('/ris/getpdfreport/'.$no_rm.'/'.@$items['assessementid'])}}">Lihat Ekspertise</a></td>
                     </tr>
                     
                 @endforeach
