@@ -25,8 +25,13 @@ class PatientApp:
             self.open_bpjs_button,
             self.open_checkin_portal_button,
             self.open_frista_button,
+            self.open_sep_button,
         ) = components.create_action_buttons(
-            root, self.open_bpjs_by_identifier, self.open_checkin_portal, self.open_frista_application
+            root,
+            self.open_bpjs_by_identifier,
+            self.open_checkin_portal,
+            self.open_frista_application,
+            self.open_sep_flow,
         )
 
         self.internet_status, self.db_status = layout.create_status_section(root, self.loading_var)
@@ -92,6 +97,15 @@ class PatientApp:
             frista.handle_automation_error,
         )
 
+    def open_sep_flow(self):
+        actions.run_action(
+            self.root,
+            self._set_loading_state,
+            lambda: actions.launch_sep_flow(self.half_screen_width, self.screen_height),
+            "Membuka alur cetak SEP...",
+            self._action_buttons,
+        )
+
     def _run_bpjs_action(self, action, message: str):
         actions.run_bpjs_action(self.root, self._set_loading_state, action, message, self._action_buttons)
 
@@ -111,7 +125,12 @@ class PatientApp:
 
     @property
     def _action_buttons(self):
-        return [self.open_bpjs_button, self.open_checkin_portal_button, self.open_frista_button]
+        return [
+            self.open_bpjs_button,
+            self.open_checkin_portal_button,
+            self.open_frista_button,
+            self.open_sep_button,
+        ]
 
     def _append_digit(self, digit: str):
         self.no_rm_var.set(self.no_rm_var.get() + digit)

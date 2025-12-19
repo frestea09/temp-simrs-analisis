@@ -22,6 +22,20 @@ def launch_checkin_portal(half_screen_width: int, screen_height: int):
     )
 
 
+def launch_sep_flow(half_screen_width: int, screen_height: int):
+    window_position = f"--window-position={half_screen_width},0"
+    window_size = f"--window-size={half_screen_width},{screen_height}"
+    subprocess.Popen(
+        [
+            config.CHROME_EXECUTABLE,
+            window_position,
+            window_size,
+            "--new-window",
+            config.SEP_URL,
+        ]
+    )
+
+
 def run_action(root: tk.Tk, set_loading_state, action, message: str, buttons: list[tk.Button], on_error=None):
     set_loading_state(True, message, buttons)
 
