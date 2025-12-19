@@ -114,3 +114,31 @@ def fetch_registration_by_bpjs(bpjs_number: str) -> Optional[RegistrationRow]:
 def fetch_patient_by_bpjs(bpjs_number: str) -> Optional[PatientRow]:
     """Fetch a patient record by BPJS card number."""
     return fetch_one("SELECT * FROM pasiens WHERE no_jkn = %s", (bpjs_number,))
+
+
+def fetch_latest_booking(identifier: str) -> Optional[Tuple[str, str, int, str | None, str | None]]:
+    """
+    Return the latest booking info (nomorantrian, no_rm, id, tglperiksa, nik) for the provided identifier.
+
+    The identifier can be No RM, NIK (16 digit), or nomor BPJS. The query prioritizes No RM,
+    then NIK, then BPJS number.
+    """
+
+    query = (
+        "SELECT nomorantrian, no_rm, id, tglperiksa, nik FROM registrasis_dummy "
+        "WHERE {field} = %s ORDER BY id DESC LIMIT 1"
+    )
+
+    # Try No RM first
+    booking = fetch_one(query.format(field="no_rm"), (identifier,))
+    if booking:
+        return booking
+
+    # If identifier looks like NIK (16 numeric digits), try NIK
+    if len(identifier) == 16 and identifier.isdigit():
+        booking = fetch_one(query.format(field="nik"), (identifier,))
+        if booking:
+            return booking
+
+    # Finally, try BPJS card number
+    return fetch_one(query.format(field="nomorkartu"), (identifier,))

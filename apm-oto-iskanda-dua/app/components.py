@@ -44,7 +44,7 @@ def create_keypad(root: tk.Tk, append_digit, clear_input, delete_last):
     return buttons
 
 
-def create_action_buttons(root: tk.Tk, on_bpjs, on_portal, on_frista):
+def create_action_buttons(root: tk.Tk, on_bpjs, on_portal, on_frista, on_sep):
     action_frame = tk.Frame(root, bg="#ffffff")
     action_frame.pack(pady=16, fill=tk.X)
 
@@ -60,4 +60,6 @@ def create_action_buttons(root: tk.Tk, on_bpjs, on_portal, on_frista):
 
     frista_button = tk.Button(action_frame, text="Frista", bg="#e8d2ff", command=on_frista, **button_opts)
     frista_button.pack(padx=8, pady=6, fill=tk.X)
-    return bpjs_button, portal_button, frista_button
+    sep_button = tk.Button(action_frame, text="Cetak SEP", bg="#cde4ff", command=on_sep, **button_opts)
+    sep_button.pack(padx=8, pady=6, fill=tk.X)
+    return bpjs_button, portal_button, frista_button, sep_button
