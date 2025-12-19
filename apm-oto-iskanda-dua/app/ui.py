@@ -98,11 +98,15 @@ class PatientApp:
         )
 
     def open_sep_flow(self):
+        identifier = self.no_rm_var.get().strip()
+        if not identifier:
+            messagebox.showwarning("Input Error", "Masukkan No RM, NIK, atau BPJS terlebih dahulu.")
+            return
         actions.run_action(
             self.root,
             self._set_loading_state,
-            lambda: actions.launch_sep_flow(self.half_screen_width, self.screen_height),
-            "Membuka alur cetak SEP...",
+            lambda: actions.launch_sep_flow(identifier, self.half_screen_width, self.screen_height),
+            "Membuka halaman SEP sesuai identitas...",
             self._action_buttons,
         )
 
