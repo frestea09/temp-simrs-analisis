@@ -5,7 +5,7 @@ import threading
 import tkinter as tk
 from tkinter import messagebox
 
-from app import bpjs, config
+from app import bpjs, config, database
 
 
 def launch_checkin_portal(half_screen_width: int, screen_height: int):
@@ -18,6 +18,35 @@ def launch_checkin_portal(half_screen_width: int, screen_height: int):
             window_size,
             "--new-window",
             config.CHECKIN_URL,
+        ]
+    )
+
+
+def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int):
+    """
+    Open Chrome directly to the SEP page for the latest booking tied to the identifier.
+    Identifier may be No RM, NIK, or nomor BPJS.
+    """
+
+    booking = database.fetch_latest_booking(identifier)
+    if not booking:
+        raise ValueError("Reservasi/booking tidak ditemukan untuk identitas tersebut.")
+
+    nomorantrian, no_rm, booking_id = booking
+    if not booking_id:
+        raise ValueError("Data booking tidak lengkap untuk diarahkan ke halaman SEP.")
+
+    sep_url = f"{config.SEP_BASE_URL.rstrip('/')}/reservasi/sep/{booking_id}/{no_rm or ''}"
+
+    window_position = f"--window-position={half_screen_width},0"
+    window_size = f"--window-size={half_screen_width},{screen_height}"
+    subprocess.Popen(
+        [
+            config.CHROME_EXECUTABLE,
+            window_position,
+            window_size,
+            "--new-window",
+            sep_url,
         ]
     )
 
