@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% set is_kontrol = mode == "kontrol" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow-sm border-{{ 'danger' if is_kontrol else 'success' }}">
+            <div class="card-header bg-{{ 'danger' if is_kontrol else 'success' }} text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Form Nomor Booking MJKN</h5>
+                    <a href="/" class="btn btn-light btn-sm">Beranda</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <form id="cek-form" class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label fw-bold">No. Booking</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text">{{ today_prefix }}</span>
+                            <input
+                                type="text"
+                                name="keyword"
+                                class="form-control"
+                                placeholder="Contoh : INT3"
+                                aria-label="Kode booking"
+                                required
+                            />
+                        </div>
+                        <div class="form-text">Masukkan kode tanpa tanggal. Tanggal hari ini otomatis ditambahkan.</div>
+                        {% if is_kontrol %}
+                        <input type="hidden" name="from" value="kontrol" />
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-warning btn-lg w-100" id="submit-btn">
+                            <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
+                            Cek Reservasi
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-4 d-none" id="result-card">
+            <div class="card-header bg-primary text-white">
+                Hasil Pencarian
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info d-none" id="info-finger"></div>
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-center">Kode Booking</th>
+                                <th class="text-center">Poli</th>
+                                <th class="text-center">Nama</th>
+                                <th class="text-center">No. Rujukan</th>
+                                <th class="text-center">Tgl. Periksa</th>
+                                <th class="text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="result-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const form = document.getElementById('cek-form');
+const submitBtn = document.getElementById('submit-btn');
+const spinner = submitBtn.querySelector('.spinner-border');
+const resultCard = document.getElementById('result-card');
+const resultBody = document.getElementById('result-body');
+const infoFinger = document.getElementById('info-finger');
+
+function showError(message) {
+    resultCard.classList.add('d-none');
+    alert(message);
+}
+
+form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const formData = new FormData(form);
+    spinner.classList.remove('d-none');
+    submitBtn.setAttribute('disabled', 'disabled');
+
+    try {
+        const response = await fetch('/reservasi/cek', {
+            method: 'POST',
+            body: formData
+        });
+        const payload = await response.json();
+        if (payload.status !== 200) {
+            showError(payload.result || 'Terjadi kesalahan');
+            return;
+        }
+
+        const data = payload.result;
+        resultBody.innerHTML = `
+            <tr>
+                <td class="text-center fw-bold">${data.nomorantrian || '-'}</td>
+                <td class="text-center">${data.poli || '-'}</td>
+                <td class="text-center">${data.nama || '-'}</td>
+                <td class="text-center">${data.no_rujukan || '-'}</td>
+                <td class="text-center">${data.tglperiksa || '-'}</td>
+                <td class="text-center">${data.status || '-'}</td>
+            </tr>
+        `;
+
+        const finger = data.fingerprint || {};
+        infoFinger.classList.remove('d-none');
+        infoFinger.classList.toggle('alert-success', finger.kode === '1');
+        infoFinger.classList.toggle('alert-danger', finger.kode !== '1');
+        infoFinger.textContent = finger.status || 'Status fingerprint tidak diketahui';
+
+        if (data.cekin === false && data.jam_dilayani) {
+            infoFinger.classList.add('mt-2');
+            infoFinger.textContent += ` • Cekin mulai ${data.jam_dilayani} WIB`;
+        }
+
+        resultCard.classList.remove('d-none');
+    } catch (error) {
+        showError('Tidak dapat terhubung ke server');
+    } finally {
+        spinner.classList.add('d-none');
+        submitBtn.removeAttribute('disabled');
+    }
+});
+</script>
+{% endblock %}
