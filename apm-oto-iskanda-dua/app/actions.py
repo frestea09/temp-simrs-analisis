@@ -1,5 +1,6 @@
 """Action helpers to keep the Tkinter UI lean and readable."""
 
+from datetime import date
 import subprocess
 import threading
 import tkinter as tk
@@ -28,15 +29,34 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
     Identifier may be No RM, NIK, or nomor BPJS.
     """
 
-    booking = database.fetch_latest_booking(identifier)
-    if not booking:
+    registration = database.fetch_latest_registration(identifier)
+    if not registration:
         raise ValueError("Reservasi/booking tidak ditemukan untuk identitas tersebut.")
 
-    nomorantrian, no_rm, booking_id = booking
-    if not booking_id:
+    registration_id = registration[0]
+    no_rm = registration[database.REGISTRATION_NO_RM_INDEX]
+    if not registration_id:
         raise ValueError("Data booking tidak lengkap untuk diarahkan ke halaman SEP.")
 
-    sep_url = f"{config.SEP_BASE_URL.rstrip('/')}/reservasi/sep/{booking_id}/{no_rm or ''}"
+    visit_date = database.extract_registration_date(registration)
+    today = date.today()
+    if visit_date and visit_date != today:
+        messagebox.showwarning(
+            "Tanggal Periksa Tidak Sesuai",
+            (
+                "Tanggal periksa pada data registrasi berbeda dengan hari ini.\n"
+                f"Tanggal periksa: {visit_date.strftime('%d-%m-%Y')}."
+            ),
+        )
+
+    patient = database.fetch_patient_by_identifier(identifier)
+    if not patient:
+        messagebox.showwarning(
+            "Pasien Tidak Ditemukan",
+            "Data pasien belum ada di tabel pasiens. Pastikan pasien sudah terdaftar.",
+        )
+
+    sep_url = f"{config.SEP_BASE_URL.rstrip('/')}/reservasi/sep/{registration_id}/{no_rm or ''}"
 
     window_position = f"--window-position={half_screen_width},0"
     window_size = f"--window-size={half_screen_width},{screen_height}"
