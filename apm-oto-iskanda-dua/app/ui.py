@@ -17,9 +17,11 @@ class PatientApp:
 
         self.half_screen_width, self.screen_height = layout.setup_root(root, self.logo_image)
 
-        self.no_rm_entry = layout.create_input_section(root, self.logo_image, self.no_rm_var)
+        left_panel, right_panel = layout.create_main_frames(root)
+
+        self.no_rm_entry = layout.create_input_section(left_panel, self.logo_image, self.no_rm_var)
         self._keypad_buttons = components.create_keypad(
-            root, self._append_digit, self._clear_input, self._delete_last_digit
+            left_panel, self._append_digit, self._clear_input, self._delete_last_digit
         )
         (
             self.open_bpjs_button,
@@ -27,14 +29,15 @@ class PatientApp:
             self.open_frista_button,
             self.open_sep_button,
         ) = components.create_action_buttons(
-            root,
+            right_panel,
             self.open_bpjs_by_identifier,
             self.open_checkin_portal,
             self.open_frista_application,
             self.open_sep_flow,
         )
 
-        self.internet_status, self.db_status = layout.create_status_section(root, self.loading_var)
+        status_frame, self.internet_status, self.db_status = layout.create_status_section(right_panel, self.loading_var)
+        status_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=(8, 0))
 
         self._create_menu()
         self.refresh_status()
