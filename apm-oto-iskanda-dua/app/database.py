@@ -3,6 +3,7 @@ from datetime import date, datetime
 import logging
 from pathlib import Path
 from typing import Optional, Tuple
+from urllib.parse import urlparse
 
 import requests
 
@@ -27,7 +28,7 @@ if not logger.handlers:
 
 def ping_database() -> tuple[bool, Optional[str]]:
     try:
-        response = requests.get(config.API_BASE_URL, timeout=config.API_TIMEOUT_SECONDS)
+        response = requests.get(_normalized_base_url(), timeout=config.API_TIMEOUT_SECONDS)
         response.raise_for_status()
         return True, None
     except requests.RequestException as err:
@@ -41,9 +42,19 @@ def ping_database() -> tuple[bool, Optional[str]]:
 
 
 def _build_url(endpoint_template: str, identifier: str) -> str:
-    base = config.API_BASE_URL.rstrip("/")
+    base = _normalized_base_url().rstrip("/")
     endpoint = endpoint_template.format(identifier=identifier).lstrip("/")
     return f"{base}/{endpoint}"
+
+
+def _normalized_base_url() -> str:
+    base_url = config.API_BASE_URL.strip()
+    if not base_url:
+        return base_url
+    parsed = urlparse(base_url)
+    if not parsed.scheme:
+        return f"http://{base_url}"
+    return base_url
 
 
 def _fetch_data(url: str) -> Optional[dict]:
