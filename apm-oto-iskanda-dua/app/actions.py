@@ -48,6 +48,7 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
                 f"Tanggal periksa: {visit_date.strftime('%d-%m-%Y')}."
             ),
         )
+        return
 
     patient = database.fetch_patient_by_identifier(identifier)
     if not patient:

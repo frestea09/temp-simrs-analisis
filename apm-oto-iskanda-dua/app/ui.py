@@ -61,7 +61,7 @@ class PatientApp:
         if connection_ok:
             self.api_status.config(text="API: Tersedia", fg="green")
         else:
-            self.api_status.config(text="API: Tidak Tersedia", fg="red")
+            self.api_status.config(text="", fg="red")
 
     def open_bpjs_by_identifier(self):
         identifier = self.no_rm_var.get().strip()
