@@ -50,6 +50,10 @@ DEFAULT_SETTINGS = {
     "FRISTA_PASSWORD": "#Bandung28",
     "FRISTA_LOGIN_DELAY_SECONDS": 6.0,
     "FRISTA_STANDBY_SECONDS": 3.0,
+    "API_BASE_URL": "http://172.168.1.175:8070/api",
+    "API_PATIENT_ENDPOINT": "/apm-oto/v1/patients/{identifier}",
+    "API_REGISTRATION_ENDPOINT": "/apm-oto/v1/registrations/latest/{identifier}",
+    "API_TIMEOUT_SECONDS": 10,
 }
 
 
@@ -98,6 +102,10 @@ def _apply_settings(settings: Dict[str, str | float]) -> None:
     global FRISTA_PASSWORD
     global FRISTA_LOGIN_DELAY_SECONDS
     global FRISTA_STANDBY_SECONDS
+    global API_BASE_URL
+    global API_PATIENT_ENDPOINT
+    global API_REGISTRATION_ENDPOINT
+    global API_TIMEOUT_SECONDS
 
     BPJS_EXECUTABLE = settings["BPJS_EXECUTABLE"]
     BPJS_USERNAME = settings["BPJS_USERNAME"]
@@ -115,6 +123,10 @@ def _apply_settings(settings: Dict[str, str | float]) -> None:
     FRISTA_PASSWORD = settings["FRISTA_PASSWORD"]
     FRISTA_LOGIN_DELAY_SECONDS = float(settings["FRISTA_LOGIN_DELAY_SECONDS"])
     FRISTA_STANDBY_SECONDS = float(settings["FRISTA_STANDBY_SECONDS"])
+    API_BASE_URL = settings["API_BASE_URL"]
+    API_PATIENT_ENDPOINT = settings["API_PATIENT_ENDPOINT"]
+    API_REGISTRATION_ENDPOINT = settings["API_REGISTRATION_ENDPOINT"]
+    API_TIMEOUT_SECONDS = float(settings["API_TIMEOUT_SECONDS"])
 
 
 _apply_settings(_load_user_settings())

@@ -1,25 +1,18 @@
-"""Database helpers for patient lookup."""
-from contextlib import contextmanager
+"""API helpers for patient lookup."""
 from datetime import date, datetime
 import logging
 from pathlib import Path
-from typing import Iterable, Optional, Tuple
+from typing import Optional, Tuple
 
-import mysql.connector
-# Explicitly import the caching_sha2_password auth plugin so PyInstaller
-# bundles it for onefile executables.
-from mysql.connector.plugins import caching_sha2_password  # noqa: F401
+import requests
 
-from app.config import DB_CONFIG
+from app import config
 
 
-PatientRow = Tuple
-RegistrationRow = Tuple
+PatientRow = dict
+RegistrationRow = dict
 
-REGISTRATION_NO_RM_INDEX = 5
-REGISTRATION_DATE_INDEX = 13
-
-ERROR_LOG_PATH = Path.home() / "apm_db_errors.log"
+ERROR_LOG_PATH = Path.home() / "apm_api_errors.log"
 
 logger = logging.getLogger(__name__)
 if not logger.handlers:
@@ -34,28 +27,12 @@ if not logger.handlers:
 
 def ping_database() -> tuple[bool, Optional[str]]:
     try:
-        with mysql_connection():
-            return True, None
-    except mysql.connector.Error as err:
-        err_str = str(err)
-        if err.errno == 2059 and "mysql_native_password" in err_str:
-            error_message = (
-                "Plugin autentikasi mysql_native_password tidak tersedia di server. "
-                "Sesuaikan server atau aplikasi: (1) set env APM_DB_AUTH_PLUGIN=caching_sha2_password lalu pastikan user MySQL "
-                "dipindah ke plugin tersebut: ALTER USER '<user>'@'%' IDENTIFIED WITH caching_sha2_password BY '<password>'; "
-                "FLUSH PRIVILEGES; atau (2) jika tetap ingin mysql_native_password, aktifkan plugin itu di server dan jalankan "
-                "ALTER USER '<user>'@'%' IDENTIFIED WITH mysql_native_password BY '<password>'; FLUSH PRIVILEGES;. Connector "
-                "sudah dibundel di aplikasi."
-            )
-        elif err.errno == 2059 and "caching_sha2_password" in err_str:
-            error_message = (
-                "Server meminta plugin caching_sha2_password. Aktifkan dengan set APM_DB_AUTH_PLUGIN="
-                "caching_sha2_password sebelum build/jalankan, atau ubah user MySQL ke plugin tersebut: "
-                "ALTER USER '<user>'@'%' IDENTIFIED WITH caching_sha2_password BY '<password>'; FLUSH PRIVILEGES;."
-            )
-        else:
-            error_message = f"{err_str}"
-        logger.error("Database ping failed: %s", error_message)
+        response = requests.get(config.API_BASE_URL, timeout=config.API_TIMEOUT_SECONDS)
+        response.raise_for_status()
+        return True, None
+    except requests.RequestException as err:
+        error_message = f"Gagal menghubungi API: {err}"
+        logger.error("API ping failed: %s", error_message)
         return False, error_message
     except Exception as err:  # noqa: BLE001
         error_message = f"Kesalahan tidak terduga: {err}"
@@ -63,76 +40,68 @@ def ping_database() -> tuple[bool, Optional[str]]:
         return False, error_message
 
 
-@contextmanager
-def mysql_connection():
-    """Context manager returning a MySQL connection."""
-    conn = mysql.connector.connect(**DB_CONFIG)
+def _build_url(endpoint_template: str, identifier: str) -> str:
+    base = config.API_BASE_URL.rstrip("/")
+    endpoint = endpoint_template.format(identifier=identifier).lstrip("/")
+    return f"{base}/{endpoint}"
+
+
+def _fetch_data(url: str) -> Optional[dict]:
     try:
-        yield conn
-    finally:
-        if conn.is_connected():
-            conn.close()
+        response = requests.get(url, timeout=config.API_TIMEOUT_SECONDS)
+        response.raise_for_status()
+        payload = response.json()
+    except requests.RequestException as err:
+        logger.error("API request failed for %s: %s", url, err)
+        return None
+    except ValueError as err:
+        logger.error("API response not JSON for %s: %s", url, err)
+        return None
 
-
-def fetch_one(query: str, params: Iterable) -> Optional[Tuple]:
-    with mysql_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(query, params)
-        result = cursor.fetchone()
-        cursor.close()
-        return result
+    if isinstance(payload, dict) and "data" in payload:
+        return payload["data"]
+    return payload if isinstance(payload, dict) else None
 
 
 def fetch_patient_by_no_rm(no_rm: str) -> Optional[PatientRow]:
-    return fetch_one("SELECT * FROM pasiens WHERE no_rm = %s", (no_rm,))
+    return _fetch_patient(no_rm)
 
 
 def fetch_patient_by_nik(nik: str) -> Optional[PatientRow]:
-    return fetch_one("SELECT * FROM pasiens WHERE nik = %s", (nik,))
+    return _fetch_patient(nik)
 
 
 def fetch_registration_by_no_rm(no_rm: str) -> Optional[RegistrationRow]:
     """Fetch the newest registration matching the given medical record number."""
-    return fetch_one(
-        "SELECT * FROM registrasis_dummy WHERE no_rm = %s ORDER BY id DESC LIMIT 1",
-        (no_rm,),
-    )
+    return _fetch_registration(no_rm)
 
 
 def fetch_registration_by_nik(nik: str) -> Optional[RegistrationRow]:
     """Fetch the newest registration matching the given national ID."""
-    return fetch_one(
-        "SELECT * FROM registrasis_dummy WHERE nik = %s ORDER BY id DESC LIMIT 1",
-        (nik,),
-    )
+    return _fetch_registration(nik)
 
 
 def fetch_registration_by_bpjs(bpjs_number: str) -> Optional[RegistrationRow]:
     """Fetch the newest registration matching the given BPJS card number."""
-    return fetch_one(
-        "SELECT * FROM registrasis_dummy WHERE nomorkartu = %s ORDER BY id DESC LIMIT 1",
-        (bpjs_number,),
-    )
+    return _fetch_registration(bpjs_number)
 
 
 def fetch_patient_by_bpjs(bpjs_number: str) -> Optional[PatientRow]:
     """Fetch a patient record by BPJS card number."""
-    return fetch_one("SELECT * FROM pasiens WHERE no_jkn = %s", (bpjs_number,))
+    return _fetch_patient(bpjs_number)
 
 
 def fetch_patient_by_identifier(identifier: str) -> Optional[PatientRow]:
     """Return the patient matching No RM, NIK, or nomor BPJS (latest priority order)."""
 
-    patient = fetch_patient_by_no_rm(identifier)
-    if patient:
-        return patient
+    return _fetch_patient(identifier)
 
-    if len(identifier) == 16 and identifier.isdigit():
-        patient = fetch_patient_by_nik(identifier)
-        if patient:
-            return patient
 
-    return fetch_patient_by_bpjs(identifier)
+def _fetch_patient(identifier: str) -> Optional[PatientRow]:
+    if not identifier:
+        return None
+    url = _build_url(config.API_PATIENT_ENDPOINT, identifier)
+    return _fetch_data(url)
 
 
 def fetch_latest_booking(identifier: str) -> Optional[Tuple[str, str, int]]:
@@ -142,51 +111,43 @@ def fetch_latest_booking(identifier: str) -> Optional[Tuple[str, str, int]]:
     The identifier can be No RM, NIK (16 digit), or nomor BPJS. The query prioritizes No RM,
     then NIK, then BPJS number.
     """
-
-    query = (
-        "SELECT nomorantrian, no_rm, id FROM registrasis_dummy "
-        "WHERE {field} = %s ORDER BY id DESC LIMIT 1"
+    registration = _fetch_registration(identifier)
+    if not registration:
+        return None
+    return (
+        registration.get("nomorantrian")
+        or registration.get("nomor_antrian"),
+        registration.get("no_rm"),
+        registration.get("id"),
     )
-
-    # Try No RM first
-    booking = fetch_one(query.format(field="no_rm"), (identifier,))
-    if booking:
-        return booking
-
-    # If identifier looks like NIK (16 numeric digits), try NIK
-    if len(identifier) == 16 and identifier.isdigit():
-        booking = fetch_one(query.format(field="nik"), (identifier,))
-        if booking:
-            return booking
-
-    # Finally, try BPJS card number
-    return fetch_one(query.format(field="nomorkartu"), (identifier,))
 
 
 def fetch_latest_registration(identifier: str) -> Optional[RegistrationRow]:
     """
     Return the latest registration row (entire tuple) matching No RM, NIK, or nomor BPJS.
     """
+    return _fetch_registration(identifier)
 
-    registration = fetch_registration_by_no_rm(identifier)
-    if registration:
-        return registration
 
-    if len(identifier) == 16 and identifier.isdigit():
-        registration = fetch_registration_by_nik(identifier)
-        if registration:
-            return registration
-
-    return fetch_registration_by_bpjs(identifier)
+def _fetch_registration(identifier: str) -> Optional[RegistrationRow]:
+    if not identifier:
+        return None
+    url = _build_url(config.API_REGISTRATION_ENDPOINT, identifier)
+    return _fetch_data(url)
 
 
 def extract_registration_date(registration: RegistrationRow) -> Optional[date]:
     """Extract the visit date from a registration row, normalized to a date object."""
 
-    if not registration or len(registration) <= REGISTRATION_DATE_INDEX:
+    if not registration:
         return None
 
-    raw_date = registration[REGISTRATION_DATE_INDEX]
+    raw_date = (
+        registration.get("tanggal_periksa")
+        or registration.get("tglperiksa")
+        or registration.get("tanggal")
+        or registration.get("created_at")
+    )
     if isinstance(raw_date, datetime):
         return raw_date.date()
     if isinstance(raw_date, date):

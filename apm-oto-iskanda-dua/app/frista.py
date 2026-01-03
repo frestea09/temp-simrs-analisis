@@ -12,27 +12,20 @@ class FristaAutomationError(Exception):
 
 
 def _extract_nik(record) -> str | None:
-    """Return the first 16-digit numeric field found in a database record."""
+    """Return the NIK from an API record."""
 
     if not record:
         return None
 
-    for field in record:
-        if isinstance(field, str) and len(field) == 16 and field.isdigit():
-            return field
+    nik = record.get("nik")
+    if isinstance(nik, str) and len(nik) == 16 and nik.isdigit():
+        return nik
     return None
 
 
 def _resolve_nik(identifier: str) -> str:
-    registration = database.fetch_registration_by_no_rm(identifier)
-    patient = database.fetch_patient_by_no_rm(identifier)
-
-    if len(identifier) == 16:
-        registration = registration or database.fetch_registration_by_nik(identifier)
-        patient = patient or database.fetch_patient_by_nik(identifier)
-
-    registration = registration or database.fetch_registration_by_bpjs(identifier)
-    patient = patient or database.fetch_patient_by_bpjs(identifier)
+    registration = database.fetch_latest_registration(identifier)
+    patient = database.fetch_patient_by_identifier(identifier)
 
     if not registration and not patient:
         raise FristaAutomationError("Data registrasi atau pasien tidak ditemukan.")
