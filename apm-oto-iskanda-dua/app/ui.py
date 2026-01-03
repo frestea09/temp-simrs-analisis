@@ -36,7 +36,9 @@ class PatientApp:
             self.open_sep_flow,
         )
 
-        status_frame, self.internet_status, self.db_status = layout.create_status_section(right_panel, self.loading_var)
+        status_frame, self.internet_status, self.api_status = layout.create_status_section(
+            right_panel, self.loading_var
+        )
         status_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=(8, 0))
 
         self._create_menu()
@@ -55,20 +57,11 @@ class PatientApp:
         else:
             self.internet_status.config(text="Internet: Tidak Terhubung", fg="red")
 
-        connection_ok, db_error = database.ping_database()
+        connection_ok, _ = database.ping_database()
         if connection_ok:
-            self.db_status.config(text="Database: Tersedia", fg="green")
+            self.api_status.config(text="API: Tersedia", fg="green")
         else:
-            self.db_status.config(text="Database: Tidak Tersedia", fg="red")
-            if db_error:
-                messagebox.showerror(
-                    "Database Error",
-                    (
-                        "Aplikasi tidak dapat terhubung ke database.\n"
-                        f"Detail: {db_error}\n"
-                        f"Log kesalahan: {database.ERROR_LOG_PATH}"
-                    ),
-                )
+            self.api_status.config(text="API: Tidak Tersedia", fg="red")
 
     def open_bpjs_by_identifier(self):
         identifier = self.no_rm_var.get().strip()
