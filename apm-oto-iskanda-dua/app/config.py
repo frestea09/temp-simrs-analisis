@@ -50,7 +50,7 @@ DEFAULT_SETTINGS = {
     "FRISTA_PASSWORD": "#Bandung28",
     "FRISTA_LOGIN_DELAY_SECONDS": 6.0,
     "FRISTA_STANDBY_SECONDS": 3.0,
-    "API_BASE_URL": "http://172.168.1.175:8070/api",
+    "API_BASE_URL": "http://172.168.1.175/api",
     "API_PATIENT_ENDPOINT": "/apm-oto/v1/patients/{identifier}",
     "API_REGISTRATION_ENDPOINT": "/apm-oto/v1/registrations/latest/{identifier}",
     "API_TIMEOUT_SECONDS": 10,
