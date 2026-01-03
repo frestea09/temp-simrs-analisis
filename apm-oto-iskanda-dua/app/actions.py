@@ -33,8 +33,8 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
     if not registration:
         raise ValueError("Reservasi/booking tidak ditemukan untuk identitas tersebut.")
 
-    registration_id = registration[0]
-    no_rm = registration[database.REGISTRATION_NO_RM_INDEX]
+    registration_id = registration.get("id")
+    no_rm = registration.get("no_rm")
     if not registration_id:
         raise ValueError("Data booking tidak lengkap untuk diarahkan ke halaman SEP.")
 

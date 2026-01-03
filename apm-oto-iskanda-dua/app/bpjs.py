@@ -43,31 +43,60 @@ def _fill_member_id(member_id: str):
     pyautogui.hotkey("alt", "f4")
 
 
-def _fill_registration_details(registration: Optional[tuple], patient: Optional[tuple]):
+def _resolve_bpjs_number(registration: Optional[dict], patient: Optional[dict]) -> Optional[str]:
+    if registration:
+        for key in ("nomorkartu", "nomor_bpjs", "no_jkn", "no_bpjs"):
+            value = registration.get(key)
+            if value:
+                return value
+    if patient:
+        for key in ("no_jkn", "nomor_bpjs", "no_bpjs", "nomorkartu"):
+            value = patient.get(key)
+            if value:
+                return value
+    return None
+
+
+def _resolve_identity_value(registration: Optional[dict], patient: Optional[dict]) -> Optional[str]:
+    if registration:
+        for key in ("nik", "no_rujukan", "nomor_rujukan"):
+            value = registration.get(key)
+            if value:
+                return value
+    if patient:
+        for key in ("nik", "no_rm"):
+            value = patient.get(key)
+            if value:
+                return value
+    return None
+
+
+def _fill_registration_details(registration: Optional[dict], patient: Optional[dict]):
     _focus_window()
-    if registration and registration[3]:
-        pyautogui.write(registration[3])
-    if patient and len(patient) > 32 and patient[32]:
-        if(len(patient[32])!=1):
-            pyautogui.write(patient[32])
-        else:
-            pyautogui.press("tab")
-            pyautogui.press("tab")
-            pyautogui.press("tab")
-            pyautogui.press("tab")
-            pyautogui.press("space")
-            pyautogui.write(patient[36])
+    identity_value = _resolve_identity_value(registration, patient)
+    if identity_value:
+        pyautogui.write(str(identity_value))
+
+    bpjs_number = _resolve_bpjs_number(registration, patient)
+    if bpjs_number:
+        pyautogui.press("tab")
+        pyautogui.press("tab")
+        pyautogui.press("tab")
+        pyautogui.press("tab")
+        pyautogui.press("space")
+        pyautogui.write(str(bpjs_number))
     pyautogui.sleep(config.FORM_FILL_DELAY_SECONDS)
     pyautogui.sleep(5.0)
     pyautogui.hotkey("alt", "f4")
 
 
-def _extract_nik_from_patient(patient: tuple) -> Optional[str]:
-    """Return the first 16-digit numeric field found in the patient tuple."""
-
-    for field in patient:
-        if isinstance(field, str) and len(field) == 16 and field.isdigit():
-            return field
+def _extract_nik_from_patient(patient: dict) -> Optional[str]:
+    """Return the NIK field if available."""
+    if not patient:
+        return None
+    nik = patient.get("nik")
+    if isinstance(nik, str) and len(nik) == 16 and nik.isdigit():
+        return nik
     return None
 
 
@@ -76,30 +105,24 @@ def open_bpjs_for_member_id(no_rm: str):
     if not patient:
         raise BpjsAutomationError("Pasien dengan No RM tersebut tidak ditemukan.")
 
-    if len(patient) <= 36 or not patient[36]:
+    bpjs_number = _resolve_bpjs_number(None, patient)
+    if not bpjs_number:
         raise BpjsAutomationError("Data BPJS untuk pasien tidak tersedia.")
 
     _launch_application()
     _login()
-    _fill_member_id(patient[36])
+    _fill_member_id(str(bpjs_number))
 
 
 def open_bpjs_for_identifier(identifier: str):
     if not identifier:
         raise BpjsAutomationError("Masukkan No RM, NIK, atau BPJS terlebih dahulu.")
 
-    registration: Optional[tuple] = None
-    patient: Optional[tuple] = None
+    registration: Optional[dict] = None
+    patient: Optional[dict] = None
 
-    registration = database.fetch_registration_by_no_rm(identifier)
-    patient = database.fetch_patient_by_no_rm(identifier)
-
-    if len(identifier) == 16:
-        registration = registration or database.fetch_registration_by_nik(identifier)
-        patient = patient or database.fetch_patient_by_nik(identifier)
-
-    registration = registration or database.fetch_registration_by_bpjs(identifier)
-    patient = patient or database.fetch_patient_by_bpjs(identifier)
+    registration = database.fetch_latest_registration(identifier)
+    patient = database.fetch_patient_by_identifier(identifier)
 
     if not registration and not patient:
         raise BpjsAutomationError("Data registrasi atau pasien tidak ditemukan.")
@@ -115,7 +138,7 @@ def open_bpjs_for_identifier(identifier: str):
 
     if registration:
         _fill_registration_details(registration, patient)
-    elif patient and len(patient) > 32 and patient[32]:
+    elif patient and _resolve_identity_value(None, patient):
         _fill_registration_details(None, patient)
     elif nik:
         _fill_member_id(nik)
