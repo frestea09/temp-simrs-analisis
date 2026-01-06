@@ -74,16 +74,15 @@ def _resolve_identity_value(registration: Optional[dict], patient: Optional[dict
 def _fill_registration_details(registration: Optional[dict], patient: Optional[dict]):
     _focus_window()
     identity_value = _resolve_identity_value(registration, patient)
-    if identity_value:
-        pyautogui.write(str(identity_value))
-
     bpjs_number = _resolve_bpjs_number(registration, patient)
     if bpjs_number:
-        pyautogui.press("tab")
-        pyautogui.press("tab")
-        pyautogui.press("tab")
-        pyautogui.press("tab")
-        pyautogui.press("space")
+        # pyautogui.press("tab")
+        # pyautogui.press("tab")
+        # pyautogui.press("tab")
+        # pyautogui.press("tab")
+        # pyautogui.press("space")
+        pyautogui.write(str(bpjs_number))
+    elif identity_value:
         pyautogui.write(str(bpjs_number))
     pyautogui.sleep(config.FORM_FILL_DELAY_SECONDS)
     pyautogui.sleep(5.0)
