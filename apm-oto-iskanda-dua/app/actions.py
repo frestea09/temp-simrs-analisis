@@ -9,6 +9,42 @@ from tkinter import messagebox
 from app import bpjs, config, database
 
 
+CONTROL_HINT_KEYS = {
+    "is_kontrol",
+    "kontrol",
+    "jenis_kunjungan",
+    "jenis_pasien",
+    "kategori_kunjungan",
+    "tipe_kunjungan",
+    "jenis_registrasi",
+    "tipe_registrasi",
+}
+
+
+def _is_control_registration(registration: dict) -> bool | None:
+    if not registration:
+        return None
+    for key, value in registration.items():
+        normalized_key = str(key).lower()
+        if normalized_key not in CONTROL_HINT_KEYS:
+            continue
+        if isinstance(value, bool):
+            return value
+        if value is None:
+            continue
+        text_value = str(value).strip().lower()
+        if not text_value:
+            continue
+        if text_value in {"1", "y", "yes", "true"}:
+            return True
+        if text_value in {"0", "n", "no", "false"}:
+            return False
+        if "kontrol" in text_value:
+            return True
+        return False
+    return None
+
+
 def launch_checkin_portal(half_screen_width: int, screen_height: int):
     window_position = f"--window-position={half_screen_width},0"
     window_size = f"--window-size={half_screen_width},{screen_height}"
@@ -57,7 +93,15 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
             "Data pasien belum ada di tabel pasiens. Pastikan pasien sudah terdaftar.",
         )
 
-    sep_url = f"{config.SEP_BASE_URL.rstrip('/')}/reservasi/sep/{registration_id}/{no_rm or ''}"
+    is_control = _is_control_registration(registration)
+    if is_control is None:
+        is_control = messagebox.askyesno(
+            "Jenis SEP",
+            "Registrasi ini kontrol? Klik Ya untuk SEP Kontrol, Tidak untuk SEP Reguler.",
+        )
+
+    sep_path = "reservasi/sep-kontrol" if is_control else "reservasi/sep"
+    sep_url = f"{config.SEP_BASE_URL.rstrip('/')}/{sep_path}/{registration_id}/{no_rm or ''}"
 
     window_position = f"--window-position={half_screen_width},0"
     window_size = f"--window-size={half_screen_width},{screen_height}"
