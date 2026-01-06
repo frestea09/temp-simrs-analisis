@@ -85,7 +85,6 @@ def _fill_registration_details(registration: Optional[dict], patient: Optional[d
     elif identity_value:
         pyautogui.write(str(bpjs_number))
     pyautogui.sleep(config.FORM_FILL_DELAY_SECONDS)
-    pyautogui.sleep(5.0)
     pyautogui.hotkey("alt", "f4")
 
 
