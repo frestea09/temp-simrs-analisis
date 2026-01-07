@@ -53,7 +53,7 @@ def launch_checkin_portal(half_screen_width: int, screen_height: int):
             config.CHROME_EXECUTABLE,
             window_position,
             window_size,
-            "--new-window",
+            "--new-tab",
             config.CHECKIN_URL,
         ]
     )
@@ -110,7 +110,7 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
             config.CHROME_EXECUTABLE,
             window_position,
             window_size,
-            "--new-window",
+            "--new-tab",
             sep_url,
         ]
     )
