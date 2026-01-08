@@ -83,6 +83,8 @@ def _fill_member_id(member_id: str):
     for _ in range(4):
         pyautogui.press("tab")
     pyautogui.press("space")
+    pyautogui.hotkey("ctrl", "a")
+    pyautogui.press("backspace")
     pyautogui.write(member_id)
     pyautogui.sleep(config.FORM_FILL_DELAY_SECONDS)
     if config.BPJS_CLOSE_AFTER_FILL:
@@ -127,8 +129,12 @@ def _fill_registration_details(registration: Optional[dict], patient: Optional[d
         # pyautogui.press("tab")
         # pyautogui.press("tab")
         # pyautogui.press("space")
+        pyautogui.hotkey("ctrl", "a")
+        pyautogui.press("backspace")
         pyautogui.write(str(bpjs_number))
     elif identity_value:
+        pyautogui.hotkey("ctrl", "a")
+        pyautogui.press("backspace")
         pyautogui.write(str(bpjs_number))
     pyautogui.sleep(config.FORM_FILL_DELAY_SECONDS)
     if config.BPJS_CLOSE_AFTER_FILL:
