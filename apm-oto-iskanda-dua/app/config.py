@@ -35,12 +35,15 @@ DB_CONFIG = {
 
 DEFAULT_SETTINGS = {
     "BPJS_EXECUTABLE": r"C:\\Program Files (x86)\\BPJS Kesehatan\\Aplikasi Sidik Jari BPJS Kesehatan\\After.exe",
+    "BPJS_WINDOW_TITLE": "Aplikasi Registrasi Sidik Jari",
     "BPJS_USERNAME": "1002r006th",
     "BPJS_PASSWORD": "#Bandung28",
     "LOGIN_DELAY_SECONDS": 0.8,
     "POST_LOGIN_DELAY_SECONDS": 0.6,
     "BPJS_STANDBY_SECONDS": 3.0,
     "FORM_FILL_DELAY_SECONDS": 2.5,
+    "BPJS_LAUNCH_DELAY_SECONDS": 1.5,
+    "BPJS_CLOSE_AFTER_FILL": False,
     "CHROME_EXECUTABLE": r"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
     "CHECKIN_URL": "http://172.168.1.175:8070",
     "SEP_CHECK_URL": "http://172.168.1.175:8070/reservasi/cek",
@@ -87,12 +90,15 @@ def save_user_settings(settings: Dict[str, str | float]) -> None:
 
 def _apply_settings(settings: Dict[str, str | float]) -> None:
     global BPJS_EXECUTABLE
+    global BPJS_WINDOW_TITLE
     global BPJS_USERNAME
     global BPJS_PASSWORD
     global LOGIN_DELAY_SECONDS
     global POST_LOGIN_DELAY_SECONDS
     global BPJS_STANDBY_SECONDS
     global FORM_FILL_DELAY_SECONDS
+    global BPJS_LAUNCH_DELAY_SECONDS
+    global BPJS_CLOSE_AFTER_FILL
     global CHROME_EXECUTABLE
     global CHECKIN_URL
     global SEP_CHECK_URL
@@ -108,12 +114,15 @@ def _apply_settings(settings: Dict[str, str | float]) -> None:
     global API_TIMEOUT_SECONDS
 
     BPJS_EXECUTABLE = settings["BPJS_EXECUTABLE"]
+    BPJS_WINDOW_TITLE = settings["BPJS_WINDOW_TITLE"]
     BPJS_USERNAME = settings["BPJS_USERNAME"]
     BPJS_PASSWORD = settings["BPJS_PASSWORD"]
     LOGIN_DELAY_SECONDS = float(settings["LOGIN_DELAY_SECONDS"])
     POST_LOGIN_DELAY_SECONDS = float(settings["POST_LOGIN_DELAY_SECONDS"])
     BPJS_STANDBY_SECONDS = float(settings["BPJS_STANDBY_SECONDS"])
     FORM_FILL_DELAY_SECONDS = float(settings["FORM_FILL_DELAY_SECONDS"])
+    BPJS_LAUNCH_DELAY_SECONDS = float(settings["BPJS_LAUNCH_DELAY_SECONDS"])
+    BPJS_CLOSE_AFTER_FILL = bool(settings["BPJS_CLOSE_AFTER_FILL"])
     CHROME_EXECUTABLE = settings["CHROME_EXECUTABLE"]
     CHECKIN_URL = settings["CHECKIN_URL"]
     SEP_CHECK_URL = settings["SEP_CHECK_URL"]

@@ -1,5 +1,6 @@
 """Automation helpers for BPJS fingerprint application."""
 import subprocess
+from pathlib import Path
 from typing import Optional
 
 import pyautogui
@@ -12,9 +13,51 @@ class BpjsAutomationError(Exception):
     """Raised when automation cannot proceed due to missing data."""
 
 
+def _bpjs_executable_name() -> str:
+    executable = Path(config.BPJS_EXECUTABLE)
+    return executable.name if executable.name else "After.exe"
+
+
+def _is_bpjs_running() -> bool:
+    exe_name = _bpjs_executable_name()
+    try:
+        result = subprocess.run(
+            ["tasklist", "/FI", f"IMAGENAME eq {exe_name}"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except FileNotFoundError:
+        return False
+    return exe_name.lower() in result.stdout.lower()
+
+
+def _focus_bpjs_window() -> bool:
+    try:
+        windows = pyautogui.getWindowsWithTitle(config.BPJS_WINDOW_TITLE)
+    except Exception:  # noqa: BLE001
+        return False
+    for window in windows:
+        if not window:
+            continue
+        if getattr(window, "isMinimized", False):
+            window.restore()
+        window.activate()
+        pyautogui.sleep(0.4)
+        return True
+    return False
+
+
 def _launch_application():
+    if _is_bpjs_running():
+        if not _focus_bpjs_window():
+            _focus_window()
+        return False
+
     subprocess.Popen([config.BPJS_EXECUTABLE])
-    pyautogui.sleep(1.5)
+    pyautogui.sleep(config.BPJS_LAUNCH_DELAY_SECONDS)
+    _focus_bpjs_window()
+    return True
 
 
 def _login():
@@ -29,6 +72,8 @@ def _login():
 
 
 def _focus_window():
+    if _focus_bpjs_window():
+        return
     screen_width, screen_height = pyautogui.size()
     pyautogui.click(screen_width // 2, screen_height // 2)
 
@@ -40,7 +85,8 @@ def _fill_member_id(member_id: str):
     pyautogui.press("space")
     pyautogui.write(member_id)
     pyautogui.sleep(config.FORM_FILL_DELAY_SECONDS)
-    pyautogui.hotkey("alt", "f4")
+    if config.BPJS_CLOSE_AFTER_FILL:
+        pyautogui.hotkey("alt", "f4")
 
 
 def _resolve_bpjs_number(registration: Optional[dict], patient: Optional[dict]) -> Optional[str]:
@@ -85,7 +131,8 @@ def _fill_registration_details(registration: Optional[dict], patient: Optional[d
     elif identity_value:
         pyautogui.write(str(bpjs_number))
     pyautogui.sleep(config.FORM_FILL_DELAY_SECONDS)
-    pyautogui.hotkey("alt", "f4")
+    if config.BPJS_CLOSE_AFTER_FILL:
+        pyautogui.hotkey("alt", "f4")
 
 
 def _extract_nik_from_patient(patient: dict) -> Optional[str]:
@@ -107,8 +154,9 @@ def open_bpjs_for_member_id(no_rm: str):
     if not bpjs_number:
         raise BpjsAutomationError("Data BPJS untuk pasien tidak tersedia.")
 
-    _launch_application()
-    _login()
+    launched = _launch_application()
+    if launched:
+        _login()
     _fill_member_id(str(bpjs_number))
 
 
@@ -131,8 +179,9 @@ def open_bpjs_for_identifier(identifier: str):
     if not nik and patient:
         nik = _extract_nik_from_patient(patient)
 
-    _launch_application()
-    _login()
+    launched = _launch_application()
+    if launched:
+        _login()
 
     if registration:
         _fill_registration_details(registration, patient)
