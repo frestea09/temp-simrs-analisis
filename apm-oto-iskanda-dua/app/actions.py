@@ -6,6 +6,8 @@ import threading
 import tkinter as tk
 from tkinter import messagebox
 
+import pyautogui
+
 from app import bpjs, config, database
 
 
@@ -59,6 +61,23 @@ def launch_checkin_portal(half_screen_width: int, screen_height: int):
     )
 
 
+def _focus_chrome_window() -> bool:
+    for title in ("Google Chrome", "Chrome"):
+        try:
+            windows = pyautogui.getWindowsWithTitle(title)
+        except Exception:  # noqa: BLE001
+            windows = []
+        for window in windows:
+            if not window:
+                continue
+            if getattr(window, "isMinimized", False):
+                window.restore()
+            window.activate()
+            pyautogui.sleep(0.3)
+            return True
+    return False
+
+
 def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int):
     """
     Open Chrome directly to the SEP page for the latest booking tied to the identifier.
@@ -103,6 +122,12 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
     sep_path = "reservasi/sep-kontrol" if is_control else "reservasi/sep"
     sep_url = f"{config.SEP_BASE_URL.rstrip('/')}/{sep_path}/{registration_id}/{no_rm or ''}"
 
+    if _focus_chrome_window():
+        pyautogui.hotkey("ctrl", "l")
+        pyautogui.write(sep_url)
+        pyautogui.press("enter")
+        return
+
     window_position = f"--window-position={half_screen_width},0"
     window_size = f"--window-size={half_screen_width},{screen_height}"
     subprocess.Popen(
@@ -110,7 +135,7 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
             config.CHROME_EXECUTABLE,
             window_position,
             window_size,
-            "--new-tab",
+            "--new-window",
             sep_url,
         ]
     )
