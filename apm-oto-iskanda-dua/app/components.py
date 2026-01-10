@@ -44,7 +44,7 @@ def create_keypad(parent: tk.Frame, append_digit, clear_input, delete_last):
     return buttons
 
 
-def create_action_buttons(parent: tk.Frame, on_bpjs, on_portal, on_frista, on_sep):
+def create_action_buttons(parent: tk.Frame, on_bpjs, on_frista, on_sep):
     action_frame = tk.Frame(parent, bg="#ffffff")
     action_frame.pack(pady=16, fill=tk.BOTH, expand=True)
     action_frame.columnconfigure(0, weight=1)
@@ -56,13 +56,8 @@ def create_action_buttons(parent: tk.Frame, on_bpjs, on_portal, on_frista, on_se
     )
     bpjs_button.grid(row=0, column=0, padx=8, pady=6, sticky="ew")
 
-    portal_button = tk.Button(
-        action_frame, text="Sistem Pendaftaran", bg="#fff2b2", command=on_portal, **button_opts, width=1
-    )
-    portal_button.grid(row=1, column=0, padx=8, pady=6, sticky="ew")
-
     frista_button = tk.Button(action_frame, text="Frista", bg="#e8d2ff", command=on_frista, **button_opts, width=1)
-    frista_button.grid(row=2, column=0, padx=8, pady=6, sticky="ew")
+    frista_button.grid(row=1, column=0, padx=8, pady=6, sticky="ew")
     sep_button = tk.Button(action_frame, text="Cetak SEP", bg="#cde4ff", command=on_sep, **button_opts, width=1)
-    sep_button.grid(row=3, column=0, padx=8, pady=6, sticky="ew")
-    return bpjs_button, portal_button, frista_button, sep_button
+    sep_button.grid(row=2, column=0, padx=8, pady=6, sticky="ew")
+    return bpjs_button, frista_button, sep_button

@@ -47,20 +47,6 @@ def _is_control_registration(registration: dict) -> bool | None:
     return None
 
 
-def launch_checkin_portal(half_screen_width: int, screen_height: int):
-    window_position = f"--window-position={half_screen_width},0"
-    window_size = f"--window-size={half_screen_width},{screen_height}"
-    subprocess.Popen(
-        [
-            config.CHROME_EXECUTABLE,
-            window_position,
-            window_size,
-            "--new-tab",
-            config.CHECKIN_URL,
-        ]
-    )
-
-
 def _focus_chrome_window() -> bool:
     for title in ("Google Chrome", "Chrome"):
         try:
@@ -78,6 +64,26 @@ def _focus_chrome_window() -> bool:
     return False
 
 
+def _open_chrome_url(url: str, half_screen_width: int, screen_height: int):
+    if _focus_chrome_window():
+        pyautogui.hotkey("ctrl", "l")
+        pyautogui.write(url)
+        pyautogui.press("enter")
+        return
+
+    window_position = f"--window-position={half_screen_width},0"
+    window_size = f"--window-size={half_screen_width},{screen_height}"
+    subprocess.Popen(
+        [
+            config.CHROME_EXECUTABLE,
+            window_position,
+            window_size,
+            "--new-window",
+            url,
+        ]
+    )
+
+
 def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int):
     """
     Open Chrome directly to the SEP page for the latest booking tied to the identifier.
@@ -86,12 +92,24 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
 
     registration = database.fetch_latest_registration(identifier)
     if not registration:
-        raise ValueError("Reservasi/booking tidak ditemukan untuk identitas tersebut.")
+        messagebox.showwarning(
+            "Reservasi Tidak Ditemukan",
+            "Reservasi tidak ditemukan. Membuka halaman cek baru.",
+        )
+        fallback_url = f"{config.SEP_BASE_URL.rstrip('/')}/reservasi/cek-baru"
+        _open_chrome_url(fallback_url, half_screen_width, screen_height)
+        return
 
     registration_id = registration.get("id")
     no_rm = registration.get("no_rm")
     if not registration_id:
-        raise ValueError("Data booking tidak lengkap untuk diarahkan ke halaman SEP.")
+        messagebox.showwarning(
+            "Reservasi Tidak Lengkap",
+            "Data reservasi tidak lengkap. Membuka halaman cek baru.",
+        )
+        fallback_url = f"{config.SEP_BASE_URL.rstrip('/')}/reservasi/cek-baru"
+        _open_chrome_url(fallback_url, half_screen_width, screen_height)
+        return
 
     visit_date = database.extract_registration_date(registration)
     today = date.today()
@@ -121,24 +139,7 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
 
     sep_path = "reservasi/sep-kontrol" if is_control else "reservasi/sep"
     sep_url = f"{config.SEP_BASE_URL.rstrip('/')}/{sep_path}/{registration_id}/{no_rm or ''}"
-
-    if _focus_chrome_window():
-        pyautogui.hotkey("ctrl", "l")
-        pyautogui.write(sep_url)
-        pyautogui.press("enter")
-        return
-
-    window_position = f"--window-position={half_screen_width},0"
-    window_size = f"--window-size={half_screen_width},{screen_height}"
-    subprocess.Popen(
-        [
-            config.CHROME_EXECUTABLE,
-            window_position,
-            window_size,
-            "--new-window",
-            sep_url,
-        ]
-    )
+    _open_chrome_url(sep_url, half_screen_width, screen_height)
 
 
 def run_action(root: tk.Tk, set_loading_state, action, message: str, buttons: list[tk.Button], on_error=None):

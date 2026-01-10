@@ -25,13 +25,11 @@ class PatientApp:
         )
         (
             self.open_bpjs_button,
-            self.open_checkin_portal_button,
             self.open_frista_button,
             self.open_sep_button,
         ) = components.create_action_buttons(
             right_panel,
             self.open_bpjs_by_identifier,
-            self.open_checkin_portal,
             self.open_frista_application,
             self.open_sep_flow,
         )
@@ -69,15 +67,6 @@ class PatientApp:
             messagebox.showwarning("Input Error", "Masukkan No RM, NIK, atau BPJS terlebih dahulu.")
             return
         self._run_bpjs_action(lambda: bpjs.open_bpjs_for_identifier(identifier), "Membuka aplikasi BPJS...")
-
-    def open_checkin_portal(self):
-        actions.run_action(
-            self.root,
-            self._set_loading_state,
-            lambda: actions.launch_checkin_portal(self.half_screen_width, self.screen_height),
-            "Membuka sistem pendaftaran...",
-            self._action_buttons,
-        )
 
     def open_frista_application(self):
         identifier = self.no_rm_var.get().strip()
@@ -127,7 +116,6 @@ class PatientApp:
     def _action_buttons(self):
         return [
             self.open_bpjs_button,
-            self.open_checkin_portal_button,
             self.open_frista_button,
             self.open_sep_button,
         ]
