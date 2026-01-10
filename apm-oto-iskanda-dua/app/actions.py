@@ -6,6 +6,8 @@ import threading
 import tkinter as tk
 from tkinter import messagebox
 
+import pyautogui
+
 from app import bpjs, config, database
 
 
@@ -45,7 +47,30 @@ def _is_control_registration(registration: dict) -> bool | None:
     return None
 
 
-def launch_checkin_portal(half_screen_width: int, screen_height: int):
+def _focus_chrome_window() -> bool:
+    for title in ("Google Chrome", "Chrome"):
+        try:
+            windows = pyautogui.getWindowsWithTitle(title)
+        except Exception:  # noqa: BLE001
+            windows = []
+        for window in windows:
+            if not window:
+                continue
+            if getattr(window, "isMinimized", False):
+                window.restore()
+            window.activate()
+            pyautogui.sleep(0.3)
+            return True
+    return False
+
+
+def _open_url_in_chrome(url: str, half_screen_width: int, screen_height: int):
+    if _focus_chrome_window():
+        pyautogui.hotkey("ctrl", "l")
+        pyautogui.write(url)
+        pyautogui.press("enter")
+        return
+
     window_position = f"--window-position={half_screen_width},0"
     window_size = f"--window-size={half_screen_width},{screen_height}"
     subprocess.Popen(
@@ -53,8 +78,8 @@ def launch_checkin_portal(half_screen_width: int, screen_height: int):
             config.CHROME_EXECUTABLE,
             window_position,
             window_size,
-            "--new-tab",
-            config.CHECKIN_URL,
+            "--new-window",
+            url,
         ]
     )
 
@@ -67,7 +92,9 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
 
     registration = database.fetch_latest_registration(identifier)
     if not registration:
-        raise ValueError("Reservasi/booking tidak ditemukan untuk identitas tersebut.")
+        fallback_url = f"{config.SEP_BASE_URL.rstrip('/')}/reservasi/cek-baru"
+        _open_url_in_chrome(fallback_url, half_screen_width, screen_height)
+        return
 
     registration_id = registration.get("id")
     no_rm = registration.get("no_rm")
@@ -103,17 +130,7 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
     sep_path = "reservasi/sep-kontrol" if is_control else "reservasi/sep"
     sep_url = f"{config.SEP_BASE_URL.rstrip('/')}/{sep_path}/{registration_id}/{no_rm or ''}"
 
-    window_position = f"--window-position={half_screen_width},0"
-    window_size = f"--window-size={half_screen_width},{screen_height}"
-    subprocess.Popen(
-        [
-            config.CHROME_EXECUTABLE,
-            window_position,
-            window_size,
-            "--new-tab",
-            sep_url,
-        ]
-    )
+    _open_url_in_chrome(sep_url, half_screen_width, screen_height)
 
 
 def run_action(root: tk.Tk, set_loading_state, action, message: str, buttons: list[tk.Button], on_error=None):

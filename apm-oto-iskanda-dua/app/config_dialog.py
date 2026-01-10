@@ -40,18 +40,22 @@ def open_config_dialog(root: tk.Tk):
 
     entries = {
         "BPJS Executable": tk.StringVar(value=config.BPJS_EXECUTABLE),
+        "BPJS Window Title": tk.StringVar(value=config.BPJS_WINDOW_TITLE),
         "BPJS Username": tk.StringVar(value=config.BPJS_USERNAME),
         "BPJS Password": tk.StringVar(value=config.BPJS_PASSWORD),
         "Standby BPJS Setelah Login (detik)": tk.StringVar(value=str(config.BPJS_STANDBY_SECONDS)),
         "Delay Isi Form BPJS (detik)": tk.StringVar(value=str(config.FORM_FILL_DELAY_SECONDS)),
+        "Penundaan Launch BPJS (detik)": tk.StringVar(value=str(config.BPJS_LAUNCH_DELAY_SECONDS)),
         "Chrome Executable": tk.StringVar(value=config.CHROME_EXECUTABLE),
         "URL Sistem Pendaftaran": tk.StringVar(value=config.CHECKIN_URL),
         "URL Cek SEP": tk.StringVar(value=config.SEP_CHECK_URL),
         "URL Dasar Aplikasi APM": tk.StringVar(value=config.SEP_BASE_URL),
         "Frista Executable": tk.StringVar(value=config.FRISTA_EXECUTABLE),
+        "Frista Window Title": tk.StringVar(value=config.FRISTA_WINDOW_TITLE),
         "Frista Username": tk.StringVar(value=config.FRISTA_USERNAME),
         "Frista Password": tk.StringVar(value=config.FRISTA_PASSWORD),
         "Standby Frista Setelah Login (detik)": tk.StringVar(value=str(config.FRISTA_STANDBY_SECONDS)),
+        "Penundaan Launch Frista (detik)": tk.StringVar(value=str(config.FRISTA_LAUNCH_DELAY_SECONDS)),
         "Penundaan Login Frista (detik)": tk.StringVar(value=str(config.FRISTA_LOGIN_DELAY_SECONDS)),
     }
 
@@ -77,18 +81,22 @@ def open_config_dialog(root: tk.Tk):
         try:
             updated_settings = {
                 "BPJS_EXECUTABLE": _clean_path(entries["BPJS Executable"].get()),
+                "BPJS_WINDOW_TITLE": entries["BPJS Window Title"].get(),
                 "BPJS_USERNAME": entries["BPJS Username"].get(),
                 "BPJS_PASSWORD": entries["BPJS Password"].get(),
                 "BPJS_STANDBY_SECONDS": float(entries["Standby BPJS Setelah Login (detik)"].get()),
                 "FORM_FILL_DELAY_SECONDS": float(entries["Delay Isi Form BPJS (detik)"].get()),
+                "BPJS_LAUNCH_DELAY_SECONDS": float(entries["Penundaan Launch BPJS (detik)"].get()),
                 "CHROME_EXECUTABLE": _clean_path(entries["Chrome Executable"].get()),
                 "CHECKIN_URL": entries["URL Sistem Pendaftaran"].get(),
                 "SEP_CHECK_URL": entries["URL Cek SEP"].get(),
                 "SEP_BASE_URL": entries["URL Dasar Aplikasi APM"].get(),
                 "FRISTA_EXECUTABLE": _clean_path(entries["Frista Executable"].get()),
+                "FRISTA_WINDOW_TITLE": entries["Frista Window Title"].get(),
                 "FRISTA_USERNAME": entries["Frista Username"].get(),
                 "FRISTA_PASSWORD": entries["Frista Password"].get(),
                 "FRISTA_STANDBY_SECONDS": float(entries["Standby Frista Setelah Login (detik)"].get()),
+                "FRISTA_LAUNCH_DELAY_SECONDS": float(entries["Penundaan Launch Frista (detik)"].get()),
                 "FRISTA_LOGIN_DELAY_SECONDS": float(entries["Penundaan Login Frista (detik)"].get()),
             }
         except ValueError:
