@@ -1,5 +1,6 @@
 """Automation helpers for launching and filling the Frista application."""
 import subprocess
+from pathlib import Path
 
 import pyautogui
 from tkinter import messagebox
@@ -39,19 +40,61 @@ def _resolve_nik(identifier: str) -> str:
     return nik
 
 
-def open_frista_for_identifier(identifier: str):
-    """Launch Frista and fill credentials plus the resolved NIK."""
+def _frista_executable_name() -> str:
+    executable = Path(config.FRISTA_EXECUTABLE)
+    return executable.name if executable.name else "Frista.exe"
 
-    if not identifier:
-        raise FristaAutomationError("Masukkan NIK atau identitas pasien terlebih dahulu.")
 
-    nik = _resolve_nik(identifier)
+def _is_frista_running() -> bool:
+    exe_name = _frista_executable_name()
+    try:
+        result = subprocess.run(
+            ["tasklist", "/FI", f"IMAGENAME eq {exe_name}"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except FileNotFoundError:
+        return False
+    return exe_name.lower() in result.stdout.lower()
+
+
+def _focus_frista_window() -> bool:
+    try:
+        windows = pyautogui.getWindowsWithTitle("Frista")
+    except Exception:  # noqa: BLE001
+        return False
+    for window in windows:
+        if not window:
+            continue
+        if getattr(window, "isMinimized", False):
+            window.restore()
+        window.activate()
+        pyautogui.sleep(0.4)
+        return True
+    return False
+
+
+def _focus_frista_input():
+    if _focus_frista_window():
+        return
+    screen_width, screen_height = pyautogui.size()
+    pyautogui.click(screen_width // 2, screen_height // 2)
+
+
+def _launch_frista() -> bool:
+    if _is_frista_running():
+        _focus_frista_window()
+        return False
 
     try:
         subprocess.Popen([config.FRISTA_EXECUTABLE])
     except FileNotFoundError as exc:
         raise FristaAutomationError("Executable Frista tidak ditemukan.") from exc
+    return True
 
+
+def _login_frista():
     pyautogui.sleep(config.FRISTA_LOGIN_DELAY_SECONDS)
     pyautogui.write(config.FRISTA_USERNAME)
     pyautogui.press("tab")
@@ -61,8 +104,20 @@ def open_frista_for_identifier(identifier: str):
 
     pyautogui.sleep(config.FRISTA_STANDBY_SECONDS)
 
-    screen_width, screen_height = pyautogui.size()
-    pyautogui.click(screen_width // 2, screen_height // 2)
+
+def open_frista_for_identifier(identifier: str):
+    """Launch Frista and fill credentials plus the resolved NIK."""
+
+    if not identifier:
+        raise FristaAutomationError("Masukkan NIK atau identitas pasien terlebih dahulu.")
+
+    nik = _resolve_nik(identifier)
+
+    launched = _launch_frista()
+    if launched:
+        _login_frista()
+
+    _focus_frista_input()
     pyautogui.write(nik)
 
 
