@@ -1,5 +1,5 @@
 """API helpers for patient lookup."""
-from datetime import date, datetime
+from datetime import date, datetime, time
 import logging
 from pathlib import Path
 from typing import Optional, Tuple
@@ -122,7 +122,7 @@ def fetch_latest_booking(identifier: str) -> Optional[Tuple[str, str, int]]:
     The identifier can be No RM, NIK (16 digit), or nomor BPJS. The query prioritizes No RM,
     then NIK, then BPJS number.
     """
-    registration = _fetch_registration(identifier)
+    registration = fetch_latest_registration(identifier)
     if not registration:
         return None
     return (
@@ -137,7 +137,28 @@ def fetch_latest_registration(identifier: str) -> Optional[RegistrationRow]:
     """
     Return the latest registration row (entire tuple) matching No RM, NIK, or nomor BPJS.
     """
-    return _fetch_registration(identifier)
+    registrations = fetch_registrations(identifier)
+    return _select_latest_registration(registrations)
+
+
+def fetch_registration_for_date(identifier: str, target_date: date) -> Optional[RegistrationRow]:
+    """Return the registration matching the identifier and visit date."""
+
+    registrations = fetch_registrations(identifier)
+    if not registrations:
+        return None
+    return _select_registration_for_date(registrations, target_date)
+
+
+def fetch_registrations(identifier: str) -> list[RegistrationRow]:
+    """Fetch registrations matching the identifier (list endpoint when available)."""
+
+    if not identifier:
+        return []
+    endpoint = config.API_REGISTRATION_LIST_ENDPOINT or config.API_REGISTRATION_ENDPOINT
+    url = _build_url(endpoint, identifier)
+    payload = _fetch_data(url)
+    return _normalize_registrations(payload)
 
 
 def _fetch_registration(identifier: str) -> Optional[RegistrationRow]:
@@ -170,3 +191,59 @@ def extract_registration_date(registration: RegistrationRow) -> Optional[date]:
             except ValueError:
                 continue
     return None
+
+
+def _normalize_registrations(payload: object) -> list[RegistrationRow]:
+    if payload is None:
+        return []
+    if isinstance(payload, list):
+        return [item for item in payload if isinstance(item, dict)]
+    if isinstance(payload, dict):
+        return [payload]
+    return []
+
+
+def _parse_datetime_value(value: object) -> Optional[datetime]:
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, date):
+        return datetime.combine(value, time.min)
+    if isinstance(value, str) and value:
+        for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+            try:
+                return datetime.strptime(value, fmt)
+            except ValueError:
+                continue
+    return None
+
+
+def _registration_sort_key(registration: RegistrationRow) -> tuple:
+    visit_date = extract_registration_date(registration) or date.min
+    created_at = _parse_datetime_value(
+        registration.get("created_at") or registration.get("updated_at")
+    ) or datetime.min
+    try:
+        reg_id = int(registration.get("id"))
+    except (TypeError, ValueError):
+        reg_id = -1
+    return (visit_date, created_at, reg_id)
+
+
+def _select_latest_registration(registrations: list[RegistrationRow]) -> Optional[RegistrationRow]:
+    if not registrations:
+        return None
+    return max(registrations, key=_registration_sort_key)
+
+
+def _select_registration_for_date(
+    registrations: list[RegistrationRow],
+    target_date: date,
+) -> Optional[RegistrationRow]:
+    matches = [
+        registration
+        for registration in registrations
+        if extract_registration_date(registration) == target_date
+    ]
+    if not matches:
+        return None
+    return max(matches, key=_registration_sort_key)
