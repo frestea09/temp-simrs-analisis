@@ -29,6 +29,7 @@ Contoh `user_config.json` minimal:
   "API_BASE_URL": "http://172.168.1.175:8070/api",
   "API_PATIENT_ENDPOINT": "/apm-oto/v1/patients/{identifier}",
   "API_REGISTRATION_ENDPOINT": "/apm-oto/v1/registrations/latest/{identifier}",
+  "API_REGISTRATION_LIST_ENDPOINT": "/apm-oto/v1/registrations/{identifier}",
   "API_TIMEOUT_SECONDS": 10,
   "CHROME_EXECUTABLE": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
   "CHECKIN_URL": "http://172.168.1.175:8070",
@@ -40,6 +41,7 @@ Field penting:
 - `API_BASE_URL`: base URL API vendor.
 - `API_PATIENT_ENDPOINT`: template endpoint pasien, wajib ada `{identifier}`.
 - `API_REGISTRATION_ENDPOINT`: template endpoint registrasi terbaru, wajib ada `{identifier}`.
+- `API_REGISTRATION_LIST_ENDPOINT`: template endpoint daftar registrasi pasien (opsional, dipakai untuk memilih tgl periksa hari ini).
 - `API_TIMEOUT_SECONDS`: timeout request HTTP.
 
 ## Menjalankan Aplikasi
