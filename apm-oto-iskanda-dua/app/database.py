@@ -47,6 +47,15 @@ def _build_url(endpoint_template: str, identifier: str) -> str:
     return f"{base}/{endpoint}"
 
 
+def _build_url_with_date(endpoint_template: str, identifier: str, visit_date: date) -> str:
+    base = _normalized_base_url().rstrip("/")
+    endpoint = endpoint_template.format(
+        identifier=identifier,
+        date=visit_date.strftime("%Y-%m-%d"),
+    ).lstrip("/")
+    return f"{base}/{endpoint}"
+
+
 def _normalized_base_url() -> str:
     base_url = config.API_BASE_URL.strip()
     if not base_url:
@@ -144,6 +153,9 @@ def fetch_latest_registration(identifier: str) -> Optional[RegistrationRow]:
 def fetch_registration_for_date(identifier: str, target_date: date) -> Optional[RegistrationRow]:
     """Return the registration matching the identifier and visit date."""
 
+    registration = _fetch_registration_by_date(identifier, target_date)
+    if registration:
+        return registration
     registrations = fetch_registrations(identifier)
     if not registrations:
         return None
@@ -165,6 +177,17 @@ def _fetch_registration(identifier: str) -> Optional[RegistrationRow]:
     if not identifier:
         return None
     url = _build_url(config.API_REGISTRATION_ENDPOINT, identifier)
+    return _fetch_data(url)
+
+
+def _fetch_registration_by_date(identifier: str, target_date: date) -> Optional[RegistrationRow]:
+    if not identifier or not config.API_REGISTRATION_BY_DATE_ENDPOINT:
+        return None
+    url = _build_url_with_date(
+        config.API_REGISTRATION_BY_DATE_ENDPOINT,
+        identifier,
+        target_date,
+    )
     return _fetch_data(url)
 
 

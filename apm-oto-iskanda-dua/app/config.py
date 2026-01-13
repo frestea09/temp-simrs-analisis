@@ -57,6 +57,7 @@ DEFAULT_SETTINGS = {
     "API_PATIENT_ENDPOINT": "/apm-oto/v1/patients/{identifier}",
     "API_REGISTRATION_ENDPOINT": "/apm-oto/v1/registrations/latest/{identifier}",
     "API_REGISTRATION_LIST_ENDPOINT": "",
+    "API_REGISTRATION_BY_DATE_ENDPOINT": "",
     "API_TIMEOUT_SECONDS": 10,
 }
 
@@ -113,6 +114,7 @@ def _apply_settings(settings: Dict[str, str | float]) -> None:
     global API_PATIENT_ENDPOINT
     global API_REGISTRATION_ENDPOINT
     global API_REGISTRATION_LIST_ENDPOINT
+    global API_REGISTRATION_BY_DATE_ENDPOINT
     global API_TIMEOUT_SECONDS
 
     BPJS_EXECUTABLE = settings["BPJS_EXECUTABLE"]
@@ -138,6 +140,7 @@ def _apply_settings(settings: Dict[str, str | float]) -> None:
     API_PATIENT_ENDPOINT = settings["API_PATIENT_ENDPOINT"]
     API_REGISTRATION_ENDPOINT = settings["API_REGISTRATION_ENDPOINT"]
     API_REGISTRATION_LIST_ENDPOINT = settings.get("API_REGISTRATION_LIST_ENDPOINT", "")
+    API_REGISTRATION_BY_DATE_ENDPOINT = settings.get("API_REGISTRATION_BY_DATE_ENDPOINT", "")
     API_TIMEOUT_SECONDS = float(settings["API_TIMEOUT_SECONDS"])
 
 
