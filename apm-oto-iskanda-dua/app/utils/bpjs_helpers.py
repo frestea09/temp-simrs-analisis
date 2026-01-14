@@ -75,7 +75,7 @@ def login() -> None:
 
 def prepare_member_field() -> None:
     focus_window()
-    for _ in range(4):
+    for _ in range(3):
         pyautogui.press("tab")
     pyautogui.press("space")
 
