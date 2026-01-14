@@ -47,6 +47,7 @@ DEFAULT_SETTINGS = {
     "CHROME_EXECUTABLE": r"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
     "CHECKIN_URL": "http://172.168.1.175:8070",
     "SEP_CHECK_URL": "http://172.168.1.175:8070/reservasi/cek",
+    "SEP_CHECK_NEW_BASE_URL": "http://172.168.1.175:8070",
     "SEP_BASE_URL": "http://172.168.1.175:8070",
     "FRISTA_EXECUTABLE": r"C:\\Users\\ilman\\Documents\\Frista\\Frista.exe",
     "FRISTA_USERNAME": "1002r006th",
@@ -102,6 +103,7 @@ def _apply_settings(settings: Dict[str, str | float]) -> None:
     global CHROME_EXECUTABLE
     global CHECKIN_URL
     global SEP_CHECK_URL
+    global SEP_CHECK_NEW_BASE_URL
     global SEP_BASE_URL
     global FRISTA_EXECUTABLE
     global FRISTA_USERNAME
@@ -126,6 +128,7 @@ def _apply_settings(settings: Dict[str, str | float]) -> None:
     CHROME_EXECUTABLE = settings["CHROME_EXECUTABLE"]
     CHECKIN_URL = settings["CHECKIN_URL"]
     SEP_CHECK_URL = settings["SEP_CHECK_URL"]
+    SEP_CHECK_NEW_BASE_URL = settings["SEP_CHECK_NEW_BASE_URL"]
     SEP_BASE_URL = settings["SEP_BASE_URL"]
     FRISTA_EXECUTABLE = settings["FRISTA_EXECUTABLE"]
     FRISTA_USERNAME = settings["FRISTA_USERNAME"]
