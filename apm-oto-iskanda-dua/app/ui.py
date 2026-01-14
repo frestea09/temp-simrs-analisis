@@ -38,6 +38,7 @@ class PatientApp:
             right_panel, self.loading_var
         )
         status_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=(8, 0))
+        layout.create_footer(self.root)
 
         self._create_menu()
         self.refresh_status()
