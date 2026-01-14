@@ -84,6 +84,11 @@ def _open_chrome_url(url: str, half_screen_width: int, screen_height: int):
     )
 
 
+def _build_cek_baru_url() -> str:
+    base_url = config.SEP_CHECK_NEW_BASE_URL or config.SEP_BASE_URL
+    return f"{base_url.rstrip('/')}/reservasi/cek-baru"
+
+
 def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int):
     """
     Open Chrome directly to the SEP page for the latest booking tied to the identifier.
@@ -96,8 +101,7 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
             "Reservasi Tidak Ditemukan",
             "Reservasi tidak ditemukan. Membuka halaman cek baru.",
         )
-        fallback_url = f"{config.SEP_BASE_URL.rstrip('/')}/reservasi/cek-baru"
-        _open_chrome_url(fallback_url, half_screen_width, screen_height)
+        _open_chrome_url(_build_cek_baru_url(), half_screen_width, screen_height)
         return
 
     registration_id = registration.get("id")
@@ -107,8 +111,7 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
             "Reservasi Tidak Lengkap",
             "Data reservasi tidak lengkap. Membuka halaman cek baru.",
         )
-        fallback_url = f"{config.SEP_BASE_URL.rstrip('/')}/reservasi/cek-baru"
-        _open_chrome_url(fallback_url, half_screen_width, screen_height)
+        _open_chrome_url(_build_cek_baru_url(), half_screen_width, screen_height)
         return
 
     visit_date = database.extract_registration_date(registration)
