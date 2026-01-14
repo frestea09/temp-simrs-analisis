@@ -28,6 +28,7 @@ def setup_root(root: tk.Tk, logo_image: tk.PhotoImage) -> tuple[int, int]:
     root.geometry(f"{target_width}x{target_height}+0+0")
     root.minsize(max(target_width // 2, min(screen_width - 80, 600)), max(target_height // 2, 480))
     root.grid_rowconfigure(0, weight=1)
+    root.grid_rowconfigure(1, weight=0)
     root.grid_columnconfigure(0, weight=1)
     root.iconphoto(False, logo_image)
     return half_screen_width, screen_height
@@ -63,7 +64,7 @@ def create_input_section(parent: tk.Frame, logo_image: tk.PhotoImage, no_rm_var:
         parent,
         text=(
             "Masukkan No. Rekam Medis, NIK, atau nomor BPJS.\n"
-            "Tekan tombol sesuai kebutuhan, lalu ikuti langkah check-in."
+            "Tekan tombol sesuai kebutuhan (Fingerprint BPJS atau Cetak SEP), lalu ikuti langkah check-in."
         ),
         font=("Helvetica", 11),
         bg="#ffffff",
@@ -96,3 +97,17 @@ def create_status_section(parent: tk.Frame, loading_var: tk.StringVar):
     api_status = tk.Label(status_frame, text="API: Memeriksa...", fg="orange", bg="#ffffff", anchor="w")
     api_status.pack(pady=6, fill=tk.X)
     return status_frame, internet_status, api_status
+
+
+def create_footer(root: tk.Tk):
+    footer = tk.Frame(root, bg="#ffffff")
+    footer.grid(row=1, column=0, sticky="ew", pady=(10, 0))
+    footer.grid_columnconfigure(0, weight=1)
+    tk.Label(
+        footer,
+        text="Aplikasi ini dibuat oleh SIMRS Unit RSUD Oto Iskandar Dinata Soreang",
+        font=("Helvetica", 9),
+        bg="#ffffff",
+        fg="#6b6b6b",
+    ).grid(row=0, column=0, sticky="e")
+    return footer

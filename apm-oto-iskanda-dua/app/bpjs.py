@@ -1,154 +1,14 @@
 """Automation helpers for BPJS fingerprint application."""
-import subprocess
-from pathlib import Path
 from typing import Optional
 
-import pyautogui
 from tkinter import messagebox
 
-from app import config, database
+from app import database
+from app.utils import bpjs_helpers
 
 
 class BpjsAutomationError(Exception):
     """Raised when automation cannot proceed due to missing data."""
-
-
-def _bpjs_executable_name() -> str:
-    executable = Path(config.BPJS_EXECUTABLE)
-    return executable.name if executable.name else "After.exe"
-
-
-def _is_bpjs_running() -> bool:
-    exe_name = _bpjs_executable_name()
-    try:
-        result = subprocess.run(
-            ["tasklist", "/FI", f"IMAGENAME eq {exe_name}"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-    except FileNotFoundError:
-        return False
-    return exe_name.lower() in result.stdout.lower()
-
-
-def _focus_bpjs_window() -> bool:
-    try:
-        windows = pyautogui.getWindowsWithTitle(config.BPJS_WINDOW_TITLE)
-    except Exception:  # noqa: BLE001
-        return False
-    for window in windows:
-        if not window:
-            continue
-        if getattr(window, "isMinimized", False):
-            window.restore()
-        window.activate()
-        pyautogui.sleep(0.4)
-        return True
-    return False
-
-
-def _launch_application():
-    if _is_bpjs_running():
-        if not _focus_bpjs_window():
-            _focus_window()
-        return False
-
-    subprocess.Popen([config.BPJS_EXECUTABLE])
-    pyautogui.sleep(config.BPJS_LAUNCH_DELAY_SECONDS)
-    _focus_bpjs_window()
-    return True
-
-
-def _login():
-    pyautogui.sleep(config.LOGIN_DELAY_SECONDS)
-    pyautogui.write(config.BPJS_USERNAME)
-    pyautogui.press("tab")
-    pyautogui.write(config.BPJS_PASSWORD)
-    pyautogui.press("enter")
-    pyautogui.sleep(config.POST_LOGIN_DELAY_SECONDS)
-    pyautogui.press("enter")
-    pyautogui.sleep(config.BPJS_STANDBY_SECONDS)
-
-
-def _focus_window():
-    if _focus_bpjs_window():
-        return
-    screen_width, screen_height = pyautogui.size()
-    pyautogui.click(screen_width // 2, screen_height // 2)
-
-
-def _fill_member_id(member_id: str):
-    _focus_window()
-    for _ in range(4):
-        pyautogui.press("tab")
-    pyautogui.press("space")
-    pyautogui.hotkey("ctrl", "a")
-    pyautogui.press("backspace")
-    pyautogui.write(member_id)
-    pyautogui.sleep(config.FORM_FILL_DELAY_SECONDS)
-    if config.BPJS_CLOSE_AFTER_FILL:
-        pyautogui.hotkey("alt", "f4")
-
-
-def _resolve_bpjs_number(registration: Optional[dict], patient: Optional[dict]) -> Optional[str]:
-    if registration:
-        for key in ("nomorkartu", "nomor_bpjs", "no_jkn", "no_bpjs"):
-            value = registration.get(key)
-            if value:
-                return value
-    if patient:
-        for key in ("no_jkn", "nomor_bpjs", "no_bpjs", "nomorkartu"):
-            value = patient.get(key)
-            if value:
-                return value
-    return None
-
-
-def _resolve_identity_value(registration: Optional[dict], patient: Optional[dict]) -> Optional[str]:
-    if registration:
-        for key in ("nik", "no_rujukan", "nomor_rujukan"):
-            value = registration.get(key)
-            if value:
-                return value
-    if patient:
-        for key in ("nik", "no_rm"):
-            value = patient.get(key)
-            if value:
-                return value
-    return None
-
-
-def _fill_registration_details(registration: Optional[dict], patient: Optional[dict]):
-    _focus_window()
-    identity_value = _resolve_identity_value(registration, patient)
-    bpjs_number = _resolve_bpjs_number(registration, patient)
-    if bpjs_number:
-        # pyautogui.press("tab")
-        # pyautogui.press("tab")
-        # pyautogui.press("tab")
-        # pyautogui.press("tab")
-        # pyautogui.press("space")
-        pyautogui.hotkey("ctrl", "a")
-        pyautogui.press("backspace")
-        pyautogui.write(str(bpjs_number))
-    elif identity_value:
-        pyautogui.hotkey("ctrl", "a")
-        pyautogui.press("backspace")
-        pyautogui.write(str(bpjs_number))
-    pyautogui.sleep(config.FORM_FILL_DELAY_SECONDS)
-    if config.BPJS_CLOSE_AFTER_FILL:
-        pyautogui.hotkey("alt", "f4")
-
-
-def _extract_nik_from_patient(patient: dict) -> Optional[str]:
-    """Return the NIK field if available."""
-    if not patient:
-        return None
-    nik = patient.get("nik")
-    if isinstance(nik, str) and len(nik) == 16 and nik.isdigit():
-        return nik
-    return None
 
 
 def open_bpjs_for_member_id(no_rm: str):
@@ -156,14 +16,14 @@ def open_bpjs_for_member_id(no_rm: str):
     if not patient:
         raise BpjsAutomationError("Pasien dengan No RM tersebut tidak ditemukan.")
 
-    bpjs_number = _resolve_bpjs_number(None, patient)
+    bpjs_number = bpjs_helpers.resolve_bpjs_number(None, patient)
     if not bpjs_number:
         raise BpjsAutomationError("Data BPJS untuk pasien tidak tersedia.")
 
-    launched = _launch_application()
+    launched = bpjs_helpers.launch_application()
     if launched:
-        _login()
-    _fill_member_id(str(bpjs_number))
+        bpjs_helpers.login()
+    bpjs_helpers.fill_member_id(str(bpjs_number))
 
 
 def open_bpjs_for_identifier(identifier: str):
@@ -183,18 +43,30 @@ def open_bpjs_for_identifier(identifier: str):
     if len(identifier) == 16 and identifier.isdigit():
         nik = identifier
     if not nik and patient:
-        nik = _extract_nik_from_patient(patient)
+        nik = bpjs_helpers.extract_nik_from_patient(patient)
 
-    launched = _launch_application()
+    launched = bpjs_helpers.launch_application()
     if launched:
-        _login()
+        bpjs_helpers.login()
 
     if registration:
-        _fill_registration_details(registration, patient)
-    elif patient and _resolve_identity_value(None, patient):
-        _fill_registration_details(None, patient)
+        filled = bpjs_helpers.fill_registration_details(registration, patient)
+        if filled:
+            return
+        if nik:
+            bpjs_helpers.fill_member_id(nik)
+            return
+        raise BpjsAutomationError("Data BPJS atau identitas pasien tidak ditemukan.")
+    if patient and bpjs_helpers.resolve_identity_value(None, patient):
+        filled = bpjs_helpers.fill_registration_details(None, patient)
+        if filled:
+            return
+        if nik:
+            bpjs_helpers.fill_member_id(nik)
+            return
+        raise BpjsAutomationError("Data BPJS atau identitas pasien tidak ditemukan.")
     elif nik:
-        _fill_member_id(nik)
+        bpjs_helpers.fill_member_id(nik)
     else:
         raise BpjsAutomationError("NIK untuk pasien tidak ditemukan.")
 
