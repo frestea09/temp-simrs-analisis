@@ -22,28 +22,72 @@ CONTROL_HINT_KEYS = {
     "tipe_registrasi",
 }
 
+CONTROL_NUMERIC_VALUES = {
+    "0": False,
+    "1": False,
+    "2": True,
+    "3": True,
+    "4": True,
+}
+CONTROL_TRUE_VALUES = {"y", "yes", "true", "kontrol", "control", "postrawat", "post rawat"}
+CONTROL_FALSE_VALUES = {"n", "no", "false", "reguler", "regular", "baru", "rujukan baru"}
+CONTROL_REFERENCE_KEYS = {
+    "no_surat_kontrol",
+    "no_surkon",
+    "surat_kontrol",
+    "no_skdp",
+}
+CONTROL_REFERENCE_TOKENS = {"SKDP", "SURKON", "SURAT KONTROL"}
 
-def _is_control_registration(registration: dict) -> bool | None:
+
+def _interpret_control_value(value: object) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return None
+    text_value = str(value).strip().lower()
+    if not text_value:
+        return None
+    if text_value in CONTROL_TRUE_VALUES:
+        return True
+    if text_value in CONTROL_FALSE_VALUES:
+        return False
+    if text_value in CONTROL_NUMERIC_VALUES:
+        return CONTROL_NUMERIC_VALUES[text_value]
+    if "kontrol" in text_value:
+        return True
+    return None
+
+
+def _infer_control_from_registration(registration: dict) -> bool | None:
     if not registration:
         return None
     for key, value in registration.items():
         normalized_key = str(key).lower()
         if normalized_key not in CONTROL_HINT_KEYS:
             continue
-        if isinstance(value, bool):
-            return value
-        if value is None:
-            continue
-        text_value = str(value).strip().lower()
-        if not text_value:
-            continue
-        if text_value in {"1", "y", "yes", "true"}:
+        inferred = _interpret_control_value(value)
+        if inferred is not None:
+            return inferred
+
+    for key in ("jenis_kunjungan", "jenisKunjungan", "jeniskunjungan", "jenis_kunjungan_kode"):
+        value = registration.get(key)
+        inferred = _interpret_control_value(value)
+        if inferred is not None:
+            return inferred
+
+    for key in CONTROL_REFERENCE_KEYS:
+        value = registration.get(key)
+        if value:
             return True
-        if text_value in {"0", "n", "no", "false"}:
-            return False
-        if "kontrol" in text_value:
+
+    no_rujukan = registration.get("no_rujukan") or registration.get("nomor_rujukan")
+    if isinstance(no_rujukan, str) and no_rujukan.strip():
+        normalized_rujukan = no_rujukan.strip().upper()
+        if any(token in normalized_rujukan for token in CONTROL_REFERENCE_TOKENS):
             return True
-        return False
+        if normalized_rujukan.startswith("K") and len(normalized_rujukan) >= 6:
+            return True
     return None
 
 
@@ -133,7 +177,7 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
             "Data pasien belum ada di tabel pasiens. Pastikan pasien sudah terdaftar.",
         )
 
-    is_control = _is_control_registration(registration)
+    is_control = _infer_control_from_registration(registration)
     if is_control is None:
         is_control = messagebox.askyesno(
             "Jenis SEP",
