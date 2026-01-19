@@ -1,9 +1,10 @@
 """Action helpers to keep the Tkinter UI lean and readable."""
 
 from datetime import date
+import shutil
 import subprocess
+import sys
 import threading
-import tkinter as tk
 from tkinter import messagebox
 
 import pyautogui
@@ -111,8 +112,10 @@ def _focus_chrome_window() -> bool:
 def _open_chrome_url(url: str, half_screen_width: int, screen_height: int):
     if _focus_chrome_window():
         pyautogui.hotkey("ctrl", "l")
-        _set_clipboard_text(url)
-        pyautogui.hotkey("ctrl", "v")
+        if _set_clipboard_text(url):
+            pyautogui.hotkey("ctrl", "v")
+        else:
+            pyautogui.write(url)
         pyautogui.press("enter")
         return
 
@@ -129,13 +132,24 @@ def _open_chrome_url(url: str, half_screen_width: int, screen_height: int):
     )
 
 
-def _set_clipboard_text(text: str) -> None:
-    clipboard_root = tk.Tk()
-    clipboard_root.withdraw()
-    clipboard_root.clipboard_clear()
-    clipboard_root.clipboard_append(text)
-    clipboard_root.update()
-    clipboard_root.destroy()
+def _set_clipboard_text(text: str) -> bool:
+    if sys.platform.startswith("win"):
+        subprocess.run(["cmd", "/c", "clip"], input=text, text=True, check=False)
+        return True
+
+    if sys.platform == "darwin":
+        if shutil.which("pbcopy"):
+            subprocess.run(["pbcopy"], input=text, text=True, check=False)
+            return True
+        return False
+
+    if shutil.which("xclip"):
+        subprocess.run(["xclip", "-selection", "clipboard"], input=text, text=True, check=False)
+        return True
+    if shutil.which("xsel"):
+        subprocess.run(["xsel", "--clipboard", "--input"], input=text, text=True, check=False)
+        return True
+    return False
 
 
 def _build_cek_baru_url() -> str:
