@@ -179,10 +179,7 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
 
     is_control = _infer_control_from_registration(registration)
     if is_control is None:
-        is_control = messagebox.askyesno(
-            "Jenis SEP",
-            "Registrasi ini kontrol? Klik Ya untuk SEP Kontrol, Tidak untuk SEP Reguler.",
-        )
+        is_control = False
 
     sep_path = "reservasi/sep-kontrol" if is_control else "reservasi/sep"
     sep_url = f"{config.SEP_BASE_URL.rstrip('/')}/{sep_path}/{registration_id}/{no_rm or ''}"
