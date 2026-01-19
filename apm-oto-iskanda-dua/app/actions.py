@@ -111,7 +111,8 @@ def _focus_chrome_window() -> bool:
 def _open_chrome_url(url: str, half_screen_width: int, screen_height: int):
     if _focus_chrome_window():
         pyautogui.hotkey("ctrl", "l")
-        pyautogui.write(url)
+        _set_clipboard_text(url)
+        pyautogui.hotkey("ctrl", "v")
         pyautogui.press("enter")
         return
 
@@ -126,6 +127,15 @@ def _open_chrome_url(url: str, half_screen_width: int, screen_height: int):
             url,
         ]
     )
+
+
+def _set_clipboard_text(text: str) -> None:
+    clipboard_root = tk.Tk()
+    clipboard_root.withdraw()
+    clipboard_root.clipboard_clear()
+    clipboard_root.clipboard_append(text)
+    clipboard_root.update()
+    clipboard_root.destroy()
 
 
 def _build_cek_baru_url() -> str:
