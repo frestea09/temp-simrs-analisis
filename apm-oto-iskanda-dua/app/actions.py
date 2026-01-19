@@ -86,7 +86,7 @@ def _infer_control_from_registration(registration: dict) -> bool | None:
         normalized_rujukan = no_rujukan.strip().upper()
         if any(token in normalized_rujukan for token in CONTROL_REFERENCE_TOKENS):
             return True
-        if normalized_rujukan.startswith("K") and len(normalized_rujukan) >= 6:
+        if "K" in normalized_rujukan and len(normalized_rujukan) >= 6:
             return True
     return None
 
