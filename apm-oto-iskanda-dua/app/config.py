@@ -59,7 +59,7 @@ DEFAULT_SETTINGS = {
     "API_FALLBACK_BASE_URLS": "",
     "API_PATIENT_ENDPOINT": "/apm-oto/v1/patients/{identifier}",
     "API_REGISTRATION_ENDPOINT": "/apm-oto/v1/registrations/latest/{identifier}",
-    "API_REGISTRATION_DUMMY_ENDPOINT": "",
+    "API_REGISTRATION_DUMMY_ENDPOINT": "/apm-oto/v1/registrations-dummy/latest/{identifier}",
     "API_TIMEOUT_SECONDS": 10,
     "BPJS_API_BASE_URL": "http://172.168.1.2:3001",
     "BPJS_ANTREAN_ADD_ENDPOINT": "/bpjs/antrean/add",
