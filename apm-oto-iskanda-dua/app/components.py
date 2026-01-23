@@ -25,14 +25,15 @@ def create_keypad(parent: tk.Frame, append_digit, clear_input, delete_last):
 
     for index, (label, handler) in enumerate(keypad_layout):
         is_action = label in {"Clear", "Del"}
-        bg_color = "#ffd6e0" if label == "Clear" else "#ffe8cc" if label == "Del" else "#ffffff"
+        bg_color = "#fca5a5" if label == "Clear" else "#fdba74" if label == "Del" else "#e5e7eb"
         button = tk.Button(
             keypad_frame,
             text=label,
             width=8,
             height=2,
-            font=("Helvetica", 12, "bold"),
+            font=("Helvetica", 13, "bold"),
             bg=bg_color,
+            fg="#111827",
             command=(lambda l=label, h=handler, action=is_action: h(l) if not action else h()),
         )
         button.grid(row=index // 3, column=index % 3, padx=4, pady=4, sticky="nsew")
@@ -49,21 +50,27 @@ def create_action_buttons(parent: tk.Frame, on_bpjs, on_frista, on_sep, on_ticke
     action_frame.pack(pady=16, fill=tk.BOTH, expand=True)
     action_frame.columnconfigure(0, weight=1)
 
-    button_opts = {"font": ("Helvetica", 13, "bold"), "height": 3, "anchor": "center"}
+    button_opts = {
+        "font": ("Helvetica", 14, "bold"),
+        "height": 3,
+        "anchor": "center",
+        "fg": "#0b0f1a",
+        "activeforeground": "#0b0f1a",
+    }
 
     bpjs_button = tk.Button(
-        action_frame, text="Fingerprint BPJS", bg="#c8f7c5", command=on_bpjs, **button_opts, width=1
+        action_frame, text="Fingerprint BPJS", bg="#22c55e", command=on_bpjs, **button_opts, width=1
     )
     bpjs_button.grid(row=0, column=0, padx=8, pady=6, sticky="ew")
 
-    frista_button = tk.Button(action_frame, text="Frista", bg="#e8d2ff", command=on_frista, **button_opts, width=1)
+    frista_button = tk.Button(action_frame, text="Frista", bg="#a78bfa", command=on_frista, **button_opts, width=1)
     frista_button.grid(row=1, column=0, padx=8, pady=6, sticky="ew")
-    sep_button = tk.Button(action_frame, text="Cetak SEP", bg="#cde4ff", command=on_sep, **button_opts, width=1)
+    sep_button = tk.Button(action_frame, text="Cetak SEP", bg="#3b82f6", command=on_sep, **button_opts, width=1)
     sep_button.grid(row=2, column=0, padx=8, pady=6, sticky="ew")
     ticket_button = tk.Button(
         action_frame,
         text="Cetak Tiket",
-        bg="#fff3bf",
+        bg="#f59e0b",
         command=on_ticket,
         **button_opts,
         width=1,
