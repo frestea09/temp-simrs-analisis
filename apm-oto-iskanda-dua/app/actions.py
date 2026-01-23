@@ -163,7 +163,10 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
     Identifier may be No RM, NIK, or nomor BPJS.
     """
 
-    registration = database.fetch_latest_registration(identifier)
+    today = date.today()
+    registration = database.fetch_registration_for_date(identifier, today)
+    if not registration:
+        registration = database.fetch_latest_registration(identifier)
     if not registration:
         messagebox.showwarning(
             "Reservasi Tidak Ditemukan",
@@ -183,7 +186,6 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
         return
 
     visit_date = database.extract_registration_date(registration)
-    today = date.today()
     if visit_date and visit_date != today:
         messagebox.showwarning(
             "Tanggal Periksa Tidak Sesuai",
