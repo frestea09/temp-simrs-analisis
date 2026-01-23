@@ -27,51 +27,65 @@ if not logger.handlers:
 
 
 def ping_database() -> tuple[bool, Optional[str]]:
-    try:
-        response = requests.get(_normalized_base_url(), timeout=config.API_TIMEOUT_SECONDS)
-        response.raise_for_status()
-        return True, None
-    except requests.RequestException as err:
-        error_message = f"Gagal menghubungi API: {err}"
-        logger.error("API ping failed: %s", error_message)
-        return False, error_message
-    except Exception as err:  # noqa: BLE001
-        error_message = f"Kesalahan tidak terduga: {err}"
-        logger.exception(error_message)
-        return False, error_message
+    last_error = None
+    for base_url in _normalized_base_urls():
+        try:
+            response = requests.get(base_url, timeout=config.API_TIMEOUT_SECONDS)
+            response.raise_for_status()
+            return True, None
+        except requests.RequestException as err:
+            last_error = f"Gagal menghubungi API: {err}"
+            logger.error("API ping failed: %s", last_error)
+        except Exception as err:  # noqa: BLE001
+            last_error = f"Kesalahan tidak terduga: {err}"
+            logger.exception(last_error)
+    return False, last_error
 
 
-def _build_url(endpoint_template: str, identifier: str) -> str:
-    base = _normalized_base_url().rstrip("/")
+def _build_url(base_url: str, endpoint_template: str, identifier: str) -> str:
+    base = base_url.rstrip("/")
     endpoint = endpoint_template.format(identifier=identifier).lstrip("/")
     return f"{base}/{endpoint}"
 
 
-def _normalized_base_url() -> str:
-    base_url = config.API_BASE_URL.strip()
-    if not base_url:
-        return base_url
-    parsed = urlparse(base_url)
-    if not parsed.scheme:
-        return f"http://{base_url}"
-    return base_url
+def _normalized_base_urls() -> list[str]:
+    base_urls = []
+    primary = (config.API_PRIMARY_BASE_URL or config.API_BASE_URL or "").strip()
+    if primary:
+        base_urls.append(primary)
+
+    fallback_raw = (config.API_FALLBACK_BASE_URLS or "").strip()
+    if fallback_raw:
+        base_urls.extend([item.strip() for item in fallback_raw.split(",") if item.strip()])
+
+    if not base_urls:
+        return []
+
+    normalized = []
+    for base_url in base_urls:
+        parsed = urlparse(base_url)
+        normalized.append(base_url if parsed.scheme else f"http://{base_url}")
+    return normalized
 
 
-def _fetch_data(url: str) -> Optional[dict]:
-    try:
-        response = requests.get(url, timeout=config.API_TIMEOUT_SECONDS)
-        response.raise_for_status()
-        payload = response.json()
-    except requests.RequestException as err:
-        logger.error("API request failed for %s: %s", url, err)
-        return None
-    except ValueError as err:
-        logger.error("API response not JSON for %s: %s", url, err)
-        return None
+def _fetch_data(urls: list[str]) -> Optional[dict]:
+    for url in urls:
+        try:
+            response = requests.get(url, timeout=config.API_TIMEOUT_SECONDS)
+            response.raise_for_status()
+            payload = response.json()
+        except requests.RequestException as err:
+            logger.error("API request failed for %s: %s", url, err)
+            continue
+        except ValueError as err:
+            logger.error("API response not JSON for %s: %s", url, err)
+            continue
 
-    if isinstance(payload, dict) and "data" in payload:
-        return payload["data"]
-    return payload if isinstance(payload, dict) else None
+        if isinstance(payload, dict) and "data" in payload:
+            return payload["data"]
+        if isinstance(payload, dict):
+            return payload
+    return None
 
 
 def fetch_patient_by_no_rm(no_rm: str) -> Optional[PatientRow]:
@@ -111,8 +125,11 @@ def fetch_patient_by_identifier(identifier: str) -> Optional[PatientRow]:
 def _fetch_patient(identifier: str) -> Optional[PatientRow]:
     if not identifier:
         return None
-    url = _build_url(config.API_PATIENT_ENDPOINT, identifier)
-    return _fetch_data(url)
+    urls = [
+        _build_url(base_url, config.API_PATIENT_ENDPOINT, identifier)
+        for base_url in _normalized_base_urls()
+    ]
+    return _fetch_data(urls)
 
 
 def fetch_latest_booking(identifier: str) -> Optional[Tuple[str, str, int]]:
@@ -143,8 +160,11 @@ def fetch_latest_registration(identifier: str) -> Optional[RegistrationRow]:
 def _fetch_registration(identifier: str) -> Optional[RegistrationRow]:
     if not identifier:
         return None
-    url = _build_url(config.API_REGISTRATION_ENDPOINT, identifier)
-    return _fetch_data(url)
+    urls = [
+        _build_url(base_url, config.API_REGISTRATION_ENDPOINT, identifier)
+        for base_url in _normalized_base_urls()
+    ]
+    return _fetch_data(urls)
 
 
 def extract_registration_date(registration: RegistrationRow) -> Optional[date]:
