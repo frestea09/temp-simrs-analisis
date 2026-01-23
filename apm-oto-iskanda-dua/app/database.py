@@ -6,6 +6,7 @@ from typing import Optional, Tuple
 from urllib.parse import urlparse
 
 import requests
+import time
 
 from app import config
 
@@ -86,6 +87,19 @@ def _fetch_data(urls: list[str]) -> Optional[dict]:
         if isinstance(payload, dict):
             return payload
     return None
+
+
+def _post_json(url: str, payload: dict) -> Optional[dict]:
+    try:
+        response = requests.post(url, json=payload, timeout=config.API_TIMEOUT_SECONDS)
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as err:
+        logger.error("API POST failed for %s: %s", url, err)
+        return None
+    except ValueError as err:
+        logger.error("API POST response not JSON for %s: %s", url, err)
+        return None
 
 
 def fetch_patient_by_no_rm(no_rm: str) -> Optional[PatientRow]:
@@ -170,6 +184,107 @@ def _fetch_bpjs_participant(identifier: str) -> Optional[PatientRow]:
         "jenis_kelamin": participant.get("sex") or participant.get("kelamin"),
         "provider": participant.get("provUmum") or participant.get("provPerujuk"),
     }
+
+
+def update_taskid_after_print(registration: RegistrationRow, patient: Optional[PatientRow]) -> None:
+    """Best-effort: run antrean/add + updatewaktu taskid 3 via backend-apm-oid."""
+    if not registration:
+        return
+
+    base_url = (config.BPJS_API_BASE_URL or "").strip().rstrip("/")
+    if not base_url:
+        return
+
+    add_endpoint = config.BPJS_ANTREAN_ADD_ENDPOINT or "/bpjs/antrean/add"
+    update_endpoint = config.BPJS_ANTREAN_UPDATE_ENDPOINT or "/bpjs/antrean/updatewaktu"
+
+    payload = _build_antrean_payload(registration, patient)
+    if not payload:
+        return
+
+    add_url = f"{base_url}/{add_endpoint.lstrip('/')}"
+    add_response = _post_json(add_url, payload) or {}
+
+    kodebooking = _extract_kodebooking(add_response) or payload.get("kodebooking")
+    if not kodebooking:
+        return
+
+    update_url = f"{base_url}/{update_endpoint.lstrip('/')}"
+    update_payload = {
+        "kodebooking": kodebooking,
+        "taskid": 3,
+        "waktu": int(time.time() * 1000),
+    }
+    _post_json(update_url, update_payload)
+
+
+def _extract_kodebooking(response: dict) -> Optional[str]:
+    if not isinstance(response, dict):
+        return None
+    candidate = response.get("kodebooking")
+    if candidate:
+        return str(candidate)
+    response_payload = response.get("response") if isinstance(response.get("response"), dict) else {}
+    candidate = response_payload.get("kodebooking")
+    return str(candidate) if candidate else None
+
+
+def _build_antrean_payload(registration: RegistrationRow, patient: Optional[PatientRow]) -> Optional[dict]:
+    kodebooking = (
+        registration.get("kodebooking")
+        or registration.get("nomorantrian")
+        or registration.get("nomor_antrian")
+    )
+    if not kodebooking:
+        return None
+
+    nomorkartu = (
+        registration.get("no_kartu")
+        or registration.get("nokartu")
+        or registration.get("nomorkartu")
+        or (patient or {}).get("no_kartu")
+    )
+    nik = registration.get("nik") or (patient or {}).get("nik")
+    no_rm = registration.get("no_rm") or (patient or {}).get("no_rm")
+    nama = registration.get("nama") or (patient or {}).get("nama")
+    tanggal_periksa = (
+        registration.get("tanggal_periksa")
+        or registration.get("tglperiksa")
+        or registration.get("tanggal")
+    )
+
+    nomorantrean = registration.get("nomorantrean") or registration.get("nomorantrian")
+    angkaantrean = registration.get("angkaantrean")
+    if angkaantrean is None and isinstance(nomorantrean, str):
+        digits = "".join(char for char in nomorantrean if char.isdigit())
+        angkaantrean = int(digits) if digits else None
+
+    payload = {
+        "kodebooking": str(kodebooking),
+        "jenispasien": registration.get("jenispasien") or "JKN",
+        "nomorkartu": nomorkartu or "",
+        "nik": nik or "",
+        "nohp": registration.get("no_hp") or registration.get("nohp") or "",
+        "kodepoli": registration.get("kode_poli") or registration.get("kodepoli") or "",
+        "namapoli": registration.get("nama_poli") or registration.get("poli") or "",
+        "pasienbaru": int(bool(registration.get("pasien_baru") or registration.get("pasienbaru") == 1)),
+        "norm": no_rm or "",
+        "tanggalperiksa": tanggal_periksa or "",
+        "kodedokter": registration.get("kode_dokter") or registration.get("kodedokter") or "",
+        "namadokter": registration.get("nama_dokter") or registration.get("namadokter") or "",
+        "jampraktek": registration.get("jam_praktek") or registration.get("jampraktek") or "",
+        "jeniskunjungan": registration.get("jenis_kunjungan") or registration.get("jeniskunjungan") or 1,
+        "nomorreferensi": registration.get("no_rujukan") or registration.get("nomorreferensi") or "",
+        "nomorantrean": nomorantrean or "",
+        "angkaantrean": int(angkaantrean) if angkaantrean is not None else 0,
+        "estimasidilayani": registration.get("estimasidilayani") or int(time.time() * 1000),
+        "sisakuotajkn": registration.get("sisakuotajkn") or 0,
+        "kuotajkn": registration.get("kuotajkn") or 0,
+        "sisakuotanonjkn": registration.get("sisakuotanonjkn") or 0,
+        "kuotanonjkn": registration.get("kuotanonjkn") or 0,
+        "keterangan": registration.get("keterangan") or f"Pasien {nama or ''}".strip() or "Pasien datang.",
+    }
+    return payload
 
 
 def fetch_latest_booking(identifier: str) -> Optional[Tuple[str, str, int]]:
