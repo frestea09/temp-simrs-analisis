@@ -54,15 +54,15 @@ class PatientApp:
 
     def refresh_status(self):
         if network.has_internet_connection():
-            self.internet_status.config(text="Internet: Terhubung", fg="green")
+            self.internet_status.config(text="Internet: Terhubung", fg="#15803d")
         else:
-            self.internet_status.config(text="Internet: Tidak Terhubung", fg="red")
+            self.internet_status.config(text="Internet: Tidak Terhubung", fg="#b91c1c")
 
         connection_ok, _ = database.ping_database()
         if connection_ok:
-            self.api_status.config(text="API: Tersedia", fg="green")
+            self.api_status.config(text="API: Tersedia", fg="#15803d")
         else:
-            self.api_status.config(text="", fg="red")
+            self.api_status.config(text="API: Tidak Terhubung", fg="#b91c1c")
 
     def open_bpjs_by_identifier(self):
         identifier = self.no_rm_var.get().strip()
