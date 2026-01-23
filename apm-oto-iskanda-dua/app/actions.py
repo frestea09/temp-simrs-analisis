@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import sys
 import threading
+import tkinter as tk
 from tkinter import messagebox
 
 import pyautogui
@@ -157,6 +158,13 @@ def _build_cek_baru_url() -> str:
     return f"{base_url.rstrip('/')}/reservasi/cek-baru"
 
 
+def _build_ticket_url(registration_id: str | int, no_rm: str) -> str:
+    base_url = config.TICKET_BASE_URL or config.SEP_BASE_URL
+    template = config.TICKET_URL_TEMPLATE or "/reservasi/cetak-baru/{registration_id}/{no_rm}"
+    path = template.format(registration_id=registration_id, no_rm=no_rm)
+    return f"{base_url.rstrip('/')}/{path.lstrip('/')}"
+
+
 def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int):
     """
     Open Chrome directly to the SEP page for the latest booking tied to the identifier.
@@ -208,6 +216,31 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
     sep_path = "reservasi/sep-kontrol" if is_control else "reservasi/sep"
     sep_url = f"{config.SEP_BASE_URL.rstrip('/')}/{sep_path}/{registration_id}/{no_rm or ''}"
     _open_chrome_url(sep_url, half_screen_width, screen_height)
+
+
+def launch_ticket_flow(identifier: str, half_screen_width: int, screen_height: int):
+    """
+    Open Chrome directly to the ticket print page for the latest booking tied to the identifier.
+    """
+    registration = database.fetch_latest_registration(identifier)
+    if not registration:
+        messagebox.showwarning(
+            "Reservasi Tidak Ditemukan",
+            "Reservasi tidak ditemukan. Pastikan pasien sudah melakukan booking.",
+        )
+        return
+
+    registration_id = registration.get("id")
+    no_rm = registration.get("no_rm") or ""
+    if not registration_id:
+        messagebox.showwarning(
+            "Reservasi Tidak Lengkap",
+            "Data reservasi tidak lengkap untuk cetak tiket.",
+        )
+        return
+
+    ticket_url = _build_ticket_url(registration_id, no_rm)
+    _open_chrome_url(ticket_url, half_screen_width, screen_height)
 
 
 def run_action(root: tk.Tk, set_loading_state, action, message: str, buttons: list[tk.Button], on_error=None):
