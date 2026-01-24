@@ -3,7 +3,7 @@
 import tkinter as tk
 from tkinter import messagebox
 
-from app import actions, bpjs, database, frista, network
+from app import actions, bpjs, network
 from app import auth_dialog, components, config_dialog, layout
 
 
@@ -23,22 +23,13 @@ class PatientApp:
         self._keypad_buttons = components.create_keypad(
             left_panel, self._append_digit, self._clear_input, self._delete_last_digit
         )
-        (
-            self.open_bpjs_button,
-            self.open_frista_button,
-            self.open_sep_button,
-            self.open_ticket_button,
-        ) = components.create_action_buttons(
+        self.open_bpjs_button, self.open_sep_button = components.create_action_buttons(
             right_panel,
             self.open_bpjs_by_identifier,
-            self.open_frista_application,
             self.open_sep_flow,
-            self.open_ticket_flow,
         )
 
-        status_frame, self.internet_status, self.api_status = layout.create_status_section(
-            right_panel, self.loading_var
-        )
+        status_frame, self.internet_status = layout.create_status_section(right_panel, self.loading_var)
         status_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=(8, 0))
         layout.create_footer(self.root)
 
@@ -58,32 +49,12 @@ class PatientApp:
         else:
             self.internet_status.config(text="Internet: Tidak Terhubung", fg="#b91c1c")
 
-        connection_ok, _ = database.ping_database()
-        if connection_ok:
-            self.api_status.config(text="API: Tersedia", fg="#15803d")
-        else:
-            self.api_status.config(text="API: Tidak Terhubung", fg="#b91c1c")
-
     def open_bpjs_by_identifier(self):
         identifier = self.no_rm_var.get().strip()
         if not identifier:
             messagebox.showwarning("Input Error", "Masukkan No RM, NIK, atau BPJS terlebih dahulu.")
             return
         self._run_bpjs_action(lambda: bpjs.open_bpjs_for_identifier(identifier), "Membuka aplikasi BPJS...")
-
-    def open_frista_application(self):
-        identifier = self.no_rm_var.get().strip()
-        if not identifier:
-            messagebox.showwarning("Input Error", "Masukkan NIK atau identitas pasien terlebih dahulu.")
-            return
-        actions.run_action(
-            self.root,
-            self._set_loading_state,
-            lambda: frista.open_frista_for_identifier(identifier),
-            "Membuka Frista...",
-            self._action_buttons,
-            frista.handle_automation_error,
-        )
 
     def open_sep_flow(self):
         identifier = self.no_rm_var.get().strip()
@@ -95,19 +66,6 @@ class PatientApp:
             self._set_loading_state,
             lambda: actions.launch_sep_flow(identifier, self.half_screen_width, self.screen_height),
             "Membuka halaman SEP sesuai identitas...",
-            self._action_buttons,
-        )
-
-    def open_ticket_flow(self):
-        identifier = self.no_rm_var.get().strip()
-        if not identifier:
-            messagebox.showwarning("Input Error", "Masukkan No RM, NIK, atau BPJS terlebih dahulu.")
-            return
-        actions.run_action(
-            self.root,
-            self._set_loading_state,
-            lambda: actions.launch_ticket_flow(identifier, self.half_screen_width, self.screen_height),
-            "Membuka halaman cetak tiket...",
             self._action_buttons,
         )
 
@@ -132,9 +90,7 @@ class PatientApp:
     def _action_buttons(self):
         return [
             self.open_bpjs_button,
-            self.open_frista_button,
             self.open_sep_button,
-            self.open_ticket_button,
         ]
 
     def _append_digit(self, digit: str):
