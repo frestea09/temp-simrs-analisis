@@ -94,8 +94,24 @@ def _infer_control_from_registration(registration: dict) -> bool | None:
     return None
 
 
+def _browser_window_titles() -> tuple[str, ...]:
+    exe_name = Path(config.CHROME_EXECUTABLE).name.lower()
+    if "firefox" in exe_name:
+        return ("Mozilla Firefox", "Firefox")
+    if "msedge" in exe_name or "edge" in exe_name:
+        return ("Microsoft Edge", "Edge")
+    if "chromium" in exe_name:
+        return ("Chromium", "Google Chrome", "Chrome")
+    return ("Google Chrome", "Chrome", "Chromium", "Microsoft Edge", "Edge")
+
+
+def _is_chrome_based_browser() -> bool:
+    exe_name = Path(config.CHROME_EXECUTABLE).name.lower()
+    return any(token in exe_name for token in ("chrome", "chromium", "msedge", "edge"))
+
+
 def _focus_chrome_window() -> bool:
-    for title in ("Google Chrome", "Chrome"):
+    for title in _browser_window_titles():
         try:
             windows = pyautogui.getWindowsWithTitle(title)
         except Exception:  # noqa: BLE001
@@ -123,15 +139,17 @@ def _open_chrome_url(url: str, half_screen_width: int, screen_height: int):
 
     window_position = f"--window-position={half_screen_width},0"
     window_size = f"--window-size={half_screen_width},{screen_height}"
-    subprocess.Popen(
-        [
-            config.CHROME_EXECUTABLE,
-            window_position,
-            window_size,
-            "--new-window",
-            url,
-        ]
-    )
+    browser_args = [
+        config.CHROME_EXECUTABLE,
+        window_position,
+        window_size,
+    ]
+    if _is_chrome_based_browser():
+        browser_args.append("--new-window")
+    elif "firefox" in Path(config.CHROME_EXECUTABLE).name.lower():
+        browser_args.append("-new-tab")
+    browser_args.append(url)
+    subprocess.Popen(browser_args)
 
 
 def _set_clipboard_text(text: str) -> bool:

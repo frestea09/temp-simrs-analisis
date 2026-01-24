@@ -111,16 +111,7 @@ def create_status_section(parent: tk.Frame, loading_var: tk.StringVar):
     )
     internet_status.pack(pady=6, fill=tk.X)
 
-    api_status = tk.Label(
-        status_frame,
-        text="API: Memeriksa...",
-        fg="#d97706",
-        bg="#ffffff",
-        anchor="w",
-        font=("Helvetica", 11, "bold"),
-    )
-    api_status.pack(pady=6, fill=tk.X)
-    return status_frame, internet_status, api_status
+    return status_frame, internet_status
 
 
 def create_footer(root: tk.Tk):
