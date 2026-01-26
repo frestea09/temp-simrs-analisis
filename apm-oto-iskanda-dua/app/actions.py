@@ -200,6 +200,7 @@ def _open_daftar_online_checkin(queue_number: str, half_screen_width: int, scree
     try:
         for _ in range(2):
             pyautogui.press("tab")
+        pyautogui.press("enter")
         pyautogui.write(str(queue_number))
         pyautogui.press("tab")
         pyautogui.press("enter")
