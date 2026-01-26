@@ -268,7 +268,7 @@ def _build_antrean_payload(registration: RegistrationRow, patient: Optional[Pati
     nik = registration.get("nik") or (patient or {}).get("nik")
     no_rm = registration.get("no_rm") or (patient or {}).get("no_rm")
     nama = registration.get("nama") or (patient or {}).get("nama")
-    tanggal_periksa = (
+    tanggal_periksa = _normalize_date_value(
         registration.get("tanggal_periksa")
         or registration.get("tglperiksa")
         or registration.get("tanggal")
@@ -306,6 +306,16 @@ def _build_antrean_payload(registration: RegistrationRow, patient: Optional[Pati
         "keterangan": registration.get("keterangan") or f"Pasien {nama or ''}".strip() or "Pasien datang.",
     }
     return payload
+
+
+def _normalize_date_value(value: object) -> str:
+    if isinstance(value, datetime):
+        return value.strftime("%Y-%m-%d")
+    if isinstance(value, date):
+        return value.strftime("%Y-%m-%d")
+    if value is None:
+        return ""
+    return str(value)
 
 
 def fetch_latest_booking(identifier: str) -> Optional[Tuple[str, str, int]]:
