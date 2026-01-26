@@ -8,37 +8,38 @@ def create_keypad(parent: tk.Frame, append_digit, clear_input, delete_last):
     keypad_frame.pack(pady=5, fill=tk.BOTH, expand=True)
 
     buttons: list[tk.Button] = []
-    keypad_rows = [
-        ["1", "2", "3", "4", "5"],
-        ["6", "7", "8", "9", "0"],
-        ["Q", "W", "E", "R", "T"],
-        ["Y", "U", "I", "O", "P"],
-        ["A", "S", "D", "F", "G"],
-        ["H", "J", "K", "L", "-"],
-        ["Z", "X", "C", "V", "B"],
-        ["N", "M", "Clear", "Del", ""],
+    keypad_layout = [
+        ("1", append_digit),
+        ("2", append_digit),
+        ("3", append_digit),
+        ("4", append_digit),
+        ("5", append_digit),
+        ("6", append_digit),
+        ("7", append_digit),
+        ("8", append_digit),
+        ("9", append_digit),
+        ("Clear", clear_input),
+        ("0", append_digit),
+        ("Del", delete_last),
     ]
 
-    for row_index, row in enumerate(keypad_rows):
-        for col_index, label in enumerate(row):
-            if not label:
-                continue
-            is_action = label in {"Clear", "Del"}
-            bg_color = "#fca5a5" if label == "Clear" else "#fdba74" if label == "Del" else "#e5e7eb"
-            button = tk.Button(
-                keypad_frame,
-                text=label,
-                width=6,
-                height=2,
-                font=("Helvetica", 12, "bold"),
-                bg=bg_color,
-                fg="#111827",
-                command=(lambda l=label, action=is_action: append_digit(l) if not action else (clear_input() if l == "Clear" else delete_last())),
-            )
-            button.grid(row=row_index, column=col_index, padx=4, pady=4, sticky="nsew")
-            buttons.append(button)
+    for index, (label, handler) in enumerate(keypad_layout):
+        is_action = label in {"Clear", "Del"}
+        bg_color = "#fca5a5" if label == "Clear" else "#fdba74" if label == "Del" else "#e5e7eb"
+        button = tk.Button(
+            keypad_frame,
+            text=label,
+            width=8,
+            height=2,
+            font=("Helvetica", 13, "bold"),
+            bg=bg_color,
+            fg="#111827",
+            command=(lambda l=label, h=handler, action=is_action: h(l) if not action else h()),
+        )
+        button.grid(row=index // 3, column=index % 3, padx=4, pady=4, sticky="nsew")
+        buttons.append(button)
 
-    for column_index in range(5):
+    for column_index in range(3):
         keypad_frame.grid_columnconfigure(column_index, weight=1)
 
     return buttons
