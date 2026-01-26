@@ -242,12 +242,19 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
     registration = database.fetch_latest_registration(identifier)
     if not registration:
         patient = database.fetch_patient_by_identifier(identifier)
-        messagebox.showwarning(
-            "Reservasi Tidak Ditemukan",
-            "Reservasi tidak ditemukan. Mencetak tiket admisi.",
-        )
-        if not _open_admission_ticket(identifier, patient, half_screen_width, screen_height):
+        if patient:
+            messagebox.showwarning(
+                "Reservasi Tidak Ditemukan",
+                "Reservasi tidak ditemukan, tetapi data pasien tersedia. Membuka halaman cek baru.",
+            )
             _open_chrome_url(_build_cek_baru_url(), half_screen_width, screen_height)
+        else:
+            messagebox.showwarning(
+                "Reservasi Tidak Ditemukan",
+                "Reservasi tidak ditemukan. Mencetak tiket admisi.",
+            )
+            if not _open_admission_ticket(identifier, patient, half_screen_width, screen_height):
+                _open_chrome_url(_build_cek_baru_url(), half_screen_width, screen_height)
         return
 
     registration_id = registration.get("id")
@@ -297,11 +304,18 @@ def launch_ticket_flow(identifier: str, half_screen_width: int, screen_height: i
     registration = database.fetch_latest_registration(identifier)
     if not registration:
         patient = database.fetch_patient_by_identifier(identifier)
-        messagebox.showwarning(
-            "Reservasi Tidak Ditemukan",
-            "Reservasi tidak ditemukan. Mencetak tiket admisi.",
-        )
-        _open_admission_ticket(identifier, patient, half_screen_width, screen_height)
+        if patient:
+            messagebox.showwarning(
+                "Reservasi Tidak Ditemukan",
+                "Reservasi tidak ditemukan, tetapi data pasien tersedia. Membuka halaman cek baru.",
+            )
+            _open_chrome_url(_build_cek_baru_url(), half_screen_width, screen_height)
+        else:
+            messagebox.showwarning(
+                "Reservasi Tidak Ditemukan",
+                "Reservasi tidak ditemukan. Mencetak tiket admisi.",
+            )
+            _open_admission_ticket(identifier, patient, half_screen_width, screen_height)
         return
 
     registration_id = registration.get("id")

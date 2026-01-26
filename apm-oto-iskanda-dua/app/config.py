@@ -59,6 +59,7 @@ DEFAULT_SETTINGS = {
     "API_FALLBACK_BASE_URLS": "",
     "API_PATIENT_ENDPOINT": "/apm-oto/v1/patients/{identifier}",
     "API_REGISTRATION_ENDPOINT": "/apm-oto/v1/registrations/latest/{identifier}",
+    "API_REGISTRATION_DUMMY_ENDPOINT": "/apm-oto/v1/registrations-dummy/latest/{identifier}",
     "API_TIMEOUT_SECONDS": 10,
     "BPJS_API_BASE_URL": "http://172.168.1.2:3001",
     "BPJS_ANTREAN_ADD_ENDPOINT": "/bpjs/antrean/add",
@@ -124,6 +125,7 @@ def _apply_settings(settings: Dict[str, str | float]) -> None:
     global API_FALLBACK_BASE_URLS
     global API_PATIENT_ENDPOINT
     global API_REGISTRATION_ENDPOINT
+    global API_REGISTRATION_DUMMY_ENDPOINT
     global API_TIMEOUT_SECONDS
     global BPJS_API_BASE_URL
     global BPJS_ANTREAN_ADD_ENDPOINT
@@ -158,6 +160,7 @@ def _apply_settings(settings: Dict[str, str | float]) -> None:
     API_FALLBACK_BASE_URLS = settings.get("API_FALLBACK_BASE_URLS", "")
     API_PATIENT_ENDPOINT = settings["API_PATIENT_ENDPOINT"]
     API_REGISTRATION_ENDPOINT = settings["API_REGISTRATION_ENDPOINT"]
+    API_REGISTRATION_DUMMY_ENDPOINT = settings.get("API_REGISTRATION_DUMMY_ENDPOINT", "")
     API_TIMEOUT_SECONDS = float(settings["API_TIMEOUT_SECONDS"])
     BPJS_API_BASE_URL = settings.get("BPJS_API_BASE_URL", "")
     BPJS_ANTREAN_ADD_ENDPOINT = settings.get("BPJS_ANTREAN_ADD_ENDPOINT", "/bpjs/antrean/add")

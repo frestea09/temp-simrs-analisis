@@ -319,7 +319,19 @@ def _fetch_registration(identifier: str) -> Optional[RegistrationRow]:
         _build_url(base_url, config.API_REGISTRATION_ENDPOINT, identifier)
         for base_url in _normalized_base_urls()
     ]
-    return _fetch_data(urls)
+    registration = _fetch_data(urls)
+    if registration:
+        return registration
+
+    dummy_endpoint = (config.API_REGISTRATION_DUMMY_ENDPOINT or "").strip()
+    if not dummy_endpoint:
+        return None
+
+    dummy_urls = [
+        _build_url(base_url, dummy_endpoint, identifier)
+        for base_url in _normalized_base_urls()
+    ]
+    return _fetch_data(dummy_urls)
 
 
 def extract_registration_date(registration: RegistrationRow) -> Optional[date]:
