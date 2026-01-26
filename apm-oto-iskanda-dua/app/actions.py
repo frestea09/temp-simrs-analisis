@@ -215,7 +215,7 @@ def _build_admission_ticket_html(identifier: str, patient: dict | None) -> str:
       <div><span class="label">Nama:</span> {patient_name}</div>
       <div><span class="label">NIK:</span> {patient_nik}</div>
       <div><span class="label">No. Kartu:</span> {patient_card}</div>
-      <div class="meta">Silakan bawa tiket ini ke loket admisi.</div>
+      <div class="meta">Silakan bawa tiket ini ke loket pendaftaran.</div>
     </div>
   </body>
 </html>

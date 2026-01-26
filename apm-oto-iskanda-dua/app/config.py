@@ -24,10 +24,10 @@ CONFIG_FILE_PATH = _config_root() / "user_config.json"
 DB_AUTH_PLUGIN = "caching_sha2_password"
 
 DB_CONFIG = {
-    "host": "172.168.1.2",
-    "user": "root",
-    "password": "s1mrs234@",
-    "database": "otista_dev",
+    "host": "172.168.1.175",
+    "user": "oki",
+    "password": "otista567@#",
+    "database": "rsud_otista",
     "port": 3306,
     # Gunakan env APM_DB_AUTH_PLUGIN="caching_sha2_password" bila server sudah default plugin baru
     "auth_plugin": DB_AUTH_PLUGIN,
@@ -64,7 +64,7 @@ DEFAULT_SETTINGS = {
     "BPJS_ANTREAN_ADD_ENDPOINT": "/bpjs/antrean/add",
     "BPJS_ANTREAN_UPDATE_ENDPOINT": "/bpjs/antrean/updatewaktu",
     "ADMISSION_TICKET_TITLE": "Tiket Admisi",
-    "ADMISSION_TICKET_MESSAGE": "Silakan pergi ke Admisi untuk melanjutkan pendaftaran.",
+    "ADMISSION_TICKET_MESSAGE": "Silakan pergi ke Loket Pendaftaran untuk melanjutkan pendaftaran.",
     "TICKET_BASE_URL": "http://172.168.1.175:8070",
     "TICKET_URL_TEMPLATE": "/reservasi/cetak-baru/{registration_id}/{no_rm}",
 }
