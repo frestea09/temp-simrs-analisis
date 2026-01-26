@@ -56,7 +56,7 @@ def create_input_section(parent: tk.Frame, logo_image: tk.PhotoImage, no_rm_var:
     header.pack(pady=(0, 6), fill=tk.X)
 
     tk.Label(header, image=logo_image, bg="#ffffff").pack(side=tk.LEFT, padx=(0, 10))
-    tk.Label(header, text="Layanan Check-In Pasien", font=("Helvetica", 16, "bold"), bg="#ffffff").pack(
+    tk.Label(header, text="Layanan Check-In Pasien", font=("Helvetica", 18, "bold"), bg="#ffffff").pack(
         side=tk.LEFT
     )
 
@@ -66,20 +66,26 @@ def create_input_section(parent: tk.Frame, logo_image: tk.PhotoImage, no_rm_var:
             "Masukkan No. Rekam Medis, NIK, atau nomor BPJS.\n"
             "Tekan tombol sesuai kebutuhan (Fingerprint BPJS atau Cetak SEP), lalu ikuti langkah check-in."
         ),
-        font=("Helvetica", 11),
+        font=("Helvetica", 12, "bold"),
         bg="#ffffff",
-        fg="#3a3a3a",
+        fg="#1f2937",
         justify=tk.CENTER,
         wraplength=540,
     ).pack(pady=(0, 12), fill=tk.X)
 
     entry_frame = tk.Frame(parent, bg="#ffffff")
     entry_frame.pack(pady=6, fill=tk.X)
-    tk.Label(entry_frame, text="Nomor Identitas Pasien", font=("Helvetica", 12, "bold"), bg="#ffffff").grid(
+    tk.Label(entry_frame, text="Nomor Identitas Pasien", font=("Helvetica", 13, "bold"), bg="#ffffff").grid(
         row=0, column=0, sticky="w", padx=(0, 10)
     )
 
-    entry_no_rm = tk.Entry(entry_frame, textvariable=no_rm_var, font=("Helvetica", 14), bd=2, relief=tk.GROOVE)
+    entry_no_rm = tk.Entry(
+        entry_frame,
+        textvariable=no_rm_var,
+        font=("Helvetica", 16, "bold"),
+        bd=2,
+        relief=tk.GROOVE,
+    )
     entry_no_rm.grid(row=1, column=0, ipadx=5, ipady=7, padx=(0, 10), pady=5, sticky="we")
     entry_frame.grid_columnconfigure(0, weight=1)
     return entry_no_rm
@@ -89,14 +95,23 @@ def create_status_section(parent: tk.Frame, loading_var: tk.StringVar):
     status_frame = tk.Frame(parent, bg="#ffffff")
     status_frame.grid_columnconfigure(0, weight=1)
     tk.Label(
-        status_frame, textvariable=loading_var, fg="#0057a4", bg="#f7f8fa", font=("Helvetica", 11, "italic")
+        status_frame,
+        textvariable=loading_var,
+        fg="#0b4b8a",
+        bg="#f3f4f6",
+        font=("Helvetica", 12, "bold"),
     ).pack(pady=(4, 12), fill=tk.X)
-    internet_status = tk.Label(status_frame, text="Internet: Memeriksa...", fg="orange", bg="#ffffff", anchor="w")
+    internet_status = tk.Label(
+        status_frame,
+        text="Internet: Memeriksa...",
+        fg="#d97706",
+        bg="#ffffff",
+        anchor="w",
+        font=("Helvetica", 11, "bold"),
+    )
     internet_status.pack(pady=6, fill=tk.X)
 
-    api_status = tk.Label(status_frame, text="API: Memeriksa...", fg="orange", bg="#ffffff", anchor="w")
-    api_status.pack(pady=6, fill=tk.X)
-    return status_frame, internet_status, api_status
+    return status_frame, internet_status
 
 
 def create_footer(root: tk.Tk):

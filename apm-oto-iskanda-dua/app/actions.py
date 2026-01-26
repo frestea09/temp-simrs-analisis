@@ -1,6 +1,7 @@
 """Action helpers to keep the Tkinter UI lean and readable."""
 
 from datetime import date
+from pathlib import Path
 import shutil
 import subprocess
 import sys
@@ -93,8 +94,24 @@ def _infer_control_from_registration(registration: dict) -> bool | None:
     return None
 
 
+def _browser_window_titles() -> tuple[str, ...]:
+    exe_name = Path(config.CHROME_EXECUTABLE).name.lower()
+    if "firefox" in exe_name:
+        return ("Mozilla Firefox", "Firefox")
+    if "msedge" in exe_name or "edge" in exe_name:
+        return ("Microsoft Edge", "Edge")
+    if "chromium" in exe_name:
+        return ("Chromium", "Google Chrome", "Chrome")
+    return ("Google Chrome", "Chrome", "Chromium", "Microsoft Edge", "Edge")
+
+
+def _is_chrome_based_browser() -> bool:
+    exe_name = Path(config.CHROME_EXECUTABLE).name.lower()
+    return any(token in exe_name for token in ("chrome", "chromium", "msedge", "edge"))
+
+
 def _focus_chrome_window() -> bool:
-    for title in ("Google Chrome", "Chrome"):
+    for title in _browser_window_titles():
         try:
             windows = pyautogui.getWindowsWithTitle(title)
         except Exception:  # noqa: BLE001
@@ -122,15 +139,17 @@ def _open_chrome_url(url: str, half_screen_width: int, screen_height: int):
 
     window_position = f"--window-position={half_screen_width},0"
     window_size = f"--window-size={half_screen_width},{screen_height}"
-    subprocess.Popen(
-        [
-            config.CHROME_EXECUTABLE,
-            window_position,
-            window_size,
-            "--new-window",
-            url,
-        ]
-    )
+    browser_args = [
+        config.CHROME_EXECUTABLE,
+        window_position,
+        window_size,
+    ]
+    if _is_chrome_based_browser():
+        browser_args.append("--new-window")
+    elif "firefox" in Path(config.CHROME_EXECUTABLE).name.lower():
+        browser_args.append("-new-tab")
+    browser_args.append(url)
+    subprocess.Popen(browser_args)
 
 
 def _set_clipboard_text(text: str) -> bool:
@@ -165,6 +184,55 @@ def _build_ticket_url(registration_id: str | int, no_rm: str) -> str:
     return f"{base_url.rstrip('/')}/{path.lstrip('/')}"
 
 
+def _build_admission_ticket_html(identifier: str, patient: dict | None) -> str:
+    title = config.ADMISSION_TICKET_TITLE
+    message = config.ADMISSION_TICKET_MESSAGE
+    patient_name = (patient or {}).get("nama") or "-"
+    patient_nik = (patient or {}).get("nik") or "-"
+    patient_card = (patient or {}).get("no_kartu") or "-"
+
+    return f"""
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8"/>
+    <title>{title}</title>
+    <style>
+      body {{ font-family: "Times New Roman", serif; margin: 24px; }}
+      .ticket {{ border: 1px dashed #333; padding: 16px; width: 360px; }}
+      h2 {{ margin: 0 0 8px; text-align: center; }}
+      .label {{ font-weight: bold; }}
+      .message {{ margin-top: 12px; font-size: 16px; }}
+      .meta {{ margin-top: 12px; font-size: 12px; color: #333; }}
+    </style>
+  </head>
+  <body onload="window.print()">
+    <div class="ticket">
+      <h2>{title}</h2>
+      <div class="message">{message}</div>
+      <hr/>
+      <div><span class="label">Identitas:</span> {identifier}</div>
+      <div><span class="label">Nama:</span> {patient_name}</div>
+      <div><span class="label">NIK:</span> {patient_nik}</div>
+      <div><span class="label">No. Kartu:</span> {patient_card}</div>
+      <div class="meta">Silakan bawa tiket ini ke loket admisi.</div>
+    </div>
+  </body>
+</html>
+"""
+
+
+def _open_admission_ticket(identifier: str, patient: dict | None, half_screen_width: int, screen_height: int) -> bool:
+    try:
+        html = _build_admission_ticket_html(identifier, patient)
+        output_path = Path(config.CONFIG_FILE_PATH).parent / "tiket-admisi.html"
+        output_path.write_text(html, encoding="utf-8")
+        _open_chrome_url(output_path.resolve().as_uri(), half_screen_width, screen_height)
+        return True
+    except OSError:
+        return False
+
+
 def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int):
     """
     Open Chrome directly to the SEP page for the latest booking tied to the identifier.
@@ -173,11 +241,13 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
 
     registration = database.fetch_latest_registration(identifier)
     if not registration:
+        patient = database.fetch_patient_by_identifier(identifier)
         messagebox.showwarning(
             "Reservasi Tidak Ditemukan",
-            "Reservasi tidak ditemukan. Membuka halaman cek baru.",
+            "Reservasi tidak ditemukan. Mencetak tiket admisi.",
         )
-        _open_chrome_url(_build_cek_baru_url(), half_screen_width, screen_height)
+        if not _open_admission_ticket(identifier, patient, half_screen_width, screen_height):
+            _open_chrome_url(_build_cek_baru_url(), half_screen_width, screen_height)
         return
 
     registration_id = registration.get("id")
@@ -209,6 +279,8 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
             "Data pasien belum ada di tabel pasiens. Pastikan pasien sudah terdaftar.",
         )
 
+    database.update_taskid_after_print(registration, patient)
+
     is_control = _infer_control_from_registration(registration)
     if is_control is None:
         is_control = False
@@ -224,10 +296,12 @@ def launch_ticket_flow(identifier: str, half_screen_width: int, screen_height: i
     """
     registration = database.fetch_latest_registration(identifier)
     if not registration:
+        patient = database.fetch_patient_by_identifier(identifier)
         messagebox.showwarning(
             "Reservasi Tidak Ditemukan",
-            "Reservasi tidak ditemukan. Pastikan pasien sudah melakukan booking.",
+            "Reservasi tidak ditemukan. Mencetak tiket admisi.",
         )
+        _open_admission_ticket(identifier, patient, half_screen_width, screen_height)
         return
 
     registration_id = registration.get("id")
@@ -238,6 +312,9 @@ def launch_ticket_flow(identifier: str, half_screen_width: int, screen_height: i
             "Data reservasi tidak lengkap untuk cetak tiket.",
         )
         return
+
+    patient = database.fetch_patient_by_identifier(identifier)
+    database.update_taskid_after_print(registration, patient)
 
     ticket_url = _build_ticket_url(registration_id, no_rm)
     _open_chrome_url(ticket_url, half_screen_width, screen_height)
