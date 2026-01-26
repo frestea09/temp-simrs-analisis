@@ -63,7 +63,7 @@ def create_input_section(parent: tk.Frame, logo_image: tk.PhotoImage, no_rm_var:
     tk.Label(
         parent,
         text=(
-            "Masukkan No. Rekam Medis, NIK, nomor BPJS, atau nomor antrean JKN.\n"
+            "Masukkan No. Rekam Medis, NIK, nomor BPJS.\n"
             "Tekan tombol sesuai kebutuhan (Fingerprint BPJS atau Cetak SEP), lalu ikuti langkah check-in."
         ),
         font=("Helvetica", 12, "bold"),
@@ -75,7 +75,7 @@ def create_input_section(parent: tk.Frame, logo_image: tk.PhotoImage, no_rm_var:
 
     entry_frame = tk.Frame(parent, bg="#ffffff")
     entry_frame.pack(pady=6, fill=tk.X)
-    tk.Label(entry_frame, text="Nomor Identitas / Antrean JKN", font=("Helvetica", 13, "bold"), bg="#ffffff").grid(
+    tk.Label(entry_frame, text="Nomor Identitas Pasien", font=("Helvetica", 13, "bold"), bg="#ffffff").grid(
         row=0, column=0, sticky="w", padx=(0, 10)
     )
 
