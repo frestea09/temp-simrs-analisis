@@ -44,6 +44,23 @@ def ping_database() -> tuple[bool, Optional[str]]:
     return False, last_error
 
 
+def ping_local_database() -> tuple[bool, Optional[str]]:
+    try:
+        connection = _connect_db()
+        connection.ping(reconnect=False, attempts=1, delay=0)
+        return True, None
+    except mysql.connector.Error as err:
+        message = f"Gagal menghubungi database: {err}"
+        logger.error("DB ping failed: %s", message)
+        return False, message
+    finally:
+        try:
+            if "connection" in locals() and connection.is_connected():
+                connection.close()
+        except Exception:  # noqa: BLE001
+            pass
+
+
 def _build_url(base_url: str, endpoint_template: str, identifier: str) -> str:
     base = base_url.rstrip("/")
     endpoint = endpoint_template.format(identifier=identifier).lstrip("/")
@@ -410,16 +427,16 @@ def _fetch_registration_from_db(identifier: str) -> Optional[RegistrationRow]:
 
     query_registrasi = (
         "SELECT r.id, p.no_rm, p.nik, p.no_jkn AS nomorkartu, "
-        "r.nomorantrian, r.created_at AS tanggal_periksa "
+        "r.nomorantrian_jkn AS nomorantrian, r.created_at AS tanggal_periksa "
         "FROM registrasis r "
         "JOIN pasiens p ON p.id = r.pasien_id "
-        "WHERE p.no_rm = %s OR p.nik = %s OR p.no_jkn = %s "
+        "WHERE p.no_rm = %s OR p.nik = %s OR p.no_jkn = %s OR r.nomorantrian_jkn = %s "
         "ORDER BY r.id DESC LIMIT 1"
     )
     try:
         connection = _connect_db()
         cursor = connection.cursor(dictionary=True)
-        cursor.execute(query_registrasi, (identifier, identifier, identifier))
+        cursor.execute(query_registrasi, (identifier, identifier, identifier, identifier))
         row = cursor.fetchone()
     except mysql.connector.Error:
         return None

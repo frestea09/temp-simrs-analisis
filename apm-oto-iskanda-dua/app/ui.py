@@ -3,7 +3,7 @@
 import tkinter as tk
 from tkinter import messagebox
 
-from app import actions, bpjs, network
+from app import actions, bpjs, database, network
 from app import auth_dialog, components, config_dialog, layout
 
 
@@ -29,7 +29,10 @@ class PatientApp:
             self.open_sep_flow,
         )
 
-        status_frame, self.internet_status = layout.create_status_section(right_panel, self.loading_var)
+        status_frame, self.internet_status, self.db_status = layout.create_status_section(
+            right_panel,
+            self.loading_var,
+        )
         status_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=(8, 0))
         layout.create_footer(self.root)
 
@@ -48,6 +51,11 @@ class PatientApp:
             self.internet_status.config(text="Internet: Terhubung", fg="#15803d")
         else:
             self.internet_status.config(text="Internet: Tidak Terhubung", fg="#b91c1c")
+        db_ok, _ = database.ping_local_database()
+        if db_ok:
+            self.db_status.config(text="Database: Terhubung", fg="#15803d")
+        else:
+            self.db_status.config(text="Database: Tidak Terhubung", fg="#b91c1c")
 
     def open_bpjs_by_identifier(self):
         identifier = self.no_rm_var.get().strip()
