@@ -326,6 +326,18 @@ def fetch_latest_booking(identifier: str) -> Optional[Tuple[str, str, int]]:
     )
 
 
+def fetch_queue_number_by_identifier(identifier: str) -> Optional[str]:
+    """Return the JKN queue/booking number from local DB by identifier."""
+    registration = _fetch_registration_from_db(identifier)
+    if not registration:
+        return None
+    return (
+        registration.get("kodebooking")
+        or registration.get("nomorantrian")
+        or registration.get("nomor_antrian")
+    )
+
+
 def fetch_latest_registration(identifier: str) -> Optional[RegistrationRow]:
     """
     Return the latest registration row (entire tuple) matching No RM, NIK, or nomor BPJS.
