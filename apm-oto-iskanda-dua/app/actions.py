@@ -184,34 +184,6 @@ def _build_ticket_url(registration_id: str | int, no_rm: str) -> str:
     return f"{base_url.rstrip('/')}/{path.lstrip('/')}"
 
 
-def _build_daftar_online_check_url() -> str:
-    base_url = config.DAFTAR_ONLINE_BASE_URL or ""
-    if not base_url:
-        return ""
-    return f"{base_url.rstrip('/')}/reservasi/cek"
-
-
-def _open_daftar_online_checkin(queue_number: str, half_screen_width: int, screen_height: int) -> bool:
-    url = _build_daftar_online_check_url()
-    if not url:
-        return False
-    _open_chrome_url(url, half_screen_width, screen_height)
-    pyautogui.sleep(2.5)
-    try:
-        for _ in range(2):
-            pyautogui.press("tab")
-        pyautogui.press("enter")
-        pyautogui.write(str(queue_number))
-        pyautogui.press("tab")
-        pyautogui.press("enter")
-        for _ in range(2):
-            pyautogui.press("tab")
-        pyautogui.press("enter")
-        return True
-    except Exception:  # noqa: BLE001
-        return False
-
-
 def _build_admission_ticket_html(identifier: str, patient: dict | None) -> str:
     title = config.ADMISSION_TICKET_TITLE
     message = config.ADMISSION_TICKET_MESSAGE
@@ -270,14 +242,6 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
     registration = database.fetch_latest_registration(identifier)
     if not registration:
         patient = database.fetch_patient_by_identifier(identifier)
-        queue_number = database.fetch_queue_number_by_identifier(identifier)
-        if queue_number:
-            messagebox.showwarning(
-                "Reservasi Tidak Ditemukan",
-                "Reservasi tidak ditemukan. Membuka daftar-online untuk cek antrean.",
-            )
-            if _open_daftar_online_checkin(queue_number, half_screen_width, screen_height):
-                return
         messagebox.showwarning(
             "Reservasi Tidak Ditemukan",
             "Reservasi tidak ditemukan. Mencetak tiket admisi.",

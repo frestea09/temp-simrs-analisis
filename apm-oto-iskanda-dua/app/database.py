@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Optional, Tuple
 from urllib.parse import urlparse
 
-import mysql.connector
 import requests
 import time
 
@@ -42,23 +41,6 @@ def ping_database() -> tuple[bool, Optional[str]]:
             last_error = f"Kesalahan tidak terduga: {err}"
             logger.exception(last_error)
     return False, last_error
-
-
-def ping_local_database() -> tuple[bool, Optional[str]]:
-    try:
-        connection = _connect_db()
-        connection.ping(reconnect=False, attempts=1, delay=0)
-        return True, None
-    except mysql.connector.Error as err:
-        message = f"Gagal menghubungi database: {err}"
-        logger.error("DB ping failed: %s", message)
-        return False, message
-    finally:
-        try:
-            if "connection" in locals() and connection.is_connected():
-                connection.close()
-        except Exception:  # noqa: BLE001
-            pass
 
 
 def _build_url(base_url: str, endpoint_template: str, identifier: str) -> str:
@@ -162,9 +144,6 @@ def _fetch_patient(identifier: str) -> Optional[PatientRow]:
         for base_url in _normalized_base_urls()
     ]
     patient = _fetch_data(urls)
-    if patient:
-        return patient
-    patient = _fetch_patient_from_db(identifier)
     if patient:
         return patient
     return _fetch_bpjs_participant(identifier)
@@ -336,18 +315,6 @@ def fetch_latest_booking(identifier: str) -> Optional[Tuple[str, str, int]]:
     )
 
 
-def fetch_queue_number_by_identifier(identifier: str) -> Optional[str]:
-    """Return the JKN queue/booking number from local DB by identifier."""
-    registration = _fetch_registration_from_db(identifier)
-    if not registration:
-        return None
-    return (
-        registration.get("kodebooking")
-        or registration.get("nomorantrian")
-        or registration.get("nomor_antrian")
-    )
-
-
 def fetch_latest_registration(identifier: str) -> Optional[RegistrationRow]:
     """
     Return the latest registration row (entire tuple) matching No RM, NIK, or nomor BPJS.
@@ -365,120 +332,6 @@ def _fetch_registration(identifier: str) -> Optional[RegistrationRow]:
     registration = _fetch_data(urls)
     if registration:
         return registration
-    return _fetch_registration_from_db(identifier)
-
-
-def _connect_db():
-    return mysql.connector.connect(**config.DB_CONFIG)
-
-
-def _fetch_patient_from_db(identifier: str) -> Optional[PatientRow]:
-    identifier = identifier.strip()
-    if not identifier:
-        return None
-    query = (
-        "SELECT id, no_rm, nik, no_jkn, nama, tgllahir, kelamin "
-        "FROM pasiens "
-        "WHERE no_rm = %s OR nik = %s OR no_jkn = %s "
-        "ORDER BY id DESC LIMIT 1"
-    )
-    try:
-        connection = _connect_db()
-        cursor = connection.cursor(dictionary=True)
-        cursor.execute(query, (identifier, identifier, identifier))
-        row = cursor.fetchone()
-    except mysql.connector.Error:
-        return None
-    finally:
-        try:
-            cursor.close()
-            connection.close()
-        except Exception:  # noqa: BLE001
-            pass
-    if not row:
-        return None
-    return {
-        "id": row.get("id"),
-        "no_rm": row.get("no_rm"),
-        "nik": row.get("nik"),
-        "no_jkn": row.get("no_jkn"),
-        "nama": row.get("nama"),
-        "tgl_lahir": row.get("tgllahir"),
-        "jenis_kelamin": row.get("kelamin"),
-    }
-
-
-def _fetch_registration_from_db(identifier: str) -> Optional[RegistrationRow]:
-    identifier = identifier.strip()
-    if not identifier:
-        return None
-
-    query_dummy = (
-        "SELECT id, no_rm, nik, nomorkartu, nomorantrian, kodebooking, tglperiksa "
-        "FROM registrasi_dummies "
-        "WHERE no_rm = %s OR nik = %s OR nomorkartu = %s OR kodebooking = %s OR nomorantrian = %s "
-        "ORDER BY id DESC LIMIT 1"
-    )
-    try:
-        connection = _connect_db()
-        cursor = connection.cursor(dictionary=True)
-        cursor.execute(
-            query_dummy,
-            (identifier, identifier, identifier, identifier, identifier),
-        )
-        row = cursor.fetchone()
-    except mysql.connector.Error:
-        row = None
-    finally:
-        try:
-            cursor.close()
-            connection.close()
-        except Exception:  # noqa: BLE001
-            pass
-
-    if row:
-        return {
-            "id": row.get("id"),
-            "no_rm": row.get("no_rm"),
-            "nik": row.get("nik"),
-            "nomorkartu": row.get("nomorkartu"),
-            "nomorantrian": row.get("nomorantrian"),
-            "kodebooking": row.get("kodebooking"),
-            "tanggal_periksa": row.get("tglperiksa"),
-        }
-
-    query_registrasi = (
-        "SELECT r.id, p.no_rm, p.nik, p.no_jkn AS nomorkartu, "
-        "r.nomorantrian_jkn AS nomorantrian, r.created_at AS tanggal_periksa "
-        "FROM registrasis r "
-        "JOIN pasiens p ON p.id = r.pasien_id "
-        "WHERE p.no_rm = %s OR p.nik = %s OR p.no_jkn = %s OR r.nomorantrian_jkn = %s "
-        "ORDER BY r.id DESC LIMIT 1"
-    )
-    try:
-        connection = _connect_db()
-        cursor = connection.cursor(dictionary=True)
-        cursor.execute(query_registrasi, (identifier, identifier, identifier, identifier))
-        row = cursor.fetchone()
-    except mysql.connector.Error:
-        return None
-    finally:
-        try:
-            cursor.close()
-            connection.close()
-        except Exception:  # noqa: BLE001
-            pass
-
-    if not row:
-        return None
-    return {
-        "id": row.get("id"),
-        "no_rm": row.get("no_rm"),
-        "nik": row.get("nik"),
-        "nomorkartu": row.get("nomorkartu"),
-        "nomorantrian": row.get("nomorantrian"),
-        "tanggal_periksa": row.get("tanggal_periksa"),
-    }
 
 
 def extract_registration_date(registration: RegistrationRow) -> Optional[date]:

@@ -13,7 +13,7 @@ Disarankan menggunakan virtual environment.
 ```bash
 python -m venv .venv
 .\.venv\Scripts\activate
-pip install requests pyautogui mysql-connector-python
+pip install requests pyautogui
 ```
 
 > Catatan: `tkinter` sudah termasuk di Python (Windows).

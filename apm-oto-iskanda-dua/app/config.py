@@ -20,19 +20,6 @@ def _config_root() -> Path:
 
 CONFIG_FILE_PATH = _config_root() / "user_config.json"
 
-# DB_AUTH_PLUGIN = os.environ.get("APM_DB_AUTH_PLUGIN", "mysql_native_password")
-DB_AUTH_PLUGIN = "caching_sha2_password"
-
-DB_CONFIG = {
-    "host": "172.168.1.175",
-    "user": "oki",
-    "password": "otista567@#",
-    "database": "rsud_otista",
-    "port": 3306,
-    # Gunakan env APM_DB_AUTH_PLUGIN="caching_sha2_password" bila server sudah default plugin baru
-    "auth_plugin": DB_AUTH_PLUGIN,
-}
-
 DEFAULT_SETTINGS = {
     "BPJS_EXECUTABLE": r"C:\\Program Files (x86)\\BPJS Kesehatan\\Aplikasi Sidik Jari BPJS Kesehatan\\After.exe",
     "BPJS_WINDOW_TITLE": "Aplikasi Registrasi Sidik Jari",
@@ -49,7 +36,6 @@ DEFAULT_SETTINGS = {
     "SEP_CHECK_URL": "http://172.168.1.175:8070/reservasi/cek",
     "SEP_CHECK_NEW_BASE_URL": "http://172.168.1.175:8070",
     "SEP_BASE_URL": "http://172.168.1.175:8070",
-    "DAFTAR_ONLINE_BASE_URL": "http://172.168.1.175:8000",
     "FRISTA_EXECUTABLE": r"C:\\Users\\ilman\\Documents\\Frista\\Frista.exe",
     "FRISTA_USERNAME": "1002r006th",
     "FRISTA_PASSWORD": "#Bandung28",
@@ -115,7 +101,6 @@ def _apply_settings(settings: Dict[str, str | float]) -> None:
     global SEP_CHECK_URL
     global SEP_CHECK_NEW_BASE_URL
     global SEP_BASE_URL
-    global DAFTAR_ONLINE_BASE_URL
     global FRISTA_EXECUTABLE
     global FRISTA_USERNAME
     global FRISTA_PASSWORD
@@ -150,7 +135,6 @@ def _apply_settings(settings: Dict[str, str | float]) -> None:
     SEP_CHECK_URL = settings["SEP_CHECK_URL"]
     SEP_CHECK_NEW_BASE_URL = settings["SEP_CHECK_NEW_BASE_URL"]
     SEP_BASE_URL = settings["SEP_BASE_URL"]
-    DAFTAR_ONLINE_BASE_URL = settings.get("DAFTAR_ONLINE_BASE_URL", "")
     FRISTA_EXECUTABLE = settings["FRISTA_EXECUTABLE"]
     FRISTA_USERNAME = settings["FRISTA_USERNAME"]
     FRISTA_PASSWORD = settings["FRISTA_PASSWORD"]
