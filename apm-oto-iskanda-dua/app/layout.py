@@ -63,7 +63,7 @@ def create_input_section(parent: tk.Frame, logo_image: tk.PhotoImage, no_rm_var:
     tk.Label(
         parent,
         text=(
-            "Masukkan No. Rekam Medis, NIK, atau nomor BPJS.\n"
+            "Masukkan No. Rekam Medis, NIK, nomor BPJS.\n"
             "Tekan tombol sesuai kebutuhan (Fingerprint BPJS atau Cetak SEP), lalu ikuti langkah check-in."
         ),
         font=("Helvetica", 12, "bold"),

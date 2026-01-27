@@ -247,7 +247,7 @@ def _build_antrean_payload(registration: RegistrationRow, patient: Optional[Pati
     nik = registration.get("nik") or (patient or {}).get("nik")
     no_rm = registration.get("no_rm") or (patient or {}).get("no_rm")
     nama = registration.get("nama") or (patient or {}).get("nama")
-    tanggal_periksa = (
+    tanggal_periksa = _normalize_date_value(
         registration.get("tanggal_periksa")
         or registration.get("tglperiksa")
         or registration.get("tanggal")
@@ -287,6 +287,16 @@ def _build_antrean_payload(registration: RegistrationRow, patient: Optional[Pati
     return payload
 
 
+def _normalize_date_value(value: object) -> str:
+    if isinstance(value, datetime):
+        return value.strftime("%Y-%m-%d")
+    if isinstance(value, date):
+        return value.strftime("%Y-%m-%d")
+    if value is None:
+        return ""
+    return str(value)
+
+
 def fetch_latest_booking(identifier: str) -> Optional[Tuple[str, str, int]]:
     """
     Return the latest booking info (nomorantrian, no_rm, id) for the provided identifier.
@@ -294,6 +304,17 @@ def fetch_latest_booking(identifier: str) -> Optional[Tuple[str, str, int]]:
     The identifier can be No RM, NIK (16 digit), or nomor BPJS. The query prioritizes No RM,
     then NIK, then BPJS number.
     """
+    urls = [
+        _build_url(base_url, config.API_BOOKING_ENDPOINT, identifier)
+        for base_url in _normalized_base_urls()
+    ]
+    booking = _fetch_data(urls)
+    if booking:
+        return (
+            booking.get("nomorantrian") or booking.get("nomor_antrian"),
+            booking.get("no_rm"),
+            booking.get("id"),
+        )
     registration = _fetch_registration(identifier)
     if not registration:
         return None
@@ -319,7 +340,9 @@ def _fetch_registration(identifier: str) -> Optional[RegistrationRow]:
         _build_url(base_url, config.API_REGISTRATION_ENDPOINT, identifier)
         for base_url in _normalized_base_urls()
     ]
-    return _fetch_data(urls)
+    registration = _fetch_data(urls)
+    if registration:
+        return registration
 
 
 def extract_registration_date(registration: RegistrationRow) -> Optional[date]:

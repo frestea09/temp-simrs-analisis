@@ -20,19 +20,6 @@ def _config_root() -> Path:
 
 CONFIG_FILE_PATH = _config_root() / "user_config.json"
 
-# DB_AUTH_PLUGIN = os.environ.get("APM_DB_AUTH_PLUGIN", "mysql_native_password")
-DB_AUTH_PLUGIN = "caching_sha2_password"
-
-DB_CONFIG = {
-    "host": "172.168.1.2",
-    "user": "root",
-    "password": "s1mrs234@",
-    "database": "otista_dev",
-    "port": 3306,
-    # Gunakan env APM_DB_AUTH_PLUGIN="caching_sha2_password" bila server sudah default plugin baru
-    "auth_plugin": DB_AUTH_PLUGIN,
-}
-
 DEFAULT_SETTINGS = {
     "BPJS_EXECUTABLE": r"C:\\Program Files (x86)\\BPJS Kesehatan\\Aplikasi Sidik Jari BPJS Kesehatan\\After.exe",
     "BPJS_WINDOW_TITLE": "Aplikasi Registrasi Sidik Jari",
@@ -59,12 +46,13 @@ DEFAULT_SETTINGS = {
     "API_FALLBACK_BASE_URLS": "",
     "API_PATIENT_ENDPOINT": "/apm-oto/v1/patients/{identifier}",
     "API_REGISTRATION_ENDPOINT": "/apm-oto/v1/registrations/latest/{identifier}",
+    "API_BOOKING_ENDPOINT": "/apm-oto/v1/bookings/latest/{identifier}",
     "API_TIMEOUT_SECONDS": 10,
     "BPJS_API_BASE_URL": "http://172.168.1.2:3001",
     "BPJS_ANTREAN_ADD_ENDPOINT": "/bpjs/antrean/add",
     "BPJS_ANTREAN_UPDATE_ENDPOINT": "/bpjs/antrean/updatewaktu",
     "ADMISSION_TICKET_TITLE": "Tiket Admisi",
-    "ADMISSION_TICKET_MESSAGE": "Silakan pergi ke Admisi untuk melanjutkan pendaftaran.",
+    "ADMISSION_TICKET_MESSAGE": "Silakan pergi ke Loket Pendaftaran untuk melanjutkan pendaftaran.",
     "TICKET_BASE_URL": "http://172.168.1.175:8070",
     "TICKET_URL_TEMPLATE": "/reservasi/cetak-baru/{registration_id}/{no_rm}",
 }
@@ -124,6 +112,7 @@ def _apply_settings(settings: Dict[str, str | float]) -> None:
     global API_FALLBACK_BASE_URLS
     global API_PATIENT_ENDPOINT
     global API_REGISTRATION_ENDPOINT
+    global API_BOOKING_ENDPOINT
     global API_TIMEOUT_SECONDS
     global BPJS_API_BASE_URL
     global BPJS_ANTREAN_ADD_ENDPOINT
@@ -158,6 +147,7 @@ def _apply_settings(settings: Dict[str, str | float]) -> None:
     API_FALLBACK_BASE_URLS = settings.get("API_FALLBACK_BASE_URLS", "")
     API_PATIENT_ENDPOINT = settings["API_PATIENT_ENDPOINT"]
     API_REGISTRATION_ENDPOINT = settings["API_REGISTRATION_ENDPOINT"]
+    API_BOOKING_ENDPOINT = settings.get("API_BOOKING_ENDPOINT", "/apm-oto/v1/bookings/latest/{identifier}")
     API_TIMEOUT_SECONDS = float(settings["API_TIMEOUT_SECONDS"])
     BPJS_API_BASE_URL = settings.get("BPJS_API_BASE_URL", "")
     BPJS_ANTREAN_ADD_ENDPOINT = settings.get("BPJS_ANTREAN_ADD_ENDPOINT", "/bpjs/antrean/add")

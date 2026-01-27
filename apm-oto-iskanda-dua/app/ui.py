@@ -29,7 +29,10 @@ class PatientApp:
             self.open_sep_flow,
         )
 
-        status_frame, self.internet_status = layout.create_status_section(right_panel, self.loading_var)
+        status_frame, self.internet_status = layout.create_status_section(
+            right_panel,
+            self.loading_var,
+        )
         status_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=(8, 0))
         layout.create_footer(self.root)
 

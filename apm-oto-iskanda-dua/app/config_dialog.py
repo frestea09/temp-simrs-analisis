@@ -37,6 +37,7 @@ def open_config_dialog(root: tk.Tk):
     dialog.title("Pengaturan")
     dialog.transient(root)
     dialog.grab_set()
+    dialog.geometry("760x640")
 
     entries = {
         "BPJS Executable": tk.StringVar(value=config.BPJS_EXECUTABLE),
@@ -64,8 +65,32 @@ def open_config_dialog(root: tk.Tk):
         "Penundaan Login Frista (detik)": tk.StringVar(value=str(config.FRISTA_LOGIN_DELAY_SECONDS)),
     }
 
-    content = tk.Frame(dialog, padx=10, pady=10)
-    content.pack(fill=tk.BOTH, expand=True)
+    container = tk.Frame(dialog)
+    container.pack(fill=tk.BOTH, expand=True)
+
+    canvas = tk.Canvas(container, highlightthickness=0)
+    scrollbar = tk.Scrollbar(container, orient=tk.VERTICAL, command=canvas.yview)
+    canvas.configure(yscrollcommand=scrollbar.set)
+
+    scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+    canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+    content = tk.Frame(canvas, padx=10, pady=10)
+    content_id = canvas.create_window((0, 0), window=content, anchor="nw")
+
+    def _sync_scroll_region(_event=None):
+        canvas.configure(scrollregion=canvas.bbox("all"))
+
+    def _sync_width(event):
+        canvas.itemconfig(content_id, width=event.width)
+
+    content.bind("<Configure>", _sync_scroll_region)
+    canvas.bind("<Configure>", _sync_width)
+
+    def _on_mousewheel(event):
+        canvas.yview_scroll(-1 * int(event.delta / 120), "units")
+
+    canvas.bind_all("<MouseWheel>", _on_mousewheel)
 
     for index, (label_text, var) in enumerate(entries.items()):
         tk.Label(content, text=label_text, anchor="w").grid(row=index, column=0, sticky="w", pady=4, padx=(0, 8))
@@ -127,3 +152,4 @@ def open_config_dialog(root: tk.Tk):
 
     tk.Button(button_frame, text="Simpan", command=save_config, width=12).pack(side=tk.LEFT, padx=6)
     tk.Button(button_frame, text="Tutup", command=dialog.destroy, width=12).pack(side=tk.LEFT, padx=6)
+    dialog.bind("<Destroy>", lambda _event: canvas.unbind_all("<MouseWheel>"))
