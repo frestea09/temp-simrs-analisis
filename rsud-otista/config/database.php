@@ -78,6 +78,21 @@ return [
             'prefix' => '',
         ],
 
+        'rsud_otista' => [
+            'driver' => 'mysql',
+            'host' => env('RSUD_OTISTA_DB_HOST', '172.168.1.175'),
+            'port' => env('RSUD_OTISTA_DB_PORT', '3306'),
+            'database' => env('RSUD_OTISTA_DB_DATABASE', 'rsud_otista'),
+            'username' => env('RSUD_OTISTA_DB_USERNAME', 'oki'),
+            'password' => env('RSUD_OTISTA_DB_PASSWORD', 'otista567@#'),
+            'unix_socket' => env('RSUD_OTISTA_DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => false,
+            'engine' => null,
+        ],
+
     ],
 
     /*

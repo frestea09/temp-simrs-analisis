@@ -94,6 +94,7 @@ return [
 	// 'antrean_url_web_service' => 'https://apijkn-dev.bpjs-kesehatan.go.id/antreanrs_dev/',
 	// 'antrean_url_web_service' => 'https://new-apijkn.bpjs-kesehatan.go.id/antreanrs_dev/',
 	'antrean_url_web_service' => 'https://new-apijkn.bpjs-kesehatan.go.id/antreanrs/',
+	'apm_oid_base_url' => env('APM_OID_BASE_URL', 'http://172.168.1.2:3001'),
 
 
 	'url_ris' => 'http://172.168.8.248',
