@@ -41,6 +41,7 @@ Route::get('poli/{poli}', 'SepController@poli');
 Route::get('ref-dokter/{polikode}', 'SepController@ref_dokter');
 Route::get('task-list', 'BridgingReferensiController@taskList');
 Route::get('cekdoub', 'BridgingReferensiController@cekDoub');
+Route::get('bpjs/antrean/pendaftaran/kodebooking-by-identitas', 'BpjsAntreanController@pendaftaranByIdentitas');
 include __DIR__ . '/simrs/antrian.php';
 
 Auth::routes();
