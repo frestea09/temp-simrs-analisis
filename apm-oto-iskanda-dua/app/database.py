@@ -304,6 +304,17 @@ def fetch_latest_booking(identifier: str) -> Optional[Tuple[str, str, int]]:
     The identifier can be No RM, NIK (16 digit), or nomor BPJS. The query prioritizes No RM,
     then NIK, then BPJS number.
     """
+    urls = [
+        _build_url(base_url, config.API_BOOKING_ENDPOINT, identifier)
+        for base_url in _normalized_base_urls()
+    ]
+    booking = _fetch_data(urls)
+    if booking:
+        return (
+            booking.get("nomorantrian") or booking.get("nomor_antrian"),
+            booking.get("no_rm"),
+            booking.get("id"),
+        )
     registration = _fetch_registration(identifier)
     if not registration:
         return None
