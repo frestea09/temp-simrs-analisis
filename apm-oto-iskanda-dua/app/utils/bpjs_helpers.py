@@ -87,7 +87,7 @@ def prepare_member_field() -> None:
         window.activate()
         pyautogui.sleep(0.2)
         x = window.left + int(window.width * 0.5)
-        y = window.top + int(window.height * 0.42)
+        y = window.top + int(window.height * 0.30)
         pyautogui.click(x, y)
         return
     focus_window()
