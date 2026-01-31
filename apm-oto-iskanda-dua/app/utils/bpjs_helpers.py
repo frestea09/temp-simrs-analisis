@@ -27,20 +27,26 @@ def is_bpjs_running() -> bool:
     return exe_name.lower() in result.stdout.lower()
 
 
-def focus_bpjs_window() -> bool:
+def get_bpjs_window() -> Optional[pyautogui.Window]:
     try:
         windows = pyautogui.getWindowsWithTitle(config.BPJS_WINDOW_TITLE)
     except Exception:  # noqa: BLE001
-        return False
+        return None
     for window in windows:
-        if not window:
-            continue
-        if getattr(window, "isMinimized", False):
-            window.restore()
-        window.activate()
-        pyautogui.sleep(0.4)
-        return True
-    return False
+        if window:
+            return window
+    return None
+
+
+def focus_bpjs_window() -> bool:
+    window = get_bpjs_window()
+    if not window:
+        return False
+    if getattr(window, "isMinimized", False):
+        window.restore()
+    window.activate()
+    pyautogui.sleep(0.4)
+    return True
 
 
 def focus_window() -> None:
@@ -74,10 +80,17 @@ def login() -> None:
 
 
 def prepare_member_field() -> None:
+    window = get_bpjs_window()
+    if window:
+        if getattr(window, "isMinimized", False):
+            window.restore()
+        window.activate()
+        pyautogui.sleep(0.2)
+        x = window.left + int(window.width * 0.5)
+        y = window.top + int(window.height * 0.42)
+        pyautogui.click(x, y)
+        return
     focus_window()
-    for _ in range(3):
-        pyautogui.press("tab")
-    pyautogui.press("space")
 
 
 def fill_value(value: str) -> None:
