@@ -55,6 +55,7 @@ DEFAULT_SETTINGS = {
     "ADMISSION_TICKET_MESSAGE": "Silakan pergi ke Loket Pendaftaran untuk melanjutkan pendaftaran.",
     "TICKET_BASE_URL": "http://172.168.1.175:8070",
     "TICKET_URL_TEMPLATE": "/reservasi/cetak-baru/{registration_id}/{no_rm}",
+    "BPJS_VCLAIM_SEP_CREATE_FROM_SIMRS_ENDPOINT": "/bpjs/vclaim/sep/create-from-simrs/{identifier}",
 }
 
 
@@ -121,6 +122,7 @@ def _apply_settings(settings: Dict[str, str | float]) -> None:
     global ADMISSION_TICKET_MESSAGE
     global TICKET_BASE_URL
     global TICKET_URL_TEMPLATE
+    global BPJS_VCLAIM_SEP_CREATE_FROM_SIMRS_ENDPOINT
 
     BPJS_EXECUTABLE = settings["BPJS_EXECUTABLE"]
     BPJS_WINDOW_TITLE = settings["BPJS_WINDOW_TITLE"]
@@ -159,6 +161,9 @@ def _apply_settings(settings: Dict[str, str | float]) -> None:
     )
     TICKET_BASE_URL = settings.get("TICKET_BASE_URL", settings["SEP_BASE_URL"])
     TICKET_URL_TEMPLATE = settings.get("TICKET_URL_TEMPLATE", "/reservasi/cetak-baru/{registration_id}/{no_rm}")
+    BPJS_VCLAIM_SEP_CREATE_FROM_SIMRS_ENDPOINT = settings.get(
+        "BPJS_VCLAIM_SEP_CREATE_FROM_SIMRS_ENDPOINT", "/bpjs/vclaim/sep/create-from-simrs/{identifier}"
+    )
 
 
 _apply_settings(_load_user_settings())

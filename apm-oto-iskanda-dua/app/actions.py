@@ -320,6 +320,18 @@ def launch_ticket_flow(identifier: str, half_screen_width: int, screen_height: i
     _open_chrome_url(ticket_url, half_screen_width, screen_height)
 
 
+def launch_ticket_flow_extended(identifier: str, half_screen_width: int, screen_height: int):
+    """
+    1. Call create-from-simrs API.
+    2. Open Chrome directly to the ticket print page for the latest booking.
+    """
+    # Best effort: create SEP from SIMRS data first
+    database.create_sep_from_simrs(identifier)
+
+    # Then proceed with normal ticket flow
+    launch_ticket_flow(identifier, half_screen_width, screen_height)
+
+
 def run_action(root: tk.Tk, set_loading_state, action, message: str, buttons: list[tk.Button], on_error=None):
     set_loading_state(True, message, buttons)
 

@@ -23,10 +23,11 @@ class PatientApp:
         self._keypad_buttons = components.create_keypad(
             left_panel, self._append_digit, self._clear_input, self._delete_last_digit
         )
-        self.open_bpjs_button, self.open_sep_button = components.create_action_buttons(
+        self.open_bpjs_button, self.open_sep_button, self.open_ticket_button = components.create_action_buttons(
             right_panel,
             self.open_bpjs_by_identifier,
             self.open_sep_flow,
+            self.print_ticket_flow,
         )
 
         status_frame, self.internet_status = layout.create_status_section(
@@ -72,6 +73,19 @@ class PatientApp:
             self._action_buttons,
         )
 
+    def print_ticket_flow(self):
+        identifier = self.no_rm_var.get().strip()
+        if not identifier:
+            messagebox.showwarning("Input Error", "Masukkan No RM, NIK, atau BPJS terlebih dahulu.")
+            return
+        actions.run_action(
+            self.root,
+            self._set_loading_state,
+            lambda: actions.launch_ticket_flow_extended(identifier, self.half_screen_width, self.screen_height),
+            "Membuat SEP dan menyiapkan cetak tiket...",
+            self._action_buttons,
+        )
+
     def _run_bpjs_action(self, action, message: str):
         actions.run_bpjs_action(self.root, self._set_loading_state, action, message, self._action_buttons)
 
@@ -94,6 +108,7 @@ class PatientApp:
         return [
             self.open_bpjs_button,
             self.open_sep_button,
+            self.open_ticket_button,
         ]
 
     def _append_digit(self, digit: str):

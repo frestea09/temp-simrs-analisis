@@ -45,7 +45,7 @@ def create_keypad(parent: tk.Frame, append_digit, clear_input, delete_last):
     return buttons
 
 
-def create_action_buttons(parent: tk.Frame, on_bpjs, on_sep):
+def create_action_buttons(parent: tk.Frame, on_bpjs, on_sep, on_ticket):
     action_frame = tk.Frame(parent, bg="#ffffff")
     action_frame.pack(pady=16, fill=tk.BOTH, expand=True)
     action_frame.columnconfigure(0, weight=1)
@@ -65,4 +65,8 @@ def create_action_buttons(parent: tk.Frame, on_bpjs, on_sep):
 
     sep_button = tk.Button(action_frame, text="Cetak SEP", bg="#3b82f6", command=on_sep, **button_opts, width=1)
     sep_button.grid(row=1, column=0, padx=8, pady=10, sticky="ew")
-    return bpjs_button, sep_button
+
+    ticket_button = tk.Button(action_frame, text="Cetak Tiket", bg="#f59e0b", command=on_ticket, **button_opts, width=1)
+    ticket_button.grid(row=2, column=0, padx=8, pady=6, sticky="ew")
+
+    return bpjs_button, sep_button, ticket_button
