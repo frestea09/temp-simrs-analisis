@@ -323,13 +323,26 @@ def launch_ticket_flow(identifier: str, half_screen_width: int, screen_height: i
 def launch_ticket_flow_extended(identifier: str, half_screen_width: int, screen_height: int):
     """
     1. Call create-from-simrs API.
-    2. Open Chrome directly to the ticket print page for the latest booking.
+    2. If success (200), proceed to ticket print.
+    3. If fail, show warning and print admission ticket.
     """
-    # Best effort: create SEP from SIMRS data first
-    database.create_sep_from_simrs(identifier)
+    response = database.create_sep_from_simrs(identifier)
+    
+    metadata = response.get("metaData", {}) if isinstance(response, dict) else {}
+    code = metadata.get("code")
+    message = metadata.get("message", "Gagal menghubungkan ke server untuk pembuatan SEP.")
 
-    # Then proceed with normal ticket flow
-    launch_ticket_flow(identifier, half_screen_width, screen_height)
+    if code == "200":
+        # Success: proceed with normal ticket flow
+        launch_ticket_flow(identifier, half_screen_width, screen_height)
+    else:
+        # Failure: show message and print admission ticket
+        messagebox.showwarning(
+            "Gagal Membuat SEP",
+            f"Pesan: {message}\n\nSistem akan mencetak tiket admisi untuk pendaftaran manual.",
+        )
+        patient = database.fetch_patient_by_identifier(identifier)
+        _open_admission_ticket(identifier, patient, half_screen_width, screen_height)
 
 
 def run_action(root: tk.Tk, set_loading_state, action, message: str, buttons: list[tk.Button], on_error=None):
