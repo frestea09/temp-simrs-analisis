@@ -250,6 +250,12 @@ def launch_sep_flow(identifier: str, half_screen_width: int, screen_height: int)
             _open_chrome_url(_build_cek_baru_url(), half_screen_width, screen_height)
         return
 
+    # Jika jenis_registrasi adalah pasien_baru, langsung cetak tiket admisi
+    if registration.get("jenis_registrasi") == "pasien_baru":
+        patient = database.fetch_patient_by_identifier(identifier)
+        _open_admission_ticket(identifier, patient, half_screen_width, screen_height)
+        return
+
     registration_id = registration.get("id")
     no_rm = registration.get("no_rm")
     if not registration_id:

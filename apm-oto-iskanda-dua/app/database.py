@@ -372,7 +372,7 @@ def extract_registration_date(registration: RegistrationRow) -> Optional[date]:
 
 def create_sep_from_simrs(identifier: str) -> Optional[dict]:
     """Call the backend-apm-oid endpoint to create a SEP from SIMRS data."""
-    base_url = (config.BPJS_API_BASE_URL or "").strip().rstrip("/")
+    base_url = (config.BPJS_VCLAIM_SEP_BASE_URL or "").strip().rstrip("/")
     if not base_url:
         return None
 
