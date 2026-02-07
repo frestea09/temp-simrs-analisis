@@ -369,19 +369,6 @@ def launch_ticket_flow_extended(identifier: str, half_screen_width: int, screen_
     store_meta = store_response.get("metaData", {}) if isinstance(store_response, dict) else {}
     code = store_meta.get("code")
 
-    # Retry if code is 201
-    if code == 201 or code == "201":
-        try:
-            payload = database.transform_sep_kontrol_to_cekin(
-                prep_response, tujuan_kunj="0", assesment_pel=""
-            )
-            store_response = database.store_cekin_sep(payload)
-            store_meta = store_response.get("metaData", {}) if isinstance(store_response, dict) else {}
-            code = store_meta.get("code")
-        except Exception as e:
-            messagebox.showerror("Error Retry Transformasi", f"Gagal memproses ulang data SEP: {e}")
-            return
-
     if code == 200 or code == "200":
         # Success: proceed with normal ticket flow
         launch_ticket_flow(identifier, half_screen_width, screen_height)
