@@ -406,7 +406,13 @@ def store_cekin_sep(payload: dict) -> Optional[dict]:
     return _post_json(url, payload)
 
 
-def transform_sep_kontrol_to_cekin(data: dict) -> dict:
+def transform_sep_kontrol_to_cekin(
+    data: dict,
+    tujuan_kunj: str = "2",
+    flag_procedure: str = "",
+    kd_penunjang: str = "",
+    assesment_pel: str = "5",
+) -> dict:
     """Transform GET /sep-kontrol response into POST /store-cekin-sep payload."""
     resp = data.get("response", {})
     regdum = resp.get("regdum", {})
@@ -447,5 +453,9 @@ def transform_sep_kontrol_to_cekin(data: dict) -> dict:
         "noSurat": data_skdp.get("noSuratKontrol"),
         "type_sep": "sep_kontrol",
         "jenisKunjungan": "3",
+        "tujuanKunj": tujuan_kunj,
+        "flagProcedure": flag_procedure,
+        "kdPenunjang": kd_penunjang,
+        "assesmentPel": assesment_pel,
     }
     return payload
