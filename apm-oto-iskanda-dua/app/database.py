@@ -380,3 +380,72 @@ def create_sep_from_simrs(identifier: str) -> Optional[dict]:
     url = f"{base_url}/{endpoint.format(identifier=identifier).lstrip('/')}"
 
     return _post_json(url, {})
+
+
+def fetch_sep_kontrol_data(id_reg_dum: int) -> Optional[dict]:
+    """Fetch preparation data for SEP Check-in from BPJS VClaim."""
+    base_url = (config.BPJS_VCLAIM_SEP_BASE_URL or "").strip().rstrip("/")
+    if not base_url:
+        return None
+
+    endpoint = config.BPJS_VCLAIM_SEP_KONTROL_ENDPOINT or "/bpjs/vclaim/reservasi/sep-kontrol/{id}"
+    url = f"{base_url}/{endpoint.format(id=id_reg_dum).lstrip('/')}"
+
+    return _fetch_data([url])
+
+
+def store_cekin_sep(payload: dict) -> Optional[dict]:
+    """Store SEP Check-in data to BPJS VClaim."""
+    base_url = (config.BPJS_VCLAIM_SEP_BASE_URL or "").strip().rstrip("/")
+    if not base_url:
+        return None
+
+    endpoint = config.BPJS_VCLAIM_SEP_STORE_CEKIN_ENDPOINT or "/bpjs/vclaim/reservasi/store-cekin-sep"
+    url = f"{base_url}/{endpoint.lstrip('/')}"
+
+    return _post_json(url, payload)
+
+
+def transform_sep_kontrol_to_cekin(data: dict) -> dict:
+    """Transform GET /sep-kontrol response into POST /store-cekin-sep payload."""
+    resp = data.get("response", {})
+    regdum = resp.get("regdum", {})
+    data_skdp = resp.get("dataSkdp", {})
+    rujukan_meta = resp.get("rujukan", {})
+    rujukan = rujukan_meta.get("rujukan", {})
+    peserta = rujukan.get("peserta", {})
+    diagnosa = rujukan.get("diagnosa", {})
+    poli_rujukan = rujukan.get("poliRujukan", {})
+    prov_perujuk = rujukan.get("provPerujuk", {})
+    dokter_hfis = resp.get("dokterHfis", [])
+
+    # Find matching doctor schedule
+    target_kd_dokter = str(regdum.get("kode_dokter") or data_skdp.get("kodeDokter"))
+    dokter_id = ""
+    for d in dokter_hfis:
+        if str(d.get("kodedokter")) == target_kd_dokter:
+            dokter_id = f"{d.get('kodedokter')}_{d.get('namadokter')}_{d.get('jadwal')}_{d.get('kodepoli')}"
+            break
+
+    payload = {
+        "id_reg_dum": regdum.get("id"),
+        "dokter_id": dokter_id,
+        "nomorkartu": peserta.get("noKartu"),
+        "nik": peserta.get("nik"),
+        "nama": peserta.get("nama"),
+        "tanggallahir": peserta.get("tglLahir"),
+        "jeniskelamin": peserta.get("sex"),
+        "alamat": "ALAMAT PASIEN",  # Placeholder as per user's request
+        "nohp": regdum.get("no_hp"),
+        "no_rujukan": rujukan.get("noKunjungan"),
+        "tgl_rujukan": rujukan.get("tglKunjungan"),
+        "ppk_rujukan": prov_perujuk.get("kode"),
+        "asalRujukan": rujukan_meta.get("asalFaskes"),
+        "hak_kelas_inap": peserta.get("hakKelas", {}).get("kode"),
+        "diagnosa_awal": diagnosa.get("kode"),
+        "poli_bpjs": poli_rujukan.get("kode"),
+        "noSurat": data_skdp.get("noSuratKontrol"),
+        "type_sep": "sep_kontrol",
+        "jenisKunjungan": "3",
+    }
+    return payload

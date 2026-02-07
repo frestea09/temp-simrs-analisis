@@ -328,25 +328,49 @@ def launch_ticket_flow(identifier: str, half_screen_width: int, screen_height: i
 
 def launch_ticket_flow_extended(identifier: str, half_screen_width: int, screen_height: int):
     """
-    1. Call create-from-simrs API.
-    2. If success (200), proceed to ticket print.
-    3. If fail, show warning and print admission ticket.
+    1. Fetch registration to get id_reg_dum.
+    2. Call fetch_sep_kontrol_data (GET /sep-kontrol/{id}).
+    3. Transform response and call store_cekin_sep (POST /store-cekin-sep).
+    4. If success, proceed to ticket print.
+    5. If fail, show warning and print admission ticket.
     """
-    response = database.create_sep_from_simrs(identifier)
-    
-    metadata = response.get("metaData", {}) if isinstance(response, dict) else {}
-    code = metadata.get("code")
-    message = metadata.get("message", "Gagal menghubungkan ke server untuk pembuatan SEP.")
+    registration = database.fetch_latest_registration(identifier)
+    if not registration:
+        patient = database.fetch_patient_by_identifier(identifier)
+        _open_admission_ticket(identifier, patient, half_screen_width, screen_height)
+        return
 
-    if code == "200":
+    reg_dum_id = registration.get("id")
+    if not reg_dum_id:
+        messagebox.showwarning("Data Tidak Lengkap", "ID Registrasi tidak ditemukan.")
+        return
+
+    # Step 1: Fetch hazırlık data
+    prep_response = database.fetch_sep_kontrol_data(reg_dum_id)
+    prep_meta = prep_response.get("metaData", {}) if isinstance(prep_response, dict) else {}
+    
+    if prep_meta.get("code") != 200:
+        message = prep_meta.get("message", "Gagal mengambil data persiapan SEP.")
+        messagebox.showwarning("Gagal Ambil Data SEP", f"Pesan: {message}\nMencetak tiket admisi.")
+        patient = database.fetch_patient_by_identifier(identifier)
+        _open_admission_ticket(identifier, patient, half_screen_width, screen_height)
+        return
+
+    # Step 2: Transform and Store (Check-in)
+    try:
+        payload = database.transform_sep_kontrol_to_cekin(prep_response)
+        store_response = database.store_cekin_sep(payload)
+    except Exception as e:
+        messagebox.showerror("Error Transformasi", f"Gagal memproses data SEP: {e}")
+        return
+
+    store_meta = store_response.get("metaData", {}) if isinstance(store_response, dict) else {}
+    if store_meta.get("code") == 200:
         # Success: proceed with normal ticket flow
         launch_ticket_flow(identifier, half_screen_width, screen_height)
     else:
-        # Failure: show message and print admission ticket
-        messagebox.showwarning(
-            "Gagal Membuat SEP",
-            f"Pesan: {message}\n\nSistem akan mencetak tiket admisi untuk pendaftaran manual.",
-        )
+        message = store_meta.get("message", "Gagal melakukan check-in SEP.")
+        messagebox.showwarning("Gagal Check-in SEP", f"Pesan: {message}\nMencetak tiket admisi.")
         patient = database.fetch_patient_by_identifier(identifier)
         _open_admission_ticket(identifier, patient, half_screen_width, screen_height)
 

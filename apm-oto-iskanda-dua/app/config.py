@@ -57,6 +57,8 @@ DEFAULT_SETTINGS = {
     "TICKET_URL_TEMPLATE": "/reservasi/cetak-baru/{registration_id}/{no_rm}",
     "BPJS_VCLAIM_SEP_BASE_URL": "http://172.168.1.175:3002",
     "BPJS_VCLAIM_SEP_CREATE_FROM_SIMRS_ENDPOINT": "/bpjs/vclaim/sep/create-from-simrs/{identifier}",
+    "BPJS_VCLAIM_SEP_KONTROL_ENDPOINT": "/bpjs/vclaim/reservasi/sep-kontrol/{id}",
+    "BPJS_VCLAIM_SEP_STORE_CEKIN_ENDPOINT": "/bpjs/vclaim/reservasi/store-cekin-sep",
 }
 
 
@@ -125,6 +127,8 @@ def _apply_settings(settings: Dict[str, str | float]) -> None:
     global TICKET_URL_TEMPLATE
     global BPJS_VCLAIM_SEP_BASE_URL
     global BPJS_VCLAIM_SEP_CREATE_FROM_SIMRS_ENDPOINT
+    global BPJS_VCLAIM_SEP_KONTROL_ENDPOINT
+    global BPJS_VCLAIM_SEP_STORE_CEKIN_ENDPOINT
 
     BPJS_EXECUTABLE = settings["BPJS_EXECUTABLE"]
     BPJS_WINDOW_TITLE = settings["BPJS_WINDOW_TITLE"]
@@ -166,6 +170,12 @@ def _apply_settings(settings: Dict[str, str | float]) -> None:
     BPJS_VCLAIM_SEP_BASE_URL = settings.get("BPJS_VCLAIM_SEP_BASE_URL", "http://172.168.1.175:3002")
     BPJS_VCLAIM_SEP_CREATE_FROM_SIMRS_ENDPOINT = settings.get(
         "BPJS_VCLAIM_SEP_CREATE_FROM_SIMRS_ENDPOINT", "/bpjs/vclaim/sep/create-from-simrs/{identifier}"
+    )
+    BPJS_VCLAIM_SEP_KONTROL_ENDPOINT = settings.get(
+        "BPJS_VCLAIM_SEP_KONTROL_ENDPOINT", "/bpjs/vclaim/reservasi/sep-kontrol/{id}"
+    )
+    BPJS_VCLAIM_SEP_STORE_CEKIN_ENDPOINT = settings.get(
+        "BPJS_VCLAIM_SEP_STORE_CEKIN_ENDPOINT", "/bpjs/vclaim/reservasi/store-cekin-sep"
     )
 
 
